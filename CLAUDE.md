@@ -186,10 +186,10 @@ Before closing, do both of these:
 
 ---
 ## Tools status
-- shared          → Phase 1 complete — tokens, fonts, Firebase init, auth hook
-- dashboard       → Phase 1 — not started
-- planner         → Phase 1 — not started
-- reward-tracker  → exists, needs migrating into monorepo structure
+- shared      → ✅ Complete — tokens, fonts, Firebase init, auth hook
+- dashboard   → ✅ Complete — deployed to Netlify, Google auth working, PWA ready
+- planner     → Phase 1 — not started
+- reward-tracker → exists, needs migrating into monorepo structure
 ## Phase tracking — planner
 Phase 1 (current):
   1. Firebase init + Auth
