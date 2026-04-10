@@ -12,7 +12,7 @@ export default function PlannerLayout({
   user,
   weekDates, prevWeek, nextWeek,
   subjects, dayData, subjectsLoading, updateCell, addSubject,
-  importCell, jumpToWeek,
+  importCell, jumpToWeek, deleteWeek,
   pdfImport,
   student, setStudent,
   day, setDay,
@@ -28,6 +28,11 @@ export default function PlannerLayout({
   function handleToggleFlag(subject) {
     const cell = dayData[subject] ?? {};
     updateCell(subject, day, { ...cell, flag: !cell.flag });
+  }
+
+  function handleDeleteWeek() {
+    if (!window.confirm('Clear all lessons for this week? This cannot be undone.')) return;
+    deleteWeek();
   }
 
   // Writes parsed PDF schedule data to the week/student named in the PDF.
@@ -78,6 +83,11 @@ export default function PlannerLayout({
           {!subjectsLoading && (
             <button className="planner-add-btn" onClick={() => setShowAddSubject(true)}>
               + Add Subject
+            </button>
+          )}
+          {!subjectsLoading && subjects.length > 0 && (
+            <button className="planner-clear-btn" onClick={handleDeleteWeek}>
+              Clear Week
             </button>
           )}
         </main>

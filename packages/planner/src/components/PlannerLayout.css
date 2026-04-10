@@ -39,3 +39,21 @@
   border-color: var(--forest);
   color: var(--forest);
 }
+
+.planner-clear-btn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin-top: 4px;
+}
+
+.planner-clear-btn:hover {
+  color: var(--red);
+}

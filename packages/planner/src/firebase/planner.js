@@ -2,7 +2,7 @@
 // No business logic — pure I/O only.
 // All paths from constants/firestore.js — nothing hardcoded here.
 
-import { doc, collection, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
+import { doc, collection, onSnapshot, setDoc, deleteDoc, getDocs } from 'firebase/firestore';
 import { db } from '@homeschool/shared';
 import { daySubjectsPath, cellPath } from '../constants/firestore.js';
 
@@ -30,4 +30,17 @@ export function updateCell(uid, weekId, student, subject, dayIndex, data) {
 // Deletes a cell document — removes a subject from a specific day only.
 export function deleteCell(uid, weekId, student, dayIndex, subject) {
   return deleteDoc(doc(db, cellPath(uid, weekId, student, dayIndex, subject)));
+}
+
+// Deletes all cell documents for every day of a week for one student.
+// Queries all 5 days in parallel, then deletes all found docs in parallel.
+export async function deleteWeek(uid, weekId, student) {
+  const snapshots = await Promise.all(
+    [0, 1, 2, 3, 4].map(i =>
+      getDocs(collection(db, daySubjectsPath(uid, weekId, student, i)))
+    )
+  );
+  return Promise.all(
+    snapshots.flatMap(snap => snap.docs.map(d => deleteDoc(d.ref)))
+  );
 }

@@ -3,6 +3,7 @@ import {
   subscribeDaySubjects,
   updateCell as dbUpdateCell,
   deleteCell as dbDeleteCell,
+  deleteWeek as dbDeleteWeek,
 } from '../firebase/planner.js';
 
 // Manages subjects and cell data for one specific day.
@@ -46,6 +47,11 @@ export function useSubjects(uid, weekId, student, day) {
     return dbUpdateCell(uid, weekId, student, subject, dayIndex, cleaned);
   }
 
+  // Deletes all cells for the current week/student — clears the whole week.
+  function deleteWeek() {
+    return dbDeleteWeek(uid, weekId, student);
+  }
+
   // Writes to an explicit weekId+student — used by PDF import so the data
   // lands in the correct week/student regardless of the current view.
   function importCell(importWeekId, importStudent, subject, dayIndex, data) {
@@ -58,5 +64,5 @@ export function useSubjects(uid, weekId, student, day) {
   }
 
   const subjects = Object.keys(dayData);
-  return { subjects, dayData, loading, updateCell, addSubject, removeSubject, importCell };
+  return { subjects, dayData, loading, updateCell, addSubject, removeSubject, importCell, deleteWeek };
 }
