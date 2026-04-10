@@ -1,0 +1,17 @@
+.dashboard {
+  min-height: 100vh;
+}
+
+.dashboard-main {
+  margin-top: 60px;
+  padding: 28px 20px;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tool-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
