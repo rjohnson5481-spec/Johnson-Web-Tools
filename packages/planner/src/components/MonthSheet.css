@@ -1,0 +1,123 @@
+/* ── Backdrop ── */
+.month-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* ── Sheet panel ── */
+.month-sheet {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-surface);
+  border-radius: 20px 20px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+  animation: month-sheet-up 0.25s ease;
+}
+
+@keyframes month-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.month-sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 10px auto 0;
+}
+
+/* ── Month navigation header ── */
+.month-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px 8px;
+}
+
+.month-sheet-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.month-sheet-nav {
+  background: none;
+  border: none;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 10px;
+  transition: color 0.15s;
+}
+
+.month-sheet-nav:hover { color: var(--forest); }
+
+/* ── Calendar grid ── */
+.month-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 4px 12px 20px;
+}
+
+.month-sheet-dow {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 4px 0 6px;
+}
+
+/* ── Day cells ── */
+.month-sheet-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 400;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.month-sheet-cell:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+}
+
+.month-sheet-cell--empty {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.month-sheet-cell--weekend {
+  color: var(--text-muted);
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Mon-Fri band for the currently selected week */
+.month-sheet-cell--week {
+  background: var(--forest-pale);
+  color: var(--forest);
+  font-weight: 500;
+}
+
+/* Today gets a gold ring */
+.month-sheet-cell--today {
+  outline: 2px solid var(--gold-light);
+  outline-offset: -2px;
+  font-weight: 600;
+}

@@ -4,12 +4,12 @@ import './Header.css';
 
 const STUDENTS = ['Orion', 'Malachi'];
 
-// Props: student, onStudentChange, weekDates, prevWeek, nextWeek, onUpload
+// Props: student, onStudentChange, weekDates, prevWeek, nextWeek, onUpload, onCalendar
 // signOut is called directly from shared — no prop needed.
 export default function Header({
   student, onStudentChange,
   weekDates, prevWeek, nextWeek,
-  onUpload,
+  onUpload, onCalendar,
 }) {
   return (
     <header className="header">
@@ -29,6 +29,7 @@ export default function Header({
         </nav>
 
         <div className="header-actions">
+          <button className="header-btn" onClick={onCalendar} aria-label="Open calendar">Cal</button>
           <button className="header-btn" onClick={onUpload}>Import</button>
           <button className="header-btn" onClick={() => signOut()}>Sign out</button>
         </div>

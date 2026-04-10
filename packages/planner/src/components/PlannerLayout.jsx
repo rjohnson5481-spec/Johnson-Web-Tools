@@ -6,10 +6,13 @@ import SubjectCard     from './SubjectCard.jsx';
 import EditSheet       from './EditSheet.jsx';
 import UploadSheet     from './UploadSheet.jsx';
 import AddSubjectSheet from './AddSubjectSheet.jsx';
+import MonthSheet      from './MonthSheet.jsx';
+import { getMondayOf, toWeekId } from '../constants/days.js';
 import './PlannerLayout.css';
 
 export default function PlannerLayout({
   user,
+  weekId,
   weekDates, prevWeek, nextWeek,
   subjects, dayData, subjectsLoading, updateCell, addSubject,
   importCell, jumpToWeek, deleteWeek,
@@ -19,6 +22,7 @@ export default function PlannerLayout({
   editTarget, setEditTarget,
   showUpload, setShowUpload,
   showAddSubject, setShowAddSubject,
+  showMonthPicker, setShowMonthPicker,
 }) {
   function handleToggleDone(subject) {
     const cell = dayData[subject] ?? {};
@@ -28,6 +32,13 @@ export default function PlannerLayout({
   function handleToggleFlag(subject) {
     const cell = dayData[subject] ?? {};
     updateCell(subject, day, { ...cell, flag: !cell.flag });
+  }
+
+  // Tapping a day in the month picker: jump to that week and select that day.
+  function handleMonthDaySelect(date) {
+    jumpToWeek(toWeekId(getMondayOf(date)));
+    setDay(date.getDay() - 1); // JS Mon=1 → dayIndex=0
+    setShowMonthPicker(false);
   }
 
   function handleDeleteWeek() {
@@ -62,6 +73,7 @@ export default function PlannerLayout({
         prevWeek={prevWeek}
         nextWeek={nextWeek}
         onUpload={() => setShowUpload(true)}
+        onCalendar={() => setShowMonthPicker(true)}
       />
 
       <div className="planner-body">
@@ -117,6 +129,14 @@ export default function PlannerLayout({
           existingSubjects={subjects}
           onAdd={subject => { addSubject(subject); setShowAddSubject(false); }}
           onClose={() => setShowAddSubject(false)}
+        />
+      )}
+
+      {showMonthPicker && (
+        <MonthSheet
+          weekId={weekId}
+          onSelectDay={handleMonthDaySelect}
+          onClose={() => setShowMonthPicker(false)}
         />
       )}
     </div>
