@@ -1,0 +1,46 @@
+/* Parchment & Forest Design System — color tokens */
+/* Toggle data-mode="light" or data-mode="dark" on <html> */
+
+:root,
+[data-mode="light"] {
+  --bg-base:       #f5f0e8;
+  --bg-surface:    #ece6d8;
+  --bg-card:       #faf7f2;
+  --bg-card-hover: #f0ebe0;
+  --border:        #d6cdb8;
+  --border-light:  #e8e0cc;
+  --forest:        #2d5a3d;
+  --forest-light:  #3d7a52;
+  --forest-pale:   rgba(45, 90, 61, 0.08);
+  --gold:          #8a6a20;
+  --gold-light:    #b8922a;
+  --red:           #c0392b;
+  --text-primary:  #2a2418;
+  --text-secondary:#5a4e38;
+  --text-muted:    #8a7a60;
+}
+
+[data-mode="dark"] {
+  --bg-base:       #1a2018;
+  --bg-surface:    #202820;
+  --bg-card:       #263024;
+  --bg-card-hover: #2e3a2c;
+  --border:        #3a4838;
+  --border-light:  #445442;
+  --forest:        #3a7a50;
+  --forest-light:  #4e9e68;
+  --forest-pale:   rgba(78, 158, 104, 0.12);
+  --gold:          #c9a84c;
+  --gold-light:    #e8c97a;
+  --red:           #e05252;
+  --text-primary:  #e8f0e4;
+  --text-secondary:#a0b89a;
+  --text-muted:    #607860;
+}
+
+/* Smooth color mode transitions */
+*,
+*::before,
+*::after {
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
