@@ -1,7 +1,8 @@
 // All Firestore path builders live here — never hardcode paths elsewhere.
 // Data model:
-//   /users/{uid}/weeks/{weekId}/students/{student}/subjects/{subject}/days/{0-4}
-//   /users/{uid}/subjectLists/{student}
+//   /users/{uid}/weeks/{weekId}/students/{student}/days/{dayIndex}/subjects/{subject}
+//   → { lesson, note, done, flag }
+// Subjects are implicit: a subject exists on a day only when its document exists.
 
 export const weekPath = (uid, weekId) =>
   `users/${uid}/weeks/${weekId}`;
@@ -9,11 +10,10 @@ export const weekPath = (uid, weekId) =>
 export const studentPath = (uid, weekId, student) =>
   `users/${uid}/weeks/${weekId}/students/${student}`;
 
-export const subjectPath = (uid, weekId, student, subject) =>
-  `users/${uid}/weeks/${weekId}/students/${student}/subjects/${subject}`;
+// Collection of all subjects present on a given day.
+export const daySubjectsPath = (uid, weekId, student, dayIndex) =>
+  `users/${uid}/weeks/${weekId}/students/${student}/days/${dayIndex}/subjects`;
 
-export const dayPath = (uid, weekId, student, subject, dayIndex) =>
-  `users/${uid}/weeks/${weekId}/students/${student}/subjects/${subject}/days/${dayIndex}`;
-
-export const subjectListPath = (uid, student) =>
-  `users/${uid}/subjectLists/${student}`;
+// Individual cell document (one subject on one day).
+export const cellPath = (uid, weekId, student, dayIndex, subject) =>
+  `users/${uid}/weeks/${weekId}/students/${student}/days/${dayIndex}/subjects/${subject}`;

@@ -2,47 +2,32 @@
 // No business logic — pure I/O only.
 // All paths from constants/firestore.js — nothing hardcoded here.
 
-import { doc, collection, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, collection, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@homeschool/shared';
-import {
-  subjectListPath,
-  subjectPath,
-  dayPath,
-} from '../constants/firestore.js';
+import { daySubjectsPath, cellPath } from '../constants/firestore.js';
 
-// Subscribes to the subject list for one student.
-// cb receives: string[]  (empty array if the doc doesn't exist yet)
+// Subscribes to all subjects present on one day for one student/week.
+// cb receives: { [subject]: { lesson, note, done, flag } }
+// A subject is present iff its document exists in the subjects subcollection.
 // Returns the Firestore unsubscribe function.
-export function subscribeSubjectList(uid, student, cb) {
-  const ref = doc(db, subjectListPath(uid, student));
-  return onSnapshot(ref, snap => {
-    cb(snap.exists() ? (snap.data().subjects ?? []) : []);
-  });
-}
-
-// Overwrites the subject list for one student.
-export function saveSubjectList(uid, student, subjects) {
-  return setDoc(doc(db, subjectListPath(uid, student)), { subjects });
-}
-
-// Subscribes to all 5 day docs for one subject in one week.
-// cb receives: { [dayIndex: number]: { lesson, note, done, flag } }
-// Returns the Firestore unsubscribe function.
-export function subscribeDayData(uid, weekId, student, subject, cb) {
-  const colRef = collection(
-    db,
-    `${subjectPath(uid, weekId, student, subject)}/days`
-  );
+export function subscribeDaySubjects(uid, weekId, student, dayIndex, cb) {
+  const colRef = collection(db, daySubjectsPath(uid, weekId, student, dayIndex));
   return onSnapshot(colRef, snap => {
-    const days = {};
-    snap.forEach(d => { days[Number(d.id)] = d.data(); });
-    cb(days);
+    const data = {};
+    snap.forEach(d => { data[d.id] = d.data(); });
+    cb(data);
   });
 }
 
 // Writes one day cell. merge:true so partial updates don't wipe other fields.
 // data shape: { lesson: string, note: string, done: boolean, flag: boolean }
+// Creating a cell document IS adding that subject to that day.
 export function updateCell(uid, weekId, student, subject, dayIndex, data) {
-  const ref = doc(db, dayPath(uid, weekId, student, subject, dayIndex));
+  const ref = doc(db, cellPath(uid, weekId, student, dayIndex, subject));
   return setDoc(ref, data, { merge: true });
+}
+
+// Deletes a cell document — removes a subject from a specific day only.
+export function deleteCell(uid, weekId, student, dayIndex, subject) {
+  return deleteDoc(doc(db, cellPath(uid, weekId, student, dayIndex, subject)));
 }
