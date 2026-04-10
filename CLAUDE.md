@@ -386,3 +386,11 @@ All color transitions: transition: 0.3s
 - Borders always warm-toned, never neutral gray
 - Spacing generous: 28px page padding, 20px between cards,
   22px internal card padding
+
+
+  ## Branch strategy
+Always work directly on main.
+Never create feature branches.
+After each confirmed working step, commit and push directly to main.
+Netlify auto-deploys on every push to main.
+Do not open pull requests. Do not create branches named claude/* or feature/*.
