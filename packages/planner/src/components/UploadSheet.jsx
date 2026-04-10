@@ -5,11 +5,10 @@ import './UploadSheet.css';
 export default function UploadSheet({ pdfImport, student, onApply, onClose }) {
   const { file, importing, result, error, selectFile, importSchedule } = pdfImport;
 
-  // Resolve the student's data from the parsed result (fall back to first key)
-  const studentData = result
-    ? (result[student] ?? result[Object.keys(result)[0]] ?? {})
-    : {};
-  const subjectNames = Object.keys(studentData);
+  // Collect unique subject names from all days in the parsed result.
+  const subjectNames = result
+    ? [...new Set((result.days ?? []).flatMap(d => (d.lessons ?? []).map(l => l.subject)))]
+    : [];
 
   return (
     <div className="upload-sheet-overlay" onClick={onClose}>
@@ -58,7 +57,7 @@ export default function UploadSheet({ pdfImport, student, onApply, onClose }) {
           {result && !importing && (
             <div className="upload-sheet-result">
               <p className="upload-sheet-result-heading">
-                Found {subjectNames.length} subject{subjectNames.length !== 1 ? 's' : ''} for {student}
+                Found {subjectNames.length} subject{subjectNames.length !== 1 ? 's' : ''} for {result.student}
               </p>
               <ul className="upload-sheet-subject-list">
                 {subjectNames.map(s => <li key={s}>{s}</li>)}
