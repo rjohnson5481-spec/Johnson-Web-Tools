@@ -217,12 +217,11 @@ Before closing, do both of these:
 4. Identify which files will be touched before writing any code
 
 ---
-
 ## Tools status
-- dashboard       → Phase 1 — complete, deployed
-- planner         → Phase 1 — complete (code done, not yet merged to main)
-- reward-tracker  → exists, needs migrating into monorepo structure
-
+- shared      → ✅ Complete — tokens, fonts, Firebase init, auth hook
+- dashboard   → ✅ Complete — deployed to Netlify, Google auth working, PWA ready
+- planner     → complete and merged to main
+- reward-tracker → exists, needs migrating into monorepo structure
 ## Phase tracking — planner
 Phase 1 — COMPLETE (all code on branch claude/read-claude-docs-er59m):
   ✓ 1. Firebase/Firestore layer (firebase/planner.js)
