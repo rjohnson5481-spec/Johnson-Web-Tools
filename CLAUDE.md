@@ -95,13 +95,23 @@ Model: claude-sonnet-4-20250514
 ---
 
 ## Firestore data model
-/users/{uid}/weeks/{weekId}/students/{studentName}/subjects/{subjectName}/days/{0-4}
+/users/{uid}/weeks/{weekId}/students/{studentName}/days/{0-4}/subjects/{subjectName}
   → { lesson: string, note: string, done: boolean, flag: boolean }
 
-/users/{uid}/subjectLists/{studentName}
-  → { subjects: string[] }
-
 weekId format: "2026-08-17" (Monday of that week)
+
+Subjects are implicit — a subject exists on a given day only when its
+document exists. No separate subject list document. Querying all subjects
+for a day = simple collection read of .../days/{dayIndex}/subjects.
+
+dayIndex: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri
+
+## Orphaned Firestore data (do not migrate — manual cleanup only)
+Old paths from before the per-day redesign are still present in Firestore
+but are no longer read or written by the app:
+  /users/{uid}/subjectLists/{studentName}  → { subjects: string[] }
+  /users/{uid}/weeks/{weekId}/students/{studentName}/subjects/{subjectName}/days/{0-4}
+These can be manually deleted from the Firebase console. No migration script needed.
 
 ---
 
@@ -227,9 +237,9 @@ Before closing, do both of these:
 - reward-tracker → exists, needs migrating into monorepo structure
 
 ## Phase tracking — planner
-Phase 1 — COMPLETE (all code on branch claude/read-claude-docs-er59m):
+Phase 1 — COMPLETE:
   ✓ 1. Firebase/Firestore layer (firebase/planner.js)
-  ✓ 2. Netlify Function — parse-schedule
+  ✓ 2. Netlify Function — parse-schedule (BJU Homeschool Hub "Print By Day" format)
   ✓ 3. Config files (package.json, vite.config.js, index.html)
   ✓ 4. Hooks (useWeek, useSubjects, usePdfImport, usePlannerUI)
   ✓ 5. App entry (main.jsx, App.jsx, planner.css)
@@ -237,7 +247,8 @@ Phase 1 — COMPLETE (all code on branch claude/read-claude-docs-er59m):
   ✓ 7. SubjectCard + EditSheet
   ✓ 8. AddSubjectSheet + UploadSheet
   ✓ 9. Deploy config (netlify.toml redirects, dashboard outDir)
-  — Swap Days: not built (confirm with Rob before starting)
+  ✓ 10. Bug fix: addSubject no longer pre-populates future days
+  ✓ 11. Data model redesign: per-day implicit subjects (3 batches, main)
 
 Phase 2 (do not build yet):
   - Auto-roll flagged lessons to next week

@@ -1,79 +1,94 @@
 # HANDOFF — end of session 2026-04-10
 
 ## What was completed this session
-Full Phase 1 build of packages/planner — all 30 files written, committed,
-pushed to `claude/read-claude-docs-er59m`, and merged to main by Rob.
-Netlify auto-deployed on merge. Planner is live at /planner.
+Two bug fixes and a full data model redesign. All changes committed and
+pushed directly to main. Netlify auto-deploys on push.
 
-### Files built
-**Constants**
-- src/constants/firestore.js — Firestore path builders (single source of truth)
-- src/constants/days.js — day labels, getMondayOf, toWeekId, getWeekDates,
-  formatWeekLabel, getTodayDayIndex
-- src/constants/routes.js — ROUTES object
-- src/constants/subjects.js — SUBJECT_PRESETS array (15 subjects)
+### Bug fix 1 — addSubject no longer pre-populates future days
+`hooks/useSubjects.js` — removed logic that wrote empty cell docs to all
+5 days when a subject was added. addSubject now only writes to the subject
+list doc. (This was resolved before the model redesign made it moot.)
 
-**Firebase**
-- src/firebase/planner.js — subscribeSubjectList, saveSubjectList,
-  subscribeDayData, updateCell (pure Firestore I/O, no business logic)
+### Bug fix 2 — PDF parser overhaul
+`netlify/functions/parse-schedule.js` — complete rewrite of the system
+prompt and response handler for BJU Homeschool Hub "Print By Day" format.
+New output shape: `{ student, weekId, days: [{ dayIndex, lessons: [{ subject, lesson }] }] }`
+Consumers updated: PlannerLayout.jsx handleApplySchedule and UploadSheet.jsx
+result summary display.
 
-**Netlify Function**
-- netlify/functions/parse-schedule.js — POST handler, calls claude-sonnet-4-20250514
-  with PDF/image as document block, returns structured JSON by student → subject → days
+### Data model redesign — per-day implicit subjects (3 batches)
+This is a breaking change to the Firestore data model. Subjects are now
+per-day and implicit — a subject exists on a day only when its cell document
+exists. No global subject list.
 
-**Config**
-- packages/planner/package.json
-- packages/planner/vite.config.js (base: '/planner/', outDir: '../../dist/planner')
-- packages/planner/index.html
+**New Firestore path:**
+```
+/users/{uid}/weeks/{weekId}/students/{studentName}/days/{dayIndex}/subjects/{subjectName}
+  → { lesson, note, done, flag }
+```
+dayIndex and subject are swapped vs the old path. This enables a simple
+`collection()` query to get all subjects for a given day.
 
-**Hooks**
-- src/hooks/useWeek.js — week navigation, weekId/weekDates/prevWeek/nextWeek
-- src/hooks/useSubjects.js — subject list + day data real-time subscriptions
-- src/hooks/usePdfImport.js — file → base64 → POST /api/parse-schedule → result
-- src/hooks/usePlannerUI.js — all local UI state (student, day, editTarget, etc.)
+**Files changed (3 batches, each committed separately):**
 
-**App entry**
-- src/main.jsx, src/App.jsx, src/planner.css
+Batch 1 — data layer:
+- `packages/planner/src/constants/firestore.js` — removed subjectListPath,
+  old subjectPath/dayPath; added daySubjectsPath and cellPath (new order)
+- `packages/planner/src/firebase/planner.js` — removed subscribeSubjectList,
+  saveSubjectList, subscribeDayData; added subscribeDaySubjects, deleteCell;
+  updated updateCell to write to new cellPath
 
-**Components (all with CSS)**
-- PlannerLayout — full layout shell, toggle handlers, handleApplySchedule
-- Header — 2-row 80px fixed: logo + week nav + Import/Sign out / student pills
-- DayStrip — sticky 5-tab day selector at top: 80px
-- SubjectCard — lesson card with done/flag toggles
-- EditSheet — bottom sheet: lesson + note textareas, done/flag toggles, save
-- AddSubjectSheet — preset grid + custom input
-- UploadSheet — file picker → spinner → result summary → Apply to Week
+Batch 2 — hook + wiring:
+- `packages/planner/src/hooks/useSubjects.js` — new signature
+  useSubjects(uid, weekId, student, day); single subscription to
+  subscribeDaySubjects; subjects = Object.keys(dayData); addSubject creates
+  a cell (which IS the subject); removeSubject deletes the cell; updateCell
+  keeps dayIndex param so PDF import can write to any day
+- `packages/planner/src/App.jsx` — passes ui.day to useSubjects;
+  passes dayData={dayData} to PlannerLayout
 
-**Deploy config**
-- netlify.toml — added /api/* and /planner/* redirects before /* catch-all
-- packages/dashboard/vite.config.js — added build.outDir: '../../dist'
+Batch 3 — component:
+- `packages/planner/src/components/PlannerLayout.jsx` — weekData → dayData
+  throughout; handleToggleDone/handleToggleFlag use dayData[subject] ??
+  instead of weekData[subject]?.[day]; handleApplySchedule no longer calls
+  addSubject (updateCell creates the cell); SubjectCard and EditSheet data
+  props use dayData[subject] directly
 
 ---
 
 ## What is currently incomplete or untested
-- **Swap Days feature** — not built; confirm with Rob before starting
-- **Not smoke-tested in browser** — no dev server run this session; golden
-  path (sign in → select day → add subject → edit lesson → done/flag →
-  PDF import) should be walked through before building Phase 2
+- **Not smoke-tested in browser** — the new data model has not been walked
+  through on a live device. Before building any new features, the golden
+  path should be verified:
+  1. Sign in
+  2. Select a day
+  3. Add a subject — confirm it appears only on that day
+  4. Switch days — confirm the subject is NOT on other days
+  5. Add the same subject on another day — confirm it appears on both
+  6. Edit a cell, toggle done/flag
+  7. PDF import — confirm lessons land on the correct days
+  8. Remove a subject on one day — confirm other days unaffected
+- **Orphaned Firestore data** — old documents at the old paths are still
+  in Firestore but are never read or written. Can be manually deleted from
+  the Firebase console (no migration script needed). See CLAUDE.md for paths.
 - **reward-tracker** — still needs migrating into monorepo structure
 
 ---
 
 ## What the next session should start with
 1. Read CLAUDE.md + HANDOFF.md (required)
-2. Confirm with Rob: smoke-test the live planner first, or go straight to next feature?
-3. If smoke-testing: walk the golden path on the deployed /planner URL and
-   report any bugs before building anything new
-4. Confirm with Rob: Swap Days (Phase 1 step 9) or reward-tracker migration?
-5. Do not start either until Rob explicitly says which
+2. Confirm with Rob: smoke-test the live planner first, or go straight to next task?
+3. If smoke-testing: walk the golden path (see checklist above) on the deployed
+   /planner URL and report any issues before building anything new
+4. If issues found: fix them before moving on
+5. Only after smoke-test passes: confirm with Rob what comes next
 
 ---
 
 ## Decisions made this session (already added to CLAUDE.md)
-- Planner header is 2 rows, 80px total (48px top + 32px student pills)
-- usePlannerUI.js added to keep App.jsx permanently thin (~47 lines)
-- PlannerLayout.jsx is the rendering layer — App.jsx does wiring only
-- planner firebase/ has NO init.js or auth.js — use @homeschool/shared directly
-- DayStrip sticky at top: 80px; each sheet has its own overlay class
-- netlify.toml redirect order is load-bearing — /api/* and /planner/* must
-  precede /* or the dashboard catch-all intercepts them
+- Subjects are now per-day and implicit — no global subject list document
+- New Firestore path has dayIndex BEFORE subject to enable simple collection query
+- useSubjects hook signature changed to useSubjects(uid, weekId, student, day)
+- updateCell keeps (subject, dayIndex, data) signature — PDF import needs it
+- addSubject in hook always writes to current day (from hook closure)
+- Old Firestore paths are orphaned — no migration, manual Firebase console cleanup
