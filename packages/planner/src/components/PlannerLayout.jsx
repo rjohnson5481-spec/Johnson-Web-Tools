@@ -12,6 +12,7 @@ export default function PlannerLayout({
   user,
   weekDates, prevWeek, nextWeek,
   subjects, dayData, subjectsLoading, updateCell, addSubject,
+  importCell, jumpToWeek,
   pdfImport,
   student, setStudent,
   day, setDay,
@@ -29,15 +30,19 @@ export default function PlannerLayout({
     updateCell(subject, day, { ...cell, flag: !cell.flag });
   }
 
-  // Writes parsed PDF schedule data into Firestore for the current week.
+  // Writes parsed PDF schedule data to the week/student named in the PDF.
   // parsedData shape: { student, weekId, days: [{ dayIndex, lessons: [{ subject, lesson }] }] }
-  // updateCell creates the cell document, so no addSubject call is needed.
+  // Uses importCell (not updateCell) so data lands in parsedData.weekId/student,
+  // not the currently-viewed week/student. Then navigates there automatically.
   function handleApplySchedule(parsedData) {
     (parsedData.days ?? []).forEach(({ dayIndex, lessons }) => {
       (lessons ?? []).forEach(({ subject, lesson }) => {
-        updateCell(subject, dayIndex, { lesson, note: '', done: false, flag: false });
+        importCell(parsedData.weekId, parsedData.student, subject, dayIndex,
+          { lesson, note: '', done: false, flag: false });
       });
     });
+    jumpToWeek(parsedData.weekId);
+    setStudent(parsedData.student);
     setShowUpload(false);
     pdfImport.reset();
   }

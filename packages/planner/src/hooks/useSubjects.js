@@ -46,6 +46,17 @@ export function useSubjects(uid, weekId, student, day) {
     return dbUpdateCell(uid, weekId, student, subject, dayIndex, cleaned);
   }
 
+  // Writes to an explicit weekId+student — used by PDF import so the data
+  // lands in the correct week/student regardless of the current view.
+  function importCell(importWeekId, importStudent, subject, dayIndex, data) {
+    const cleaned = {
+      ...data,
+      lesson: (data.lesson ?? '').trim(),
+      note:   (data.note   ?? '').trim(),
+    };
+    return dbUpdateCell(uid, importWeekId, importStudent, subject, dayIndex, cleaned);
+  }
+
   const subjects = Object.keys(dayData);
-  return { subjects, dayData, loading, updateCell, addSubject, removeSubject };
+  return { subjects, dayData, loading, updateCell, addSubject, removeSubject, importCell };
 }

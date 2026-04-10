@@ -22,5 +22,6 @@ export function useWeek() {
     weekDates: getWeekDates(weekId),
     prevWeek: () => shiftWeek(-7),
     nextWeek: () => shiftWeek(7),
+    jumpToWeek: setWeekId,
   };
 }

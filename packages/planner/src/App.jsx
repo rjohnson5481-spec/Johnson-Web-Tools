@@ -12,11 +12,11 @@ import PlannerLayout     from './components/PlannerLayout.jsx';
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
-  const { weekId, weekDates, prevWeek, nextWeek } = useWeek();
+  const { weekId, weekDates, prevWeek, nextWeek, jumpToWeek } = useWeek();
   const ui = usePlannerUI();
   const {
     subjects, dayData, loading: subjectsLoading,
-    updateCell, addSubject, removeSubject,
+    updateCell, addSubject, removeSubject, importCell,
   } = useSubjects(user?.uid, weekId, ui.student, ui.day);
   const pdfImport = usePdfImport();
 
@@ -40,6 +40,8 @@ export default function App() {
       updateCell={updateCell}
       addSubject={addSubject}
       removeSubject={removeSubject}
+      importCell={importCell}
+      jumpToWeek={jumpToWeek}
       pdfImport={pdfImport}
       {...ui}
     />
