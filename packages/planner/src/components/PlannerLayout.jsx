@@ -63,16 +63,19 @@ export default function PlannerLayout({
       await wipeWeek(parsedData.weekId, parsedData.student);
       pdfImport.addLog('Wipe complete.');
     }
+    let cellCount = 0;
     (parsedData.days ?? []).forEach(({ dayIndex, lessons }) => {
       (lessons ?? []).forEach(({ subject, lesson }) => {
-        pdfImport.addLog(`→ ${DAY_SHORT[dayIndex]}: ${subject} · ${lesson}`);
+        pdfImport.addLog(`Writing: ${parsedData.student} › ${DAY_SHORT[dayIndex]} › ${subject} › ${lesson}`);
         importCell(parsedData.weekId, parsedData.student, subject, dayIndex,
           { lesson, note: '', done: false, flag: false });
+        cellCount++;
       });
     });
+    pdfImport.addLog(`Apply complete: Applied ${cellCount} cells`);
     jumpToWeek(parsedData.weekId);
     setStudent(parsedData.student);
-    pdfImport.addLog(`Navigation: jumped to ${parsedData.weekId}, student=${parsedData.student}`);
+    pdfImport.addLog(`Navigation: jumping to week of ${parsedData.weekId}, student=${parsedData.student}`);
   }
 
   const isSickDay = sickDayIndices?.has(day);
