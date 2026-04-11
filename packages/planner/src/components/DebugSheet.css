@@ -11,7 +11,7 @@
 .debug-sheet {
   width: 100%;
   max-width: 480px;
-  background: var(--bg-surface);
+  background: var(--bg-base);
   border-radius: 20px 20px 0 0;
   padding-bottom: env(safe-area-inset-bottom, 16px);
   animation: debug-sheet-up 0.2s ease;
@@ -26,27 +26,28 @@
 }
 
 .debug-sheet-handle {
-  width: 36px;
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
+  width: 40px;
+  height: 5px;
+  background: #d4cfc8;
+  border-radius: 3px;
   margin: 10px auto 0;
   flex-shrink: 0;
 }
 
+/* ── Header — ink background ── */
 .debug-sheet-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px 10px;
-  border-bottom: 1px solid var(--border-light);
+  padding: 12px 16px 14px;
+  background: var(--ink);
   flex-shrink: 0;
 }
 
 .debug-sheet-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, .65);
 }
 
 .debug-sheet-header-actions {
@@ -56,26 +57,42 @@
 }
 
 .debug-sheet-copy {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, .10);
+  border: 1px solid rgba(255, 255, 255, .18);
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, .7);
   cursor: pointer;
   font-family: inherit;
+  transition: background 0.15s, color 0.15s;
 }
 
-.debug-sheet-copy:hover { border-color: var(--forest); color: var(--forest); }
+.debug-sheet-copy:hover {
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+}
 
 .debug-sheet-close {
-  background: none;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, .12);
   border: none;
-  font-size: 16px;
-  color: var(--text-muted);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, .8);
+  font-size: 13px;
   cursor: pointer;
-  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s;
+}
+
+.debug-sheet-close:hover {
+  background: rgba(255, 255, 255, .22);
+  color: #fff;
 }
 
 .debug-sheet-body {

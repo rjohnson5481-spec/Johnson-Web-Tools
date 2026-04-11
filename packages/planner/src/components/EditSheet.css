@@ -13,7 +13,7 @@
 .edit-sheet {
   width: 100%;
   max-width: 480px;
-  background: var(--bg-surface);
+  background: var(--bg-base);
   border-radius: 20px 20px 0 0;
   padding-bottom: env(safe-area-inset-bottom, 16px);
   animation: edit-sheet-up 0.25s ease;
@@ -25,41 +25,48 @@
 }
 
 .edit-sheet-handle {
-  width: 36px;
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
+  width: 40px;
+  height: 5px;
+  background: #d4cfc8;
+  border-radius: 3px;
   margin: 10px auto 0;
 }
 
-/* ── Header ── */
+/* ── Header — ink background ── */
 .edit-sheet-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px 10px;
-  border-bottom: 1px solid var(--border-light);
+  padding: 12px 16px 14px;
+  background: var(--ink);
 }
 
 .edit-sheet-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-primary);
+  color: #fff;
 }
 
 .edit-sheet-close {
-  background: none;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, .12);
   border: none;
-  font-size: 18px;
-  color: var(--text-muted);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, .8);
+  font-size: 13px;
   cursor: pointer;
-  padding: 4px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s;
 }
 
-.edit-sheet-close:hover { color: var(--text-primary); }
+.edit-sheet-close:hover {
+  background: rgba(255, 255, 255, .22);
+  color: #fff;
+}
 
 /* ── Body ── */
 .edit-sheet-body {
@@ -72,7 +79,7 @@
 .edit-sheet-label {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -80,8 +87,8 @@
 .edit-sheet-textarea {
   width: 100%;
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
   padding: 10px 12px;
   font-size: 14px;
   font-family: inherit;
@@ -93,7 +100,7 @@
 
 .edit-sheet-textarea:focus {
   outline: none;
-  border-color: var(--forest);
+  border-color: var(--gold);
 }
 
 /* ── Done / Flag toggles ── */
@@ -106,7 +113,7 @@
 .edit-sheet-toggle {
   flex: 1;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: 10px;
   padding: 10px;
   font-size: 13px;
@@ -118,16 +125,16 @@
 }
 
 .edit-sheet-toggle--done {
-  background: var(--forest-pale);
-  border-color: var(--forest);
-  color: var(--forest);
+  background: var(--gold-pale);
+  border-color: var(--gold);
+  color: #8a6a20;
   font-weight: 600;
 }
 
 .edit-sheet-toggle--flag {
-  background: rgba(138, 106, 32, 0.1);
-  border-color: var(--gold);
-  color: var(--gold);
+  background: var(--red-lt);
+  border-color: var(--red);
+  color: var(--red);
   font-weight: 600;
 }
 
@@ -136,13 +143,14 @@
   display: flex;
   gap: 10px;
   padding: 12px 20px 16px;
-  border-top: 1px solid var(--border-light);
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
 }
 
 .edit-sheet-cancel {
   flex: 1;
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: 10px;
   padding: 12px;
   font-size: 14px;
@@ -153,20 +161,25 @@
   transition: border-color 0.15s, color 0.15s;
 }
 
-.edit-sheet-cancel:hover { border-color: var(--forest); color: var(--forest); }
+.edit-sheet-cancel:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
 
 .edit-sheet-save {
   flex: 2;
-  background: var(--forest);
+  background: var(--ink);
   border: none;
   border-radius: 10px;
   padding: 12px;
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
+  color: var(--gold-light);
   cursor: pointer;
   font-family: inherit;
   transition: background 0.15s;
 }
 
-.edit-sheet-save:hover { background: var(--forest-light); }
+.edit-sheet-save:hover {
+  background: var(--ink-light);
+}
