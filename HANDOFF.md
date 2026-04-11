@@ -1,120 +1,88 @@
-# HANDOFF — end of Visual Polish Session 2 (2026-04-11)
+# HANDOFF — end of Undo Sick Day session (2026-04-11)
 
 ## What was completed this session
-Six styling commits, all pushed to main. Visual polish is now complete.
+
+One feature commit pushed to main (`618f2a5`).
 
 ---
 
-### Commit 1 — SubjectCard polish (`95a9b21`)
-- `border-radius: 13px`, box-shadow two-layer ink-tinted
-- Done state: `#fdfcf8` background (warm cream), strikethrough lesson
-- Flag state: `#fdf8f7` background, red border
-- Done badge: `var(--gold-pale)` background, `#8a6a20` text
-- Flag badge: `var(--red-lt)` background, red border `#f5cfc6`, red text
-- Note dot: `var(--gold)` when filled (was forest green)
-- Subject name: `var(--ink)` (was `var(--text-secondary)`)
-- Lesson: 14px/1.55 line-height (was 15px/1.4)
-- Placeholder: 12px, weight 300
+### Feature: Undo Sick Day
 
-Files: `SubjectCard.css`
+When the current day has a sick day marker, the "Sick Day" button in the
+bottom action bar now reads "↩ Undo Sick Day" instead. Tapping it opens a
+confirmation sheet. Confirming reverses the cascade and removes the red dot.
 
----
+**Files changed:**
 
-### Commit 2 — Bottom sheet styles (`9c52b82`)
-Applied uniform treatment across all 5 sheets:
-- Handle: 40px × 5px, background `#d4cfc8`
-- Header: `background: var(--ink)`, title `color: #fff, 15px/600`
-- Close button: 28×28px pill (`rgba(255,255,255,.12)`, `border-radius: 50%`)
-- Sheet body: `background: var(--bg-base)` (was var(--bg-surface))
-- Footer: `background: var(--bg-card)`, `border-top: 1px solid var(--border)`
-- Inputs focus: `border-color: var(--gold)`
-- Done toggle active: `var(--gold-pale)`, gold border, `#8a6a20` text
-- Flag toggle active: `var(--red-lt)`, red border, red text
-- Save/confirm/import buttons: `background: var(--ink), color: var(--gold-light)`
-- Cancel hover: gold border/color
-- All `--forest` references removed
+`packages/planner/src/firebase/planner.js`
+- Added `readSickDay(uid, dateString)` — reads the sick day marker doc
+- Added `deleteSickDay(uid, dateString)` — deletes the sick day marker doc
 
-Files: `EditSheet.css`, `UploadSheet.css`, `AddSubjectSheet.css`, `SickDaySheet.css`, `DebugSheet.css`
+`packages/planner/src/hooks/useSubjects.js`
+- Added `performUndoSickDay()`:
+  1. Reads `subjectsShifted` from the sick day marker for the current day
+  2. For each subject, builds unbroken chain from D+1 forward
+  3. Writes each cell one day back (D+1→D, D+2→D+1, …)
+  4. Deletes the last source cell in the chain
+  5. Deletes the sick day Firestore document
+- Returned from hook alongside `performSickDay`
 
----
+`packages/planner/src/hooks/usePlannerUI.js`
+- Added `showUndoSickDay` / `setShowUndoSickDay` state
 
-### Commit 3 — Action bar + empty state (`5c0ef84`)
-**Action bar** (fixed bottom):
-- `background: var(--bg-card)`, `border-top`, `box-shadow: 0 -2px 12px`
-- Sick Day: `var(--bg-surface)` bg, muted text — shown only when subjects exist
-- Clear Week: `var(--red-lt)` bg, red text — shown only when subjects exist
-- Import: `var(--ink)` bg, `var(--gold-light)` text — always visible
+`packages/planner/src/App.jsx`
+- Destructured `performUndoSickDay` from `useSubjects`, passed to PlannerLayout
 
-**Empty state** (when day has zero subjects):
-- 📋 icon, "Nothing planned yet" title, "Import a PDF..." subtitle
-- Import PDF button (ink/gold) + Add Subject button (ghost)
-- Dashed "+ Add Subject" button still rendered below for consistency
+`packages/planner/src/components/PlannerLayout.jsx`
+- Action bar button is conditional: shows "↩ Undo Sick Day" when `isSickDay`,
+  "Sick Day" otherwise
+- Added `handleUndoSickDay()` handler
+- Inline confirmation sheet: ink header, warning message, Cancel + Undo buttons
 
-Files: `PlannerLayout.jsx`, `PlannerLayout.css`
+`packages/planner/src/components/PlannerLayout.css`
+- Added `.planner-action-btn--undo` (red-lt bg, red text — mirrors Clear Week style)
+- Added full `.undo-sick-*` styles for the confirmation sheet
+  (overlay, slide-up panel, handle, ink header, body, footer, buttons)
 
 ---
 
-### Commit 4 — Dashboard polish (`c104dff`)
-- `ToolCard`: `border-radius: 13px`, gold icon box, ink/gold "Coming Soon" badge
-- `Dashboard`: `background: var(--bg-base)`, padding `20px 16px 40px`,
-  "TOOLS" section label above card grid
-- `SignIn`: logo replaced with real `logo.png`, school name two-line stack
-  matching header (IRON & **LIGHT** in gold), tagline, ink/gold sign-in button
+## Algorithm notes
 
-Files: `ToolCard.css`, `Dashboard.css`, `Dashboard.jsx`, `SignIn.jsx`, `SignIn.css`
+The undo is within-week only — the mirror of the forward cascade.
 
----
+Forward (sick day): reads chain from D through D+4, writes in reverse to D+1…,
+drops Friday overflow, deletes sick day cell, writes sick day marker.
 
-### Commit 5 — Month picker polish (`5a5c949`)
-- Ink header: `background: var(--ink)`, white title, close button (pill)
-- Nav buttons: `rgba(255,255,255,.08)` bg, visible on ink
-- Selected week band: `var(--gold-pale)`, gold text
-- Today ring: `2px solid var(--gold)` outline
-- Day hover: `var(--bg-surface)` (was var(--bg-card-hover))
-- Close button added to JSX
+Reverse (undo): reads `subjectsShifted` from the marker, builds chain from D+1
+through week (stops at first gap per subject), writes each cell to dayIndex-1,
+deletes the last source cell, deletes the sick day marker.
 
-Files: `MonthSheet.jsx`, `MonthSheet.css`
-
----
-
-### Commit 6 — Docs + remove backward-compat aliases (this commit)
-- Removed `--forest`, `--forest-light`, `--forest-pale` aliases from `tokens.css`
-  (all components now use `var(--gold)` etc. directly)
-- `CLAUDE.md`: updated phase tracking, removed alias note, updated token section
-- `HANDOFF.md`: this file
+All chain data is loaded into memory before any writes, so write order doesn't
+matter for correctness.
 
 ---
 
 ## What is currently incomplete
-- **Not smoke-tested in browser** — verify after the next deploy:
-  1. SubjectCards: done/flag visual states, gold note dot, done badge
-  2. EditSheet: ink header, gold textarea focus, gold/red toggles, ink save button
-  3. Action bar: appears at bottom, Import always visible, Sick Day/Clear Week only when subjects
-  4. Empty state: shows 📋 + centered copy + two CTA buttons when no subjects for a day
-  5. Dashboard: "TOOLS" label, tool card hover gold, sign-in screen with real logo
-  6. Month picker: ink header, close button, gold week band, gold today ring
-  7. Dark mode: all backgrounds/borders use new token values throughout
+
+- **Not smoke-tested in browser** — verify after deploy:
+  1. On a day with a sick day marker: action bar shows "↩ Undo Sick Day"
+  2. On a normal day: action bar shows "Sick Day"
+  3. Tapping "↩ Undo Sick Day" opens the confirmation sheet
+  4. Confirming shifts lessons back, removes red dot from DayStrip
+  5. Cancel closes the sheet without making changes
 
 - **reward-tracker** — still needs migrating into monorepo structure
 
 ---
 
 ## What the next session should start with
+
 1. Read CLAUDE.md + HANDOFF.md (required)
-2. Smoke-test Session 2 changes in the browser
-3. Confirm with Rob: Phase 2 features, or other work?
+2. Smoke-test Undo Sick Day in the browser
+3. Confirm with Rob: Phase 2 features, reward-tracker migration, or other work?
 
 ### Phase 2 options (do not build without Rob's go-ahead)
 - Auto-roll flagged lessons to next week
 - Week history browser
 - Copy last week as template
 - Export week as PDF
-
----
-
-## Decisions made this session (already in CLAUDE.md)
-- Action bar is fixed at viewport bottom — Sick Day + Clear Week conditional on subjects,
-  Import always visible
-- Empty state: both the centered block AND the dashed "Add Subject" button are shown
-- `--forest` backward-compat aliases removed from tokens.css (all components migrated)
-- Month picker now has an explicit close button in the ink header
