@@ -3,12 +3,13 @@ import './SubjectCard.css';
 // Props: subject (string), data ({ lesson, note, done, flag } | undefined),
 //        onEdit, onToggleDone, onToggleFlag
 export default function SubjectCard({ subject, data, onEdit, onToggleDone, onToggleFlag }) {
-  const done = data?.done ?? false;
-  const flag = data?.flag ?? false;
+  const done    = data?.done ?? false;
+  const flag    = data?.flag ?? false;
+  const hasNote = Boolean(data?.note);
 
   return (
     <div
-      className={`subject-card${done ? ' subject-card--done' : ''}`}
+      className={`subject-card${done ? ' subject-card--done' : ''}${flag ? ' subject-card--flag' : ''}`}
       onClick={onEdit}
       role="button"
       tabIndex={0}
@@ -16,22 +17,24 @@ export default function SubjectCard({ subject, data, onEdit, onToggleDone, onTog
     >
       <div className="subject-card-top">
         <span className="subject-card-name">{subject}</span>
-        <button
-          className={`subject-card-flag-btn${flag ? ' subject-card-flag-btn--active' : ''}`}
-          onClick={e => { e.stopPropagation(); onToggleFlag(); }}
-          aria-label={flag ? 'Remove flag' : 'Add flag'}
-        >
-          ⚑
-        </button>
+        <div className="subject-card-indicators">
+          <span
+            className={`subject-card-note-dot${hasNote ? ' subject-card-note-dot--active' : ''}`}
+            aria-label={hasNote ? 'Has note' : 'No note'}
+          />
+          <button
+            className={`subject-card-flag-btn${flag ? ' subject-card-flag-btn--active' : ''}`}
+            onClick={e => { e.stopPropagation(); onToggleFlag(); }}
+            aria-label={flag ? 'Remove flag' : 'Add flag'}
+          >
+            ⚑
+          </button>
+        </div>
       </div>
 
       <p className="subject-card-lesson">
-        {data?.lesson || <span className="subject-card-empty">No lesson assigned</span>}
+        {data?.lesson || <span className="subject-card-empty">Tap to add lesson details</span>}
       </p>
-
-      {data?.note && (
-        <p className="subject-card-note">{data.note}</p>
-      )}
 
       <div className="subject-card-footer">
         <button

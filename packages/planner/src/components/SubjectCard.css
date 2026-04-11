@@ -5,7 +5,7 @@
   padding: 16px;
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s, background 0.2s;
 }
 
 .subject-card:hover {
@@ -23,7 +23,13 @@
   color: var(--text-muted);
 }
 
-/* ── Top row: subject label + flag ── */
+/* Flagged card gets a red tint to make it visually obvious */
+.subject-card--flag {
+  border-color: var(--red);
+  background: rgba(192, 57, 43, 0.06);
+}
+
+/* ── Top row: subject label + indicators + flag ── */
 .subject-card-top {
   display: flex;
   align-items: center;
@@ -37,6 +43,29 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-secondary);
+}
+
+/* Wrapper for note dot + flag button */
+.subject-card-indicators {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 8×8 note indicator dot — always visible */
+.subject-card-note-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.subject-card-note-dot--active {
+  background: var(--forest);
+  border-color: var(--forest);
 }
 
 .subject-card-flag-btn {
@@ -56,7 +85,7 @@
   color: var(--text-secondary);
 }
 
-/* ── Lesson + note ── */
+/* ── Lesson ── */
 .subject-card-lesson {
   font-size: 15px;
   color: var(--text-primary);
@@ -70,18 +99,6 @@
 .subject-card-empty {
   color: var(--text-muted);
   font-style: italic;
-}
-
-.subject-card-note {
-  font-size: 13px;
-  font-style: italic;
-  color: var(--text-muted);
-  line-height: 1.35;
-  margin-top: 5px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
 }
 
 /* ── Footer: done toggle ── */

@@ -29,7 +29,7 @@ export default function Header({
         </nav>
 
         <div className="header-actions">
-          <button className="header-btn" onClick={onCalendar} aria-label="Open calendar">Cal</button>
+          <button className="header-btn" onClick={onCalendar} aria-label="Open calendar">📅</button>
           <button className="header-btn" onClick={onUpload}>Import</button>
           <button className="header-btn" onClick={() => signOut()}>Sign out</button>
         </div>
