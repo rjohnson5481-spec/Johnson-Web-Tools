@@ -11,9 +11,22 @@
 }
 
 .planner-main {
-  padding: 16px 20px 80px; /* bottom clears floating elements */
+  padding: 16px 20px 90px; /* 90px clears the fixed action bar */
 }
 
+/* ── Sick day banner ── */
+.planner-sick-banner {
+  margin: 0 14px 8px;
+  padding: 6px 14px;
+  background: var(--red-lt);
+  color: var(--red);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ── Subject card list ── */
 .planner-subjects {
   display: flex;
   flex-direction: column;
@@ -21,6 +34,73 @@
   margin-bottom: 16px;
 }
 
+/* ── Empty state ── */
+.planner-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: 48px;
+  margin-bottom: 24px;
+}
+
+.planner-empty-icon {
+  font-size: 2.2rem;
+  margin-bottom: 12px;
+}
+
+.planner-empty-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.planner-empty-subtitle {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--text-muted);
+  margin-top: 6px;
+  margin-bottom: 20px;
+}
+
+.planner-empty-import-btn {
+  width: 100%;
+  background: var(--ink);
+  color: var(--gold-light);
+  border: none;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background 0.15s;
+}
+
+.planner-empty-import-btn:hover { background: var(--ink-light); }
+
+.planner-empty-add-btn {
+  width: 100%;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.planner-empty-add-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Dashed add subject button ── */
 .planner-add-btn {
   width: 100%;
   background: transparent;
@@ -36,24 +116,54 @@
 }
 
 .planner-add-btn:hover {
-  border-color: var(--forest);
-  color: var(--forest);
+  border-color: var(--gold);
+  color: var(--gold);
 }
 
-.planner-clear-btn {
-  width: 100%;
-  background: transparent;
-  border: none;
-  padding: 12px;
-  color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 500;
+/* ── Fixed bottom action bar ── */
+.planner-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 12px rgba(34, 37, 46, .07);
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px env(safe-area-inset-bottom, 10px);
+  z-index: 40;
+}
+
+.planner-action-btn {
+  flex: 1;
+  border-radius: 10px;
+  padding: 11px;
+  font-size: 12px;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: color 0.2s;
-  margin-top: 4px;
+  transition: opacity 0.15s, background 0.15s;
 }
 
-.planner-clear-btn:hover {
-  color: var(--red);
+.planner-action-btn--sick {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
+
+.planner-action-btn--clear {
+  background: var(--red-lt);
+  color: var(--red);
+  border: 1px solid #f5cfc6;
+}
+
+.planner-action-btn--import {
+  background: var(--ink);
+  color: var(--gold-light);
+  border: none;
+}
+
+.planner-action-btn--import:hover { background: var(--ink-light); }

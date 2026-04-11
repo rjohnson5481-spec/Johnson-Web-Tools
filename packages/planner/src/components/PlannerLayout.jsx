@@ -79,6 +79,7 @@ export default function PlannerLayout({
   }
 
   const isSickDay = sickDayIndices?.has(day);
+  const hasSubjects = subjects.length > 0;
 
   return (
     <div className="planner">
@@ -106,6 +107,29 @@ export default function PlannerLayout({
         )}
 
         <main className="planner-main">
+          {/* Empty state — shown when day has no subjects */}
+          {!subjectsLoading && !hasSubjects && (
+            <div className="planner-empty">
+              <div className="planner-empty-icon">📋</div>
+              <p className="planner-empty-title">Nothing planned yet</p>
+              <p className="planner-empty-subtitle">
+                Import a PDF or add a subject to get started
+              </p>
+              <button
+                className="planner-empty-import-btn"
+                onClick={() => setShowUpload(true)}
+              >
+                📄 Import PDF
+              </button>
+              <button
+                className="planner-empty-add-btn"
+                onClick={() => setShowAddSubject(true)}
+              >
+                + Add Subject
+              </button>
+            </div>
+          )}
+
           <div className="planner-subjects">
             {subjects.map(subject => (
               <SubjectCard
@@ -118,22 +142,39 @@ export default function PlannerLayout({
               />
             ))}
           </div>
+
           {!subjectsLoading && (
             <button className="planner-add-btn" onClick={() => setShowAddSubject(true)}>
               + Add Subject
             </button>
           )}
-          {!subjectsLoading && subjects.length > 0 && (
-            <>
-              <button className="planner-sick-btn" onClick={() => setShowSickDay(true)}>
-                Sick Day
-              </button>
-              <button className="planner-clear-btn" onClick={handleDeleteWeek}>
-                Clear Week
-              </button>
-            </>
-          )}
         </main>
+      </div>
+
+      {/* Fixed bottom action bar */}
+      <div className="planner-action-bar">
+        {hasSubjects && !subjectsLoading && (
+          <>
+            <button
+              className="planner-action-btn planner-action-btn--sick"
+              onClick={() => setShowSickDay(true)}
+            >
+              Sick Day
+            </button>
+            <button
+              className="planner-action-btn planner-action-btn--clear"
+              onClick={handleDeleteWeek}
+            >
+              Clear Week
+            </button>
+          </>
+        )}
+        <button
+          className="planner-action-btn planner-action-btn--import"
+          onClick={() => setShowUpload(true)}
+        >
+          Import
+        </button>
       </div>
 
       {editTarget && (
