@@ -60,7 +60,8 @@ export default function PlannerLayout({
   }
 
   // Writes parsed PDF schedule data to the week/student named in the PDF.
-  // wipe: if true, deletes all existing cells for parsedData.weekId/student first.
+  // wipe=true: deletes all existing cells first, then writes all imported cells.
+  // wipe=false: merge only — imported cells are skipped if they already exist.
   // Does NOT auto-close — UploadSheet shows a success state; user closes manually.
   async function handleApplySchedule(parsedData, wipe) {
     pdfImport.addLog(`Applying — student: ${parsedData.student}, week: ${parsedData.weekId}${wipe ? ', wipe: true' : ''}`);
@@ -69,16 +70,17 @@ export default function PlannerLayout({
       await wipeWeek(parsedData.weekId, parsedData.student);
       pdfImport.addLog('Wipe complete.');
     }
-    let cellCount = 0;
-    (parsedData.days ?? []).forEach(({ dayIndex, lessons }) => {
-      (lessons ?? []).forEach(({ subject, lesson }) => {
-        pdfImport.addLog(`Writing: ${parsedData.student} › ${DAY_SHORT[dayIndex]} › ${subject} › ${lesson}`);
-        importCell(parsedData.weekId, parsedData.student, subject, dayIndex,
-          { lesson, note: '', done: false, flag: false });
-        cellCount++;
-      });
-    });
-    pdfImport.addLog(`Apply complete: Applied ${cellCount} cells`);
+    const cells = (parsedData.days ?? []).flatMap(({ dayIndex, lessons }) =>
+      (lessons ?? []).map(({ subject, lesson }) => ({ dayIndex, subject, lesson }))
+    );
+    cells.forEach(({ dayIndex, subject, lesson }) =>
+      pdfImport.addLog(`Writing: ${parsedData.student} › ${DAY_SHORT[dayIndex]} › ${subject} › ${lesson}`)
+    );
+    await Promise.all(cells.map(({ dayIndex, subject, lesson }) =>
+      importCell(parsedData.weekId, parsedData.student, subject, dayIndex,
+        { lesson, note: '', done: false, flag: false }, wipe)
+    ));
+    pdfImport.addLog(`Apply complete: Applied ${cells.length} cells`);
     jumpToWeek(parsedData.weekId);
     setStudent(parsedData.student);
     pdfImport.addLog(`Navigation: jumping to week of ${parsedData.weekId}, student=${parsedData.student}`);

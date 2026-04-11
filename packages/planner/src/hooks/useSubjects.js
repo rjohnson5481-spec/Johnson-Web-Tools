@@ -67,9 +67,14 @@ export function useSubjects(uid, weekId, student, day) {
     return dbDeleteWeek(uid, weekId, student);
   }
 
-  // Writes to an explicit weekId+student — used by PDF import so the data
-  // lands in the correct week/student regardless of the current view.
-  function importCell(importWeekId, importStudent, subject, dayIndex, data) {
+  // Writes to an explicit weekId+student — used by PDF import.
+  // overwrite=true: always write (wipe mode — used after deleteWeek).
+  // overwrite=false: skip cells that already exist (merge mode — default).
+  async function importCell(importWeekId, importStudent, subject, dayIndex, data, overwrite) {
+    if (!overwrite) {
+      const existing = await dbReadCell(uid, importWeekId, importStudent, dayIndex, subject);
+      if (existing) return;
+    }
     const cleaned = {
       ...data,
       lesson: (data.lesson ?? '').trim(),
