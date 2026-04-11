@@ -81,37 +81,31 @@ export function useSubjects(uid, weekId, student, day) {
     return dbDeleteWeek(uid, targetWeekId, targetStudent);
   }
 
-  // Returns {dayIndex, weekId} of the school day after the given one.
-  // Friday (4) bridges to Monday (0) of the following week.
-  function nextSchoolDay(dayIndex, wkId) {
-    if (dayIndex < 4) return { dayIndex: dayIndex + 1, weekId: wkId };
-    const [y, m, d] = wkId.split('-').map(Number);
-    return { dayIndex: 0, weekId: toWeekId(new Date(y, m - 1, d + 7)) };
-  }
-
-  // Cascades selected subjects forward by one school day, chaining collisions.
-  // Then writes a sick day marker for today's date.
+  // Cascades selected subjects forward within the current week only.
+  // Each subject's chain builds through consecutive scheduled days (Mon–Fri).
+  // If the chain reaches Friday, the Friday content is displaced (not written
+  // to the following week) — it is simply dropped. Then writes a sick day marker.
   async function performSickDay(selectedSubjects) {
     await Promise.all(selectedSubjects.map(async subject => {
       const startData = dayData[subject];
       if (!startData) return;
 
-      // Build the unbroken chain of this subject from today forward.
-      const chain = [{ dayIndex: day, weekId, data: startData }];
-      let cur = nextSchoolDay(day, weekId);
-      while (chain.length < 10) {
-        const data = await dbReadCell(uid, cur.weekId, student, cur.dayIndex, subject);
+      // Build unbroken chain from sick day through consecutive days in this week.
+      const chain = [{ dayIndex: day, data: startData }];
+      for (let d = day + 1; d <= 4; d++) {
+        const data = await dbReadCell(uid, weekId, student, d, subject);
         if (!data) break;
-        chain.push({ ...cur, data });
-        cur = nextSchoolDay(cur.dayIndex, cur.weekId);
+        chain.push({ dayIndex: d, data });
       }
 
-      // Write each link's data to the next position (reverse order is safe).
+      // Write in reverse (safe — no read-after-write collisions).
+      // Links whose dayIndex+1 > 4 (i.e., were on Friday) are not written —
+      // their content is intentionally dropped at the end of the week.
       for (let i = chain.length - 1; i >= 0; i--) {
-        const target = i < chain.length - 1
-          ? chain[i + 1]
-          : nextSchoolDay(chain[i].dayIndex, chain[i].weekId);
-        await dbUpdateCell(uid, target.weekId, student, subject, target.dayIndex, chain[i].data);
+        const targetDay = chain[i].dayIndex + 1;
+        if (targetDay <= 4) {
+          await dbUpdateCell(uid, weekId, student, subject, targetDay, chain[i].data);
+        }
       }
 
       // Delete the original sick-day cell.

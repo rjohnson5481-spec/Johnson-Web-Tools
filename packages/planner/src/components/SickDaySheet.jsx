@@ -5,9 +5,10 @@ import './SickDaySheet.css';
 //   subjects   — string[] — subjects on the current day
 //   dayData    — { [subject]: { lesson, note, done, flag } }
 //   dayName    — string — e.g. "Monday"
+//   day        — number (0=Mon … 4=Fri) — used to detect Friday overflow
 //   onConfirm(selectedSubjects) — called with array of subjects to shift
 //   onClose
-export default function SickDaySheet({ subjects, dayData, dayName, onConfirm, onClose }) {
+export default function SickDaySheet({ subjects, dayData, dayName, day, onConfirm, onClose }) {
   const [selected, setSelected] = useState(new Set(subjects));
 
   function toggle(subject) {
@@ -17,6 +18,10 @@ export default function SickDaySheet({ subjects, dayData, dayName, onConfirm, on
       return next;
     });
   }
+
+  // If the sick day is before Friday, the cascade could reach Friday and drop
+  // any Friday content for selected subjects that are scheduled continuously.
+  const showFridayWarning = day < 4 && selected.size > 0;
 
   return (
     <div className="sick-day-overlay" onClick={onClose}>
@@ -49,6 +54,12 @@ export default function SickDaySheet({ subjects, dayData, dayName, onConfirm, on
             );
           })}
         </div>
+
+        {showFridayWarning && (
+          <p className="sick-day-friday-warning">
+            Friday lessons for selected subjects will be removed.
+          </p>
+        )}
 
         <div className="sick-day-footer">
           <button className="sick-day-cancel" onClick={onClose}>Cancel</button>

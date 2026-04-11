@@ -174,6 +174,7 @@ export default function PlannerLayout({
           subjects={subjects}
           dayData={dayData}
           dayName={DAY_NAMES[day]}
+          day={day}
           onConfirm={handleSickDayConfirm}
           onClose={() => setShowSickDay(false)}
         />

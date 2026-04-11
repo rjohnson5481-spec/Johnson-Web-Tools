@@ -130,6 +130,12 @@
   max-width: 120px;
 }
 
+.sick-day-friday-warning {
+  font-size: 12px;
+  color: var(--red);
+  padding: 6px 20px 0;
+}
+
 .sick-day-footer {
   display: flex;
   gap: 10px;
