@@ -267,6 +267,10 @@ Phase 1 — COMPLETE:
   ✓ 16. Quick fixes: flag card red, note dot indicator, placeholder text, calendar emoji
   ✓ 17. Feature: Upload sheet — rich parse preview, wipe toggle, success state, debug log
   ✓ 18. Feature: Sick Day — cascade shift algorithm, Firestore markers, red dot on DayStrip
+  ✓ 19. Fix: flag card lighter red tint + red flag badge (was gold)
+  ✓ 20. Fix: upload preview grouped by day with bold day headers
+  ✓ 21. Fix: debug log enhanced — file size, response time, raw preview, subjects, per-cell writes
+  ✓ 22. Fix: sick day cascade within-week only; Friday overflow warning in SickDaySheet
 
 Phase 2 (do not build yet):
   - Auto-roll flagged lessons to next week
