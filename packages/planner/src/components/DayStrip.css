@@ -1,13 +1,18 @@
+/* ── Floating pill container — sits below the fixed header ── */
 .day-strip {
   position: sticky;
   top: 80px;
   z-index: 50;
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border);
   display: flex;
-  height: 56px;
+  gap: 3px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 5px;
+  margin: 0 14px 14px;
+  box-shadow: 0 1px 4px rgba(34, 37, 46, 0.08);
 }
 
+/* ── Each day button ── */
 .day-strip-tab {
   flex: 1;
   display: flex;
@@ -17,46 +22,67 @@
   gap: 2px;
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-muted);
+  border-radius: 8px;
   cursor: pointer;
-  padding: 6px 0;
+  padding: 6px 4px;
   font-family: inherit;
-  transition: color 0.15s, border-color 0.15s;
+  transition: background 0.15s;
   position: relative;
 }
 
+/* ── Active day: dark pill ── */
 .day-strip-tab--active {
-  color: var(--forest);
-  border-bottom-color: var(--forest);
+  background: #22252e;
 }
 
-.day-strip-tab:hover:not(.day-strip-tab--active) {
-  color: var(--text-secondary);
-}
-
+/* ── Inactive text: muted name, primary number ── */
 .day-strip-name {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--text-muted);
+  line-height: 1;
 }
 
 .day-strip-date {
   font-size: 16px;
   font-weight: 500;
+  color: var(--text-primary);
   line-height: 1;
 }
 
+/* ── Active day: white text ── */
+.day-strip-tab--active .day-strip-name {
+  color: rgba(255, 255, 255, 0.5);
+}
+
 .day-strip-tab--active .day-strip-date {
+  color: #fff;
   font-weight: 700;
 }
 
-/* Small red dot for sick day marker — positioned top-right of tab */
-.day-strip-sick-dot {
+/* ── Today: gold number + 2px underline below the date ── */
+.day-strip-tab--today .day-strip-date {
+  color: var(--gold);
+  font-weight: 700;
+  border-bottom: 2px solid var(--gold);
+  padding-bottom: 1px;
+}
+
+/* Active today: keep gold underline but lighten text for contrast on dark bg */
+.day-strip-tab--active.day-strip-tab--today .day-strip-date {
+  color: var(--gold-light);
+  border-bottom-color: var(--gold-light);
+}
+
+/* ── Sick day: 6px red dot centered below the date number ── */
+.day-strip-tab--sick::after {
+  content: '';
   position: absolute;
-  top: 5px;
-  right: 8px;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 6px;
   height: 6px;
   border-radius: 50%;
