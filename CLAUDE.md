@@ -272,6 +272,7 @@ Phase 1 — COMPLETE:
   ✓ 21. Fix: debug log enhanced — file size, response time, raw preview, subjects, per-cell writes
   ✓ 22. Fix: sick day cascade within-week only; Friday overflow warning in SickDaySheet
   ✓ 23. Visual Polish Session 1 — Ink & Gold tokens, header redesign, DayStrip floating pill, logo wired
+  ✓ 24. Visual Polish Session 2 — SubjectCard, all sheets, action bar, empty state, dashboard, month picker
 
 Phase 2 (do not build yet):
   - Auto-roll flagged lessons to next week
@@ -351,11 +352,7 @@ Dark mode: toggle data-mode="light" / data-mode="dark" on <html>
 All tokens scoped to [data-mode] selectors
 All color transitions: transition: 0.3s
 
-Backward-compat aliases in tokens.css (Session 1 only — remove in Session 2 as each
-component is migrated away from var(--forest) references):
-  --forest: var(--gold)
-  --forest-light: var(--gold-light)
-  --forest-pale: var(--gold-pale)
+No backward-compat aliases — all components now use Ink & Gold tokens directly.
 
 **Layout**
 - Fixed top header: 60px (dashboard), 80px (planner — 2-row), background: #22252e

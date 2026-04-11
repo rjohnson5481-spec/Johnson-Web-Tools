@@ -47,20 +47,3 @@
   transition: background-color 0.3s, color 0.3s, border-color 0.3s;
 }
 
-/* ── Session 1 backward-compat aliases ──────────────────────────────────────
-   Existing components still reference --forest, --forest-light, --forest-pale.
-   Map them to Ink & Gold equivalents so the app stays coherent during migration.
-   Session 2 will replace each var(--forest) reference directly, then remove these.
-   ─────────────────────────────────────────────────────────────────────────── */
-:root,
-[data-mode="light"] {
-  --forest:      var(--gold);
-  --forest-light:var(--gold-light);
-  --forest-pale: var(--gold-pale);
-}
-
-[data-mode="dark"] {
-  --forest:      var(--gold);
-  --forest-light:var(--gold-light);
-  --forest-pale: var(--gold-pale);
-}
