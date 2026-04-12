@@ -21,6 +21,7 @@ export default function PlannerLayout({
   performSickDay, performUndoSickDay, sickDayIndices,
   loadWeekDataFrom,
   pdfImport,
+  students,
   student, setStudent,
   day, setDay,
   editTarget, setEditTarget,
@@ -101,6 +102,7 @@ export default function PlannerLayout({
         weekDates={weekDates}
         prevWeek={prevWeek}
         nextWeek={nextWeek}
+        students={students}
         onUpload={() => setShowUpload(true)}
         onCalendar={() => setShowMonthPicker(true)}
         onSettings={() => setShowSettings(true)}

@@ -4,10 +4,9 @@ import { formatWeekLabel } from '../constants/days.js';
 import { version } from '../../package.json';
 import './Header.css';
 
-const STUDENTS = ['Orion', 'Malachi'];
-
-// Props: student, onStudentChange, weekDates, prevWeek, nextWeek, onUpload, onCalendar, onSettings
+// Props: students, student, onStudentChange, weekDates, prevWeek, nextWeek, onUpload, onCalendar, onSettings
 export default function Header({
+  students,
   student, onStudentChange,
   weekDates, prevWeek, nextWeek,
   onUpload, onCalendar, onSettings,
@@ -60,7 +59,7 @@ export default function Header({
 
       {/* Row 3 — student selector */}
       <div className="header-students">
-        {STUDENTS.map(name => (
+        {(students ?? []).map(name => (
           <button
             key={name}
             className={`header-student-btn${student === name ? ' header-student-btn--active' : ''}`}
