@@ -132,20 +132,23 @@ These can be manually deleted from the Firebase console. No migration script nee
 ## File structure — planner tool
 packages/planner/src/
 ├── main.jsx                     # app entry, mounts App (~18 lines)
-├── App.jsx                      # wiring only: auth + hooks → PlannerLayout (~47 lines)
+├── App.jsx                      # wiring only: auth + hooks → PlannerLayout (~67 lines)
 ├── planner.css                  # global resets for planner (~17 lines)
 ├── firebase/
-│   └── planner.js               # all Firestore reads/writes (~48 lines)
+│   ├── planner.js               # all Firestore reads/writes (~48 lines)
+│   └── settings.js              # read/write for settings students + subject presets (~40 lines)
 │   # NO init.js or auth.js here — import db/auth/useAuth from @homeschool/shared
 ├── hooks/
 │   ├── useWeek.js               # week navigation state (~32 lines)
 │   ├── useSubjects.js           # subject list + day data subscriptions (~53 lines)
 │   ├── usePdfImport.js          # file upload + Netlify Function call (~48 lines)
-│   └── usePlannerUI.js          # all local UI state, keeps App.jsx thin (~21 lines)
+│   ├── usePlannerUI.js          # all local UI state, keeps App.jsx thin (~21 lines)
+│   ├── useDarkMode.js           # dark mode toggle (localStorage + html data-mode) (~22 lines)
+│   └── useSettings.js           # students list + per-student subjects from Firestore (~62 lines)
 ├── components/
 │   ├── PlannerLayout.jsx        # full page layout, all sheets, toggle handlers (~111 lines)
 │   ├── PlannerLayout.css        # layout shell styles (~42 lines)
-│   ├── Header.jsx               # 2-row 80px fixed header (~52 lines)
+│   ├── Header.jsx               # 3-row 132px fixed header; students from Firestore (~75 lines)
 │   ├── Header.css               # header styles (~123 lines)
 │   ├── DayStrip.jsx             # sticky day tab selector (~21 lines)
 │   ├── DayStrip.css             # day strip styles (~47 lines)
@@ -160,7 +163,9 @@ packages/planner/src/
 │   ├── MonthSheet.jsx           # calendar bottom sheet, week jump (~75 lines)
 │   ├── MonthSheet.css           # month sheet styles (~60 lines)
 │   ├── SickDaySheet.jsx         # sick day checklist, cascade shift confirmation (~66 lines)
-│   └── SickDaySheet.css         # sick day sheet styles (~172 lines)
+│   ├── SickDaySheet.css         # sick day sheet styles (~172 lines)
+│   ├── SettingsSheet.jsx        # settings bottom sheet — appearance, students, subjects, app (~170 lines)
+│   └── SettingsSheet.css        # settings sheet styles (~320 lines)
 └── constants/
     ├── subjects.js              # SUBJECT_PRESETS array (~19 lines)
     ├── days.js                  # DAY_NAMES, DAY_SHORT, date helpers (~46 lines)
@@ -283,6 +288,9 @@ Phase 1 — COMPLETE:
   ✓ 23. Visual Polish Session 1 — Ink & Gold tokens, header redesign, DayStrip floating pill, logo wired
   ✓ 24. Visual Polish Session 2 — SubjectCard, all sheets, action bar, empty state, dashboard, month picker
   ✓ 25. Settings sheet — dark mode toggle, students list, default subjects, coming-soon sections, clear cache
+  ✓ 26. v0.19.0 polish — PWA theme_color #22252e; School Year & Compliance merged coming-soon;
+         student delete with inline confirmation; Header students from Firestore;
+         AddSubjectSheet quick-picks from per-student Firestore presets
 
 Phase 2 (do not build yet):
   - Auto-roll flagged lessons to next week

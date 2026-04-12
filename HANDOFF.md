@@ -1,67 +1,68 @@
-# HANDOFF — Settings Sheet Session (2026-04-12)
+# HANDOFF — v0.19.0 Polish Session (2026-04-12)
 
 ## What was completed this session
 
-### Settings sheet — v0.18.0
+### v0.19.0 — five fixes, six commits
 
-Full settings bottom sheet built and wired. Five commits:
-- `699cc1d` — Firestore path builders + `firebase/settings.js` I/O layer
-- `0afe31b` — `useDarkMode.js` + `useSettings.js` hooks
-- `d10ac85` — `SettingsSheet.jsx` + `SettingsSheet.css`
-- `510f82f` — Wired into Header, usePlannerUI, PlannerLayout
-- `e133824` — Version bumped to 0.18.0 in both package.json files
+**Fix 1 — PWA theme_color** (`3c5984c`)
+- Changed `theme_color` from `#2d5a3d` to `#22252e` in:
+  - `packages/dashboard/public/manifest.json`
+  - `packages/dashboard/index.html`
+  - `packages/planner/index.html`
 
-**New files:**
-- `packages/planner/src/constants/firestore.js` — added `settingsStudentsPath`, `settingsSubjectsPath`
-- `packages/planner/src/firebase/settings.js` — read/write for students list + default subjects
-- `packages/planner/src/hooks/useDarkMode.js` — same logic as dashboard version
-- `packages/planner/src/hooks/useSettings.js` — students + default subjects state management
-- `packages/planner/src/components/SettingsSheet.jsx` — full settings UI (~120 lines)
-- `packages/planner/src/components/SettingsSheet.css` — styles (~230 lines)
+**Fix 2 — Merge School Year + School Days** (`9a487be`)
+- Removed separate "School Year" and "School Days" coming-soon sections
+- Replaced with single "School Year & Compliance" section
+- Description: "Set academic year dates and track school days for ND compliance — coming in Phase 2"
 
-**Sheet sections:**
-1. Appearance — dark mode toggle (reads/writes `color-mode` localStorage key)
-2. Students — list from Firestore, inline pencil-edit, add new student
-3. Default Subjects — per-student tabs, add/remove subjects, lazy-loaded from Firestore
-4. School Year — coming soon (opacity 0.45, pointer-events none)
-5. App — version label `v0.18.0`, "Clear Cache & Reload" button
-6. School Days — coming soon (opacity 0.45, pointer-events none)
+**Fix 3 — Student delete with confirmation** (`9a487be`, same commit as Fix 2)
+- Added ✕ button to each student row in SettingsSheet
+- ✕ hidden when only one student remains (`namedStudents.length > 1` guard)
+- Tapping ✕ shows inline confirmation: red tint row, "Remove [name]?", Yes (red) + Cancel
+- On Yes: `saveStudents(students.filter(...))` removes from Firestore
+- New CSS classes: `.settings-row--confirm`, `.settings-confirm-msg`, `.settings-confirm-btns`, `.settings-confirm-yes`, `.settings-confirm-cancel`, `.settings-row-actions`
 
-**Firestore paths used:**
-- `users/{uid}/settings/students` → `{ names: string[] }`
-- `users/{uid}/subjectPresets/{student}` → `{ subjects: string[] }`
-  (Note: spec had a 5-segment path which isn't valid in Firestore; using 4-segment equivalent)
+**Fix 4 — Wire Header student toggle from Firestore** (`a3c2e1e`)
+- `App.jsx` calls `useSettings(user?.uid)`, passes `students` to PlannerLayout
+- `PlannerLayout.jsx` threads `students` prop to Header
+- `Header.jsx` removes hardcoded `['Orion', 'Malachi']`; uses `students` prop with `?? []` guard
+- Effect in App.jsx: if selected student is removed, falls back to `students[0]`
 
-**Default subjects** fall back to `SUBJECT_PRESETS` constant when no Firestore doc exists.
+**Fix 5 — Wire Firestore subjects into AddSubjectSheet** (`bdefe8c`)
+- `useSettings` now accepts optional `plannerStudent` param; pre-loads that student's subjects
+- `useSettings` now exposes `subjectsByStudent` map in its return value
+- `App.jsx` passes `ui.student` to `useSettings`, derives `plannerSubjects = subjectsByStudent[ui.student]`, passes to PlannerLayout
+- `PlannerLayout` passes `plannerSubjects` to `AddSubjectSheet` as `presets` prop
+- `AddSubjectSheet` uses `(presets ?? SUBJECT_PRESETS)` for the quick-pick grid
 
-**Dark mode** is initialized from localStorage before first render in `main.jsx`
-(already existed). `useDarkMode` hook in SettingsSheet handles toggle.
-
-**Not yet wired:**
-- Header still uses hardcoded `['Orion', 'Malachi']` student list —
-  follow-up: read from settings Firestore doc and drive Header + usePlannerUI initial student
-- AddSubjectSheet still uses `SUBJECT_PRESETS` constant for quick-picks —
-  follow-up: read per-student default subjects from settings and use those instead
+**Version bump** (`cdd561a`)
+- Both package.json files: `0.18.0` → `0.19.0`
 
 ---
 
 ## What is currently incomplete
 
-- Smoke-test still needed for fixes from prior sessions (fixes 2–5 listed in previous HANDOFF)
-- Header student list + AddSubjectSheet presets not yet wired to Firestore settings data
+- Smoke-test needed (all fixes are code-only, not browser-verified):
+  - Fix 1: PWA install banner shows `#22252e` charcoal (not green)
+  - Fix 2: Settings sheet shows one "School Year & Compliance" section (not two)
+  - Fix 3: Student ✕ button appears; confirmation works; ✕ hidden when 1 student remains
+  - Fix 4: Header student pills update immediately when students added/removed in Settings
+  - Fix 5: AddSubjectSheet quick-picks show student's Firestore subjects (not hardcoded list)
 - reward-tracker — still needs migrating into monorepo structure
+- Phase 2 features (do not build until Rob confirms)
 
 ---
 
 ## What the next session should start with
 
 1. Read CLAUDE.md + HANDOFF.md
-2. Smoke-test Settings sheet in browser:
-   - Dark mode toggle persists across reload
-   - Students: edit name, add student, saves to Firestore
-   - Default Subjects: per-student tabs, add/remove, saves to Firestore
-   - Coming Soon sections are greyed out
-   - Clear Cache & Reload works
-3. Wire Header student list to Firestore settings (replace hardcoded array)
-4. Wire AddSubjectSheet presets to per-student Firestore subjects
-5. Confirm with Rob: Phase 2 features or reward-tracker migration?
+2. Smoke-test all 5 fixes in browser (list above)
+3. Confirm with Rob: Phase 2 features or reward-tracker migration?
+
+---
+
+## Architecture notes
+
+- `useSettings` is called in TWO places: `App.jsx` (students list + subject pre-load for planner) and `SettingsSheet.jsx` (full settings editing state). Both subscribe independently to Firestore. Intentional — not a bug.
+- `activeStudent` in `useSettings` controls the Default Subjects tab in SettingsSheet and is independent from `ui.student` (the planner's selected student).
+- `plannerSubjects` is `undefined` until Firestore returns data. `AddSubjectSheet` falls back to `SUBJECT_PRESETS` when `presets` is `undefined`, so the quick-pick grid always shows something on first open.
