@@ -6,11 +6,11 @@ import './Header.css';
 
 const STUDENTS = ['Orion', 'Malachi'];
 
-// Props: student, onStudentChange, weekDates, prevWeek, nextWeek, onUpload, onCalendar
+// Props: student, onStudentChange, weekDates, prevWeek, nextWeek, onUpload, onCalendar, onSettings
 export default function Header({
   student, onStudentChange,
   weekDates, prevWeek, nextWeek,
-  onUpload, onCalendar,
+  onUpload, onCalendar, onSettings,
 }) {
   return (
     <header className="header">
@@ -38,7 +38,7 @@ export default function Header({
               <path d="M7.5 10.5V3.5M4.5 6.5l3-3 3 3M2.5 13.5h10"/>
             </svg>
           </button>
-          <button className="header-btn" aria-label="Settings" title="Settings">
+          <button className="header-btn" onClick={onSettings} aria-label="Settings" title="Settings">
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="7.5" cy="7.5" r="2"/><path d="M7.5 1v2M7.5 12v2M1 7.5h2M12 7.5h2M3.3 3.3l1.4 1.4M10.3 10.3l1.4 1.4M10.3 4.7l-1.4 1.4M4.7 10.3l-1.4 1.4"/>
             </svg>

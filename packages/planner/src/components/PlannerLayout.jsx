@@ -8,6 +8,7 @@ import UploadSheet     from './UploadSheet.jsx';
 import AddSubjectSheet from './AddSubjectSheet.jsx';
 import MonthSheet      from './MonthSheet.jsx';
 import SickDaySheet    from './SickDaySheet.jsx';
+import SettingsSheet   from './SettingsSheet.jsx';
 import { getMondayOf, toWeekId, DAY_SHORT, DAY_NAMES } from '../constants/days.js';
 import './PlannerLayout.css';
 
@@ -28,6 +29,7 @@ export default function PlannerLayout({
   showMonthPicker, setShowMonthPicker,
   showSickDay, setShowSickDay,
   showUndoSickDay, setShowUndoSickDay,
+  showSettings, setShowSettings,
 }) {
   function handleToggleDone(subject) {
     const cell = dayData[subject] ?? {};
@@ -101,6 +103,7 @@ export default function PlannerLayout({
         nextWeek={nextWeek}
         onUpload={() => setShowUpload(true)}
         onCalendar={() => setShowMonthPicker(true)}
+        onSettings={() => setShowSettings(true)}
       />
 
       <div className="planner-body">
@@ -238,6 +241,13 @@ export default function PlannerLayout({
           loadWeekDataFrom={loadWeekDataFrom}
           onConfirm={handleSickDayConfirm}
           onClose={() => setShowSickDay(false)}
+        />
+      )}
+
+      {showSettings && (
+        <SettingsSheet
+          uid={user?.uid}
+          onClose={() => setShowSettings(false)}
         />
       )}
 

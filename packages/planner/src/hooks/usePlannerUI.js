@@ -13,6 +13,7 @@ export function usePlannerUI() {
   const [showMonthPicker, setShowMonthPicker]   = useState(false);
   const [showSickDay, setShowSickDay]           = useState(false);
   const [showUndoSickDay, setShowUndoSickDay]   = useState(false);
+  const [showSettings, setShowSettings]         = useState(false);
 
   return {
     student,       setStudent,
@@ -23,5 +24,6 @@ export function usePlannerUI() {
     showMonthPicker, setShowMonthPicker,
     showSickDay,    setShowSickDay,
     showUndoSickDay, setShowUndoSickDay,
+    showSettings,   setShowSettings,
   };
 }
