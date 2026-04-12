@@ -101,6 +101,14 @@ Model: claude-sonnet-4-20250514
 /users/{uid}/sickDays/{dateString}
   → { student: string, date: string, subjectsShifted: string[] }
 
+/users/{uid}/settings/students
+  → { names: string[] }
+
+/users/{uid}/subjectPresets/{studentName}
+  → { subjects: string[] }
+  Note: stores per-student default subject presets shown in Settings sheet.
+  Path uses subjectPresets (not settings/defaultSubjects) for valid 4-segment Firestore doc path.
+
 weekId / dateString format: "YYYY-MM-DD" (weekId = Monday of that week)
 
 Subjects are implicit — a subject exists on a given day only when its
@@ -161,10 +169,11 @@ packages/planner/src/
     └── firestore.js             # Firestore path builder functions (~18 lines)
 
 ## Planner-specific layout decisions
-- Header is 2 rows: Row 1 (48px) = logo + week nav + actions;
-  Row 2 (32px) = student selector pills. Total: 80px.
-- planner-body margin-top: 80px to clear the fixed header
-- DayStrip is sticky at top: 80px, z-index: 50
+- Header is 3 rows: Row 1 (48px) = logo + brand + 4 icon buttons;
+  Row 2 (~52px) = week navigation centered; Row 3 (32px) = student selector pills.
+  Total: 132px.
+- planner-body margin-top: 132px to clear the fixed header
+- DayStrip is sticky at top: 132px, z-index: 50
 - All bottom sheets use slide-up animation from translateY(100%)
 - Each sheet has its own overlay class (not shared) to avoid CSS conflicts
 - safe-area-inset-bottom applied to all sheets for iPhone home bar
@@ -273,6 +282,7 @@ Phase 1 — COMPLETE:
   ✓ 22. Fix: sick day cascade within-week only; Friday overflow warning in SickDaySheet
   ✓ 23. Visual Polish Session 1 — Ink & Gold tokens, header redesign, DayStrip floating pill, logo wired
   ✓ 24. Visual Polish Session 2 — SubjectCard, all sheets, action bar, empty state, dashboard, month picker
+  ✓ 25. Settings sheet — dark mode toggle, students list, default subjects, coming-soon sections, clear cache
 
 Phase 2 (do not build yet):
   - Auto-roll flagged lessons to next week
@@ -366,7 +376,7 @@ No backward-compat aliases — all components now use Ink & Gold tokens directly
 
 **Header**
 - Background: #22252e — hardcoded literal in both Header.css files, NOT a CSS var
-- Planner: 2 rows, Row 1 (48px) logo + week nav + 4 icon buttons; Row 2 (32px) student pills
+- Planner: 3 rows — Row 1 (48px) logo + brand + 4 icon buttons; Row 2 (~52px) week nav centered; Row 3 (32px) student pills. Total: 132px.
 - Dashboard: single row, 60px, logo + school name + 2 icon buttons
 - Logo: 34–38px square, border-radius: 8px — uses logo.png (see Logo section above)
 - School name structure:
