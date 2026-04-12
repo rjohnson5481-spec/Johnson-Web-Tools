@@ -22,3 +22,14 @@ export const cellPath = (uid, weekId, student, dayIndex, subject) =>
 // dateString format: "YYYY-MM-DD"
 export const sickDayPath = (uid, dateString) =>
   `users/${uid}/sickDays/${dateString}`;
+
+// Settings — student list.
+// Document: { names: string[] }
+export const settingsStudentsPath = (uid) =>
+  `users/${uid}/settings/students`;
+
+// Settings — default subject presets per student.
+// Document: { subjects: string[] }
+// Note: stored at /users/{uid}/subjectPresets/{student} (4-segment valid doc path)
+export const settingsSubjectsPath = (uid, student) =>
+  `users/${uid}/subjectPresets/${student}`;
