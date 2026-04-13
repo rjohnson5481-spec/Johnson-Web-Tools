@@ -1,52 +1,61 @@
-# HANDOFF — Session ending 2026-04-13 (second session)
+# HANDOFF — Session ending 2026-04-13 (third session)
 
 ## What was completed this session
 
-Diagnosed blank page at /te-extractor/ — confirmed both fixes were already
-committed from the previous session:
-- `packages/te-extractor/package.json` already has the build script:
-  `"build": "mkdir -p ../../dist/te-extractor && cp -r public/. ../../dist/te-extractor/"`
-- `packages/dashboard/src/constants/tools.js` already has `href: '/te-extractor/'`
-  with trailing slash
+### Fix 1 — Version display + cache clear button (TE Extractor)
 
-The blank page was from a Netlify deploy that ran before those commits were pushed.
-This HANDOFF.md commit triggers a new deploy that will run the te-extractor
-build script for the first time.
+- `app.js`: VERSION bumped to '0.20.0'; cache-clear click handler added at
+  bottom of file using the caches API with reload(true) fallback
+- `index.html`: sidebar-footer restructured — version text in
+  `.sidebar-footer-version`, "Clear Cache & Reload" button with id=clearCacheBtn
+- `style.css`: sidebar-footer changed to column flex; added
+  `.sidebar-footer-version` (muted italic) and `.sidebar-cache-btn`
+  (ghost button on dark sidebar, rgba white borders/text)
 
-Build script verified locally: te-extractor copies to dist/te-extractor/ correctly.
+### Fix 2 — Standardised console log in callAPI()
+
+Replaced previous session's diagnostic log with Rob's exact format:
+```
+[TE Extractor] Sending: { mediaType, lessons, fileName, fileSize }
+```
+`fileSize` = `base64?.length || 0` (base64 string length, not exposing data)
 
 ---
 
 ## Current state
 
-Everything committed and pushed to main.
-Netlify should auto-deploy on this commit.
+All changes committed and pushed to main. Netlify auto-deploys on push.
+
+400 error on extraction not yet resolved — the console.log will show what the
+function receives. When Rob tests in browser with DevTools open:
+- Look for `[TE Extractor] Sending:` in the Console tab
+- If the 400 persists, the error response now names exactly which field is
+  missing (e.g. "Missing required fields: lessons")
 
 ---
 
 ## What to do first next session
 
-1. Verify /te-extractor/ loads correctly after this deploy completes:
-   - Sidebar shows ILA branding (logo, school name with gold LIGHT)
-   - No API key field visible
-   - File drop zone accepts PDF/image
-   - Extract button calls /api/te-extractor and result renders in iframe
+1. Rob tests extraction in browser with DevTools console open and shares the
+   `[TE Extractor] Sending:` log output. The log will reveal which field is
+   empty/missing so we can fix the actual 400 cause.
 
-2. Smoke-test /planner/ for regressions from the import wipe fix (commit 8dc3b64).
-   Specifically: import a second PDF with "Replace existing schedule" toggle OFF
-   and confirm existing done/note data is preserved.
+2. If extraction works after this deploy (possible the previous hardening fixed
+   it), remove the console.log and commit.
 
-3. reward-tracker still needs migrating into monorepo structure.
+3. Smoke-test planner import wipe fix (commit 8dc3b64): import second PDF
+   with "Replace existing schedule" toggle OFF, confirm existing done/note data
+   is preserved.
+
+4. reward-tracker still needs migrating into monorepo.
 
 ---
 
 ## Known incomplete / not started
 
-- reward-tracker: exists but not migrated into monorepo
-- Academic Records tool: coming-soon placeholder only, no implementation
+- 400 error on te-extractor extraction: root cause still unconfirmed —
+  awaiting console log output from Rob's browser test
+- reward-tracker: not migrated into monorepo
+- Academic Records: coming-soon placeholder only
 - CLAUDE.md Layout section still says "2 rows, total 80px" — should be
-  "3 rows, total 132px" (planner header was redesigned earlier)
-
----
-
-## No new decisions this session
+  "3 rows, total 132px"

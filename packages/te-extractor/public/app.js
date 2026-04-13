@@ -5,7 +5,7 @@
 
 'use strict';
 
-const VERSION = '2.3';
+const VERSION = '0.20.0';
 
 // ── State ────────────────────────────────────────────────────
 const state = {
@@ -250,12 +250,12 @@ async function runExtraction() {
 
 // ── API Call via Netlify Function ────────────────────────────
 async function callAPI({ base64, mediaType, lessons, fileName }) {
-  console.log('[callAPI] sending —',
-    'mediaType:', mediaType,
-    '| lessons:', JSON.stringify(lessons),
-    '| fileName:', fileName,
-    '| file bytes (base64 len):', base64 ? base64.length : 'MISSING'
-  );
+  console.log('[TE Extractor] Sending:', {
+    mediaType,
+    lessons,
+    fileName,
+    fileSize: base64?.length || 0,
+  });
 
   let response;
   try {
@@ -700,3 +700,14 @@ function parsePageRange(str) {
 
   return Array.from(pages).sort((a, b) => a - b);
 }
+
+// ── Cache Clear ──────────────────────────────────────────────
+document.getElementById('clearCacheBtn').addEventListener('click', () => {
+  if ('caches' in window) {
+    caches.keys()
+      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => window.location.reload(true));
+  } else {
+    window.location.reload(true);
+  }
+});
