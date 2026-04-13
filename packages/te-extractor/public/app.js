@@ -31,7 +31,7 @@ Return ONLY the complete HTML. No markdown fences. No explanation.`;
 const state = {
   selectedFile: null,
   lastResult:   null,   // { html, lessons, filename, timestamp }
-  sessionLog:   [],
+  history:      [],     // { id, lessons, fileName, html, previewText, createdAt } from Firestore
   debugLog:     [],     // { timestamp, label, body } entries
 };
 
@@ -69,7 +69,8 @@ const dom = {
   qcPromptText:     $('qcPromptText'),
   copyQcPrompt:     $('copyQcPrompt'),
 
-  // Session log
+  // Session / history log
+  logLoading:       $('logLoading'),
   logEmpty:         $('logEmpty'),
   logList:          $('logList'),
 
@@ -92,6 +93,14 @@ const dom = {
 document.getElementById('versionDisplay').textContent = VERSION;
 document.getElementById('versionDisplayMobile').textContent = VERSION;
 document.getElementById('sidebarVersion').textContent = `v${VERSION}`;
+
+// ── Firebase auth-ready — load extraction history ─────────────
+// Show loading spinner while waiting for auth + Firestore
+dom.logLoading.style.display = 'flex';
+
+document.addEventListener('te-auth-ready', async ({ detail: { uid } }) => {
+  await loadHistory(uid);
+});
 
 // ── Tab Navigation ───────────────────────────────────────────
 dom.navBtns.forEach(btn => {
@@ -275,8 +284,10 @@ async function runExtraction() {
     const timestamp = new Date();
     state.lastResult = { html, lessons, filename, timestamp };
 
-    // 7. Log to session
-    addToSessionLog({ lessons, filename, timestamp, html, fileUsed: file.name });
+    // 7. Save to Firestore history (non-blocking — don't fail extraction on Firestore error)
+    addToHistory({ lessons, fileName: file.name, html }).catch(err => {
+      console.warn('[TE] Firestore save failed:', err);
+    });
 
     // 8. Show results
     showResults(lessons);
@@ -495,20 +506,64 @@ async function copyText(text, btn) {
   }, 2000);
 }
 
-// ── Session Log ──────────────────────────────────────────────
-function addToSessionLog({ lessons, filename, timestamp, html, fileUsed }) {
-  const entry = { lessons, filename, timestamp, html, fileUsed };
-  state.sessionLog.unshift(entry); // newest first
+// ── Extraction History (Firestore-backed) ────────────────────
+async function loadHistory(uid) {
+  dom.logLoading.style.display = 'flex';
+  dom.logEmpty.style.display   = 'none';
+  dom.logList.style.display    = 'none';
 
-  // Update badge
-  dom.logBadge.textContent = state.sessionLog.length;
-  dom.logBadge.style.display = 'inline';
-
-  renderSessionLog();
+  try {
+    const { getDocs, collection, query, orderBy } = window.__teFirestore;
+    const q = query(
+      collection(window.__teDb, 'users', uid, 'teExtractor', 'extractions', 'items'),
+      orderBy('createdAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    state.history = snap.docs.map(d => {
+      const data = d.data();
+      return {
+        id:          d.id,
+        lessons:     data.lessons    || '',
+        fileName:    data.fileName   || '',
+        html:        data.html       || '',
+        previewText: data.previewText || '',
+        createdAt:   data.createdAt?.toDate?.() || null,
+      };
+    });
+    renderHistoryLog();
+  } catch (err) {
+    console.error('[TE] loadHistory error:', err);
+    renderHistoryLog(); // show empty state
+  } finally {
+    dom.logLoading.style.display = 'none';
+  }
 }
 
-function renderSessionLog() {
-  if (state.sessionLog.length === 0) {
+async function addToHistory({ lessons, fileName, html }) {
+  const previewText = html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 200);
+
+  // Optimistic local update first
+  const localEntry = { id: null, lessons, fileName, html, previewText, createdAt: new Date() };
+  state.history.unshift(localEntry);
+  renderHistoryLog();
+
+  // Then persist to Firestore (skip if no auth)
+  if (!window.__teUid || !window.__teFirestore) return;
+  const { addDoc, collection, serverTimestamp } = window.__teFirestore;
+  const docRef = await addDoc(
+    collection(window.__teDb, 'users', window.__teUid, 'teExtractor', 'extractions', 'items'),
+    { lessons, fileName, html, previewText, createdAt: serverTimestamp() }
+  );
+  // Backfill the doc ID so delete works immediately
+  localEntry.id = docRef.id;
+}
+
+function renderHistoryLog() {
+  const count = state.history.length;
+  dom.logBadge.textContent = count;
+  dom.logBadge.style.display = count > 0 ? 'inline' : 'none';
+
+  if (count === 0) {
     dom.logEmpty.style.display = 'flex';
     dom.logList.style.display  = 'none';
     return;
@@ -517,43 +572,57 @@ function renderSessionLog() {
   dom.logEmpty.style.display = 'none';
   dom.logList.style.display  = 'flex';
 
-  dom.logList.innerHTML = state.sessionLog.map((entry, idx) => `
+  dom.logList.innerHTML = state.history.map(entry => `
     <div class="log-entry">
       <div class="log-entry-header">
         <span class="log-entry-lessons">Lessons: ${escHtml(entry.lessons)}</span>
-        <span class="log-entry-time">${formatTime(entry.timestamp)}</span>
+        <span class="log-entry-time">${formatDate(entry.createdAt)}</span>
       </div>
-      <div class="log-entry-file">File used: ${escHtml(entry.fileUsed)}</div>
+      <div class="log-entry-file">${escHtml(entry.fileName)}</div>
+      ${entry.previewText ? `<div class="log-entry-preview">${escHtml(entry.previewText.slice(0, 120))}…</div>` : ''}
       <div class="log-entry-actions">
-        <button class="btn btn-primary btn-sm" onclick="logDownload(${idx})">
+        <button class="btn btn-primary btn-sm" onclick="historyOpen('${escHtml(entry.id || '')}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Open
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="historyDownload('${escHtml(entry.id || '')}', '${escHtml(entry.lessons)}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download
         </button>
-        <button class="btn btn-outline btn-sm" onclick="logPrint(${idx})">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          Print
-        </button>
+        ${entry.id ? `<button class="btn btn-outline btn-sm log-delete-btn" onclick="historyDelete('${escHtml(entry.id)}')">Delete</button>` : ''}
       </div>
     </div>
   `).join('');
 }
 
-// Exposed to onclick handlers in log HTML
-window.logDownload = function(idx) {
-  const entry = state.sessionLog[idx];
-  if (entry) triggerDownload(entry.html, entry.filename);
-};
-
-window.logPrint = function(idx) {
-  const entry = state.sessionLog[idx];
-  if (!entry) return;
+// History actions — exposed to inline onclick handlers
+window.historyOpen = function(id) {
+  const entry = state.history.find(e => e.id === id) || state.history[0];
+  if (!entry?.html) return;
   const win = window.open('', '_blank');
   if (!win) { alert('Pop-up was blocked. Please allow pop-ups for this site and try again.'); return; }
   win.document.open();
   win.document.write(entry.html);
   win.document.close();
-  win.onload = () => win.print();
-  setTimeout(() => { try { win.print(); } catch(_) {} }, 800);
+};
+
+window.historyDownload = function(id, lessons) {
+  const entry = state.history.find(e => e.id === id);
+  if (!entry?.html) return;
+  const filename = `lessons_${sanitizeFilename(lessons || entry.lessons)}_questions.html`;
+  triggerDownload(entry.html, filename);
+};
+
+window.historyDelete = async function(id) {
+  if (!id || !window.__teUid || !window.__teFirestore) return;
+  const { deleteDoc, doc } = window.__teFirestore;
+  try {
+    await deleteDoc(doc(window.__teDb, 'users', window.__teUid, 'teExtractor', 'extractions', 'items', id));
+  } catch (err) {
+    console.error('[TE] historyDelete error:', err);
+  }
+  state.history = state.history.filter(e => e.id !== id);
+  renderHistoryLog();
 };
 
 // ── Debug Log ────────────────────────────────────────────────
@@ -628,6 +697,13 @@ function formatBytes(bytes) {
 
 function formatTime(date) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDate(date) {
+  if (!date) return '';
+  const d = date instanceof Date ? date : new Date(date);
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
+    ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function escHtml(str) {

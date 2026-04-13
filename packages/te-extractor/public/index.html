@@ -268,13 +268,18 @@ CONTEXT: BJU Press Reading 3A, 229-page TE, Lessons 1-37. Day on calendar = Less
     <div class="tab-panel" id="tab-session-log">
       <div class="panel-header">
         <h1 class="panel-title">Session Log</h1>
-        <p class="panel-subtitle">Lessons extracted during this browser session.</p>
+        <p class="panel-subtitle">Extraction history — saved across all sessions.</p>
       </div>
 
-      <div id="logEmpty" class="empty-state">
+      <div id="logLoading" class="log-loading" style="display:none">
+        <svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="28" height="28"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        <span>Loading history…</span>
+      </div>
+
+      <div id="logEmpty" class="empty-state" style="display:none">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        <p>No extractions yet this session.</p>
-        <p class="empty-hint">Extracted lessons will appear here.</p>
+        <p>No extractions yet.</p>
+        <p class="empty-hint">Extract your first lesson to get started.</p>
       </div>
 
       <div id="logList" class="log-list" style="display:none"></div>
