@@ -1,0 +1,8 @@
+{
+  "name": "@homeschool/te-extractor",
+  "version": "0.19.1",
+  "private": true,
+  "scripts": {
+    "build": "mkdir -p ../../dist/te-extractor && cp -r public/. ../../dist/te-extractor/"
+  }
+}
