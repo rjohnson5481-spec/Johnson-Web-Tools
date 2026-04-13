@@ -3,7 +3,7 @@
    app.js
    ============================================================ */
 
-const VERSION = '0.20.2';
+const VERSION = '0.20.3';
 
 const SYSTEM_PROMPT = `You are a teacher question extraction assistant for Teacher Edition PDFs at Iron & Light Johnson Academy.
 
@@ -238,13 +238,8 @@ async function runExtraction() {
     if (file.type === 'application/pdf') {
       const pageCount = await getPdfPageCount(file);
       if (pageCount > 100) {
-        // Show the trimmer panel so they can fix it immediately
-        dom.splitSection.style.display = 'block';
-        dom.splitSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         throw new Error(
-          `This PDF has ${pageCount} pages. The API allows a maximum of 100 pages. ` +
-          `Use the "Trim this PDF" panel below to extract only the lesson pages you need ` +
-          `(typically 4–8 pages per lesson).`
+          'This PDF is too large. Please upload a smaller section — ideally under 50 pages — and try again.'
         );
       }
     }
@@ -339,6 +334,9 @@ async function callAPI({ base64, mediaType, lessons, fileName }) {
 
     if (response.status === 429) throw new Error('Rate limit exceeded. Please wait a moment and try again.');
     if (response.status === 413) throw new Error('File is too large for the API. Please try a smaller file or a specific page range.');
+    if (errMsg.toLowerCase().includes('credit')) {
+      throw new Error('API credits needed — visit console.anthropic.com to add credits and try again.');
+    }
     if (errMsg.includes('context') || errMsg.includes('max_tokens')) {
       dom.splitSection.style.display = 'block';
       dom.splitSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
