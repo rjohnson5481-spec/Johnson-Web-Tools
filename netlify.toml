@@ -8,6 +8,11 @@
   status = 200
 
 [[redirects]]
+  from = "/te-extractor/*"
+  to = "/te-extractor/index.html"
+  status = 200
+
+[[redirects]]
   from = "/planner/*"
   to = "/planner/index.html"
   status = 200
