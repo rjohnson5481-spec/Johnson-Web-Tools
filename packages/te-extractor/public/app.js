@@ -222,6 +222,16 @@ async function runExtraction() {
     // 2. Read file as base64
     const { base64, mediaType } = await readFileAsBase64(file);
 
+    // 2b. Block files whose base64 size exceeds Netlify's request body limit
+    if (base64.length > 8000000) {
+      dom.splitSection.style.display = 'block';
+      dom.splitSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      throw new Error(
+        'This PDF is too large to process in one request. Please upload a smaller section — ' +
+        'ideally under 50 pages — and try again.'
+      );
+    }
+
     // 3. Call Netlify Function
     const html = await callAPI({ base64, mediaType, lessons, fileName: file.name });
 

@@ -1,61 +1,58 @@
-# HANDOFF — Session ending 2026-04-13 (third session)
+# HANDOFF — Session ending 2026-04-13 (fourth session)
 
 ## What was completed this session
 
-### Fix 1 — Version display + cache clear button (TE Extractor)
+### Fix 1 — 504 Timeout: per-function config + netlify.toml backup
 
-- `app.js`: VERSION bumped to '0.20.0'; cache-clear click handler added at
-  bottom of file using the caches API with reload(true) fallback
-- `index.html`: sidebar-footer restructured — version text in
-  `.sidebar-footer-version`, "Clear Cache & Reload" button with id=clearCacheBtn
-- `style.css`: sidebar-footer changed to column flex; added
-  `.sidebar-footer-version` (muted italic) and `.sidebar-cache-btn`
-  (ghost button on dark sidebar, rgba white borders/text)
+- `netlify/functions/te-extractor.json` created: `{ "timeout": 300 }`
+- `netlify/functions/parse-schedule.json` created: `{ "timeout": 300 }`
+- `netlify.toml`: added `[functions] timeout = 300` block after `[build]`
 
-### Fix 2 — Standardised console log in callAPI()
+Per-function JSON files are the more reliable mechanism; the toml block is a
+belt-and-suspenders backup. Both set a 5-minute timeout.
 
-Replaced previous session's diagnostic log with Rob's exact format:
-```
-[TE Extractor] Sending: { mediaType, lessons, fileName, fileSize }
-```
-`fileSize` = `base64?.length || 0` (base64 string length, not exposing data)
+### Fix 2 — 500 on large files: client-side base64 size gate
+
+- `packages/te-extractor/public/app.js`: after reading base64 in step 2 of
+  `runExtraction()`, block if `base64.length > 8_000_000` before the API call
+- Shows the trimmer panel (same as the page-count guard above it) so the user
+  can immediately trim to a smaller range
+- Error message: "This PDF is too large to process in one request. Please upload
+  a smaller section — ideally under 50 pages — and try again."
 
 ---
 
 ## Current state
 
-All changes committed and pushed to main. Netlify auto-deploys on push.
-
-400 error on extraction not yet resolved — the console.log will show what the
-function receives. When Rob tests in browser with DevTools open:
-- Look for `[TE Extractor] Sending:` in the Console tab
-- If the 400 persists, the error response now names exactly which field is
-  missing (e.g. "Missing required fields: lessons")
+All committed and pushed to main. Netlify deploying.
 
 ---
 
 ## What to do first next session
 
-1. Rob tests extraction in browser with DevTools console open and shares the
-   `[TE Extractor] Sending:` log output. The log will reveal which field is
-   empty/missing so we can fix the actual 400 cause.
+1. Test extraction end-to-end with a real TE PDF:
+   - Small file (< 6 MB raw): should complete within timeout now
+   - Large file (> ~6 MB raw): should show the size-gate error and display the
+     trimmer panel before making any API call
 
-2. If extraction works after this deploy (possible the previous hardening fixed
-   it), remove the console.log and commit.
+2. If extraction still times out on normal-sized files, the Netlify function
+   timeout config may not be taking effect — check Netlify dashboard under
+   Functions → Settings to confirm 300s is showing.
 
-3. Smoke-test planner import wipe fix (commit 8dc3b64): import second PDF
-   with "Replace existing schedule" toggle OFF, confirm existing done/note data
-   is preserved.
+3. Remove the `console.log` in `callAPI()` once extraction is confirmed working.
 
-4. reward-tracker still needs migrating into monorepo.
+4. Smoke-test planner at /planner/ — confirm import wipe fix (8dc3b64) still
+   works: import second PDF with toggle OFF, existing done/note data preserved.
+
+5. reward-tracker: still needs migrating into monorepo structure.
 
 ---
 
 ## Known incomplete / not started
 
-- 400 error on te-extractor extraction: root cause still unconfirmed —
-  awaiting console log output from Rob's browser test
-- reward-tracker: not migrated into monorepo
+- reward-tracker: not migrated
 - Academic Records: coming-soon placeholder only
 - CLAUDE.md Layout section still says "2 rows, total 80px" — should be
   "3 rows, total 132px"
+- Console.log in callAPI() should be removed once 400/504 issues are confirmed
+  resolved
