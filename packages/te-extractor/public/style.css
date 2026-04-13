@@ -147,6 +147,14 @@ body {
   opacity: .85;
 }
 
+.nav-mobile-icon {
+  display: none; /* shown only at ≤768px */
+}
+
+.nav-label {
+  /* always visible on desktop — no style needed */
+}
+
 .nav-btn.active .nav-icon {
   opacity: 1;
 }
@@ -797,6 +805,38 @@ body {
    RESPONSIVE
    ============================================================ */
 
+/* ── Mobile nav: icon-only tabs (≤ 768px) ── */
+/* Nav label + SVG hidden; emoji shown; equal-width tabs */
+@media (max-width: 768px) {
+  .nav-label {
+    display: none;
+  }
+
+  .nav-icon {
+    display: none;
+  }
+
+  .nav-mobile-icon {
+    display: inline;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .log-badge {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    margin-left: 0;
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+
+  .nav-btn {
+    justify-content: center;
+    position: relative;
+  }
+}
+
 /* ── Tablet (≤ 900px) ── */
 @media (max-width: 900px) {
   .main-content {
@@ -873,37 +913,28 @@ body {
     color: rgba(255,255,255,.45);
   }
 
-  /* Tab bar — horizontally scrollable, no scrollbar shown */
+  /* Tab bar — icon-only, full-width equal tabs */
   .sidebar-nav {
     display: flex;
     flex-direction: row;
-    overflow-x: auto;
-    padding: 0 10px 8px;
-    gap: 4px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .sidebar-nav::-webkit-scrollbar {
-    display: none;
+    overflow-x: hidden;
+    padding: 0 6px 8px;
+    gap: 2px;
   }
 
   .sidebar-nav li {
     padding: 0;
-    flex-shrink: 0;
+    flex: 1;
+    min-width: 0;
   }
 
   .nav-btn {
     white-space: nowrap;
-    padding: 6px 13px;
+    padding: 6px 4px;
     font-size: 13px;
     border-radius: 20px;
-    gap: 6px;
-  }
-
-  .nav-icon {
-    width: 14px;
-    height: 14px;
+    gap: 0;
+    width: 100%;
   }
 
   .log-badge {
