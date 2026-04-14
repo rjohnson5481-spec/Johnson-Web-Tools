@@ -1,88 +1,103 @@
-# HANDOFF — Session 16
+# HANDOFF — Session 17 (shell migration complete)
 
 ## What was completed this session
 
-### App shell foundation — dashboard promoted to unified shell
+### Shell migration — planner + reward tracker embedded in dashboard
 
 Four commits landed:
 
-**1. `BottomNav.jsx` + `BottomNav.css` (f8369ff)**
-- Five-tab persistent nav bar: 🏠 Home · 📅 Planner · 🏅 Rewards · 📄 TE Extractor · 🎓 Records
-- Always `#22252e` background. Active tab: `#e8c97a` with `rgba(201,168,76,0.15)` pill behind icon.
-- Inactive: `rgba(255,255,255,0.45)`. Height 56px fixed. Safe area inset bottom.
-- TE Extractor tab uses `window.location.href` — the others set React tab state.
+**1. Deps audit (6908b73)**
+- Dashboard package.json already had all deps from planner and reward-tracker.
+- No changes needed. Commit documents this explicitly.
 
-**2. Tab placeholder components (8e4c874)**
-- `HomeTab.jsx` — existing tool card grid rendered without the old Header component.
-  Tool cards (Planner → /planner/, Reward Tracker → /reward-tracker/, TE Extractor, Academic Records) all intact.
-- `PlannerTab.jsx`, `RewardsTab.jsx` — "migration in progress" placeholders.
-- `AcademicRecordsTab.jsx` — "coming soon" placeholder.
-- Shared `PlaceholderTab.css` for the three non-home placeholders.
+**2. Planner source migrated (bddc407)**
+- `packages/planner/src/` copied verbatim to `packages/dashboard/src/tools/planner/`
+- All internal relative imports unchanged (folder structure preserved 1:1)
+- Two import path fixes:
+  - `Header.jsx` + `SettingsSheet.jsx`: `../../package.json` → `../../../../package.json`
+    (now correctly resolves to packages/dashboard/package.json for version string)
+- One CSS integration fix in `tools/planner/components/PlannerLayout.css`:
+  - `.planner-action-bar`: `bottom: 0` → `bottom: 56px` (lifts above bottom nav)
+  - `padding: 10px 14px env(safe-area-inset-bottom, 10px)` → `padding: 10px 14px`
+  - `.planner-main`: padding-bottom `90px` → `146px` (90 + 56 for nav)
+  - Desktop `.planner-main`: `100px` → `156px`
 
-**3. `App.jsx` shell wiring + `App.css` (d829576)**
-- App.jsx: replaced `<Dashboard />` render with full shell layout.
-- `activeTab` state (default `'home'`), passed to `BottomNav` as `onTabChange`.
-- `app-shell` + `shell-content` CSS classes in App.css.
-- `shell-content` has `padding-bottom: calc(56px + env(safe-area-inset-bottom))`.
+**3. Reward tracker source migrated (69f61ba)**
+- `packages/reward-tracker/src/` copied verbatim to `packages/dashboard/src/tools/reward-tracker/`
+- No import fixes needed — no package.json version imports
+- No CSS fixes needed — no fixed action bar; shell-content padding-bottom handles clearance
 
-**4. CLAUDE.md documentation (2cd94ca)**
-- New "Dashboard — app shell architecture" section with full file structure.
-- Bottom nav design rules documented.
-- Migration plan noted.
+**4. Tabs wired (ed583e9)**
+- `PlannerTab.jsx`: full hook wiring (useAuth, useWeek, useSubjects, usePdfImport,
+  usePlannerUI, useSettings) → renders PlannerLayout. No auth redirect (shell handles it).
+- `RewardsTab.jsx`: seedIfNeeded + RewardLayout. seeded state preserved.
+- Build verified: `npm run build --workspace=packages/dashboard` → 114 modules, 0 errors.
 
 ---
 
 ## What is currently incomplete / pending
 
-1. **Tool migration — NEXT SESSION**
-   - `PlannerTab.jsx`: embed planner code from `packages/planner/src/` into the dashboard shell.
-     The planner at `/planner/` stays deployed for now; migration adds it as a tab.
-   - `RewardsTab.jsx`: embed reward tracker from `packages/reward-tracker/src/`.
-   - Decision to make at start of migration: keep tools as separate builds OR merge into dashboard build.
-     Current CLAUDE.md says separate builds stay — tabs in shell will likely iframe or redirect for now.
-     Confirm with Rob at start of next session before touching anything.
+1. **NEXT SESSION — Retire original packages**
+   - `packages/planner` and `packages/reward-tracker` still exist as fallbacks.
+   - Once Rob confirms the shell tabs work in production, retire those packages:
+     - Remove from root `package.json` workspaces (or keep but stop building)
+     - Update `netlify.toml` to remove `/planner/*` redirect (planner now lives at `/`)
+     - Update `netlify.toml` to remove `/reward-tracker/*` redirect
+   - DO NOT retire until production is confirmed working.
 
-2. **HomeTab evolution** — tool card grid is placeholder. Replace with morning summary dashboard
-   (today's date, what's on the schedule, reward points, etc.) once tools are migrated.
+2. **HomeTab — replace tool cards with morning summary**
+   - Currently still shows the old tool card grid.
+   - Once planner + rewards are tabs in the shell, the tool cards for those are redundant.
+   - Replace with morning summary: today's date, which student's day it is, point balances.
 
-3. **Dark mode toggle missing from shell** — HomeTab has no dark mode button. The old Header.jsx had
-   the dark mode toggle; it's now unused. Need to add dark mode toggle somewhere in the shell
-   (possibly in HomeTab or as a small button in the bottom nav area). Not urgent.
+3. **Dark mode + sign-out missing from shell home**
+   - The old dashboard Header had dark mode toggle + sign-out button.
+   - Those are now only accessible within each tool's own header (planner settings, reward header).
+   - HomeTab needs accessible dark mode toggle and sign-out. Options: small icon row at top of
+     HomeTab, or a settings sheet. Confirm approach with Rob.
 
-4. **Sign out button missing from shell** — Header.jsx had the sign-out button; it's now unused.
-   Need to add sign-out somewhere accessible in the shell. Not urgent.
+4. **Chunk size warning**
+   - Build warns that the JS bundle is >500 KB. This is expected with both tools merged.
+   - Not a blocker. Address with code-splitting (dynamic imports) if load time is a concern.
 
-5. **Reward-tracker production verification** (from session 15) — still pending:
-   - Confirm blank-white-page fix (Firestore path) is working
-   - Confirm cash value shows cents
-   - Confirm dark mode toggle works and persists
+5. **Planner /planner/ URL still active**
+   - `packages/planner` still builds to `dist/planner/` and Netlify serves it at `/planner/`.
+   - Until we retire that package, the old planner URL still works.
+   - Dashboard Planner tab and `/planner/` are independent until retirement.
 
-6. **Firestore security rules** — confirm `/users/{uid}/rewardTracker/**` is covered.
-
-7. **Planner import merge bug** — `calm-whistling-clock.md` plan still unexecuted.
+6. **Import merge bug (planner)** — `calm-whistling-clock.md` plan still unexecuted.
+   The console.log diagnostic was never added. Debug in the shell tab if Rob still sees it.
 
 ---
 
 ## What the next session should start with
 
 1. Read CLAUDE.md + HANDOFF.md (standard)
-2. **DECISION POINT before writing any code**: confirm with Rob — do we migrate planner/reward-tracker
-   INTO the dashboard build (one bundled app), or do we keep them as separate Vite builds and have
-   the shell tabs navigate externally? This is architecturally significant and must be confirmed first.
-3. Address sign-out + dark mode missing from shell (small fix, 2-3 lines each)
-4. Then proceed with tool migration per Rob's decision
+2. Test the shell in production — confirm Planner tab and Rewards tab both work
+3. If confirmed: retire `packages/planner` and `packages/reward-tracker`
+   - Remove from root package.json workspaces (or leave + skip build)
+   - Update netlify.toml redirect rules
+4. Replace HomeTab tool cards with morning summary content
+5. Address dark mode + sign-out on HomeTab
 
 ---
 
-## Architecture decision pending (do NOT assume)
-The current `packages/planner` and `packages/reward-tracker` are separate Vite builds with their
-own `index.html`, `vite.config.js`, and Netlify redirects. Migrating them INTO the dashboard shell
-means merging their source into `packages/dashboard/src/` and removing their separate builds.
-This is a significant change to the build config and netlify.toml.
+## Decisions made this session (update CLAUDE.md after confirming shell works)
 
-The alternative is "fake migration" — the Planner and Rewards tabs in the shell simply do
-`window.location.href = '/planner/'` / `window.location.href = '/reward-tracker/'` instead of
-rendering real content. This is simpler and avoids touching build config, but doesn't give the
-unified-app feel Rob described.
+### App shell file structure (to add to CLAUDE.md after confirmation)
+```
+packages/dashboard/src/
+├── tools/
+│   ├── planner/          ← copy of packages/planner/src/ + CSS nav fixes
+│   └── reward-tracker/   ← copy of packages/reward-tracker/src/
+├── tabs/
+│   ├── PlannerTab.jsx    ← full hook wiring, renders tools/planner PlannerLayout
+│   ├── RewardsTab.jsx    ← seed + renders tools/reward-tracker RewardLayout
+│   ├── HomeTab.jsx       ← tool card grid (to be replaced with morning summary)
+│   └── AcademicRecordsTab.jsx
+```
 
-Rob must confirm which approach before any code is written next session.
+### Planner action bar in shell
+When planner is embedded in the shell, the action bar must be at `bottom: 56px`
+(not `bottom: 0`) to sit above the bottom nav. This is in `tools/planner/components/PlannerLayout.css`.
+The original `packages/planner/src/components/PlannerLayout.css` remains unchanged.
