@@ -100,6 +100,9 @@
   color: var(--gold);
 }
 
+/* ── Desktop-only day title header — hidden on mobile ── */
+.planner-day-header { display: none; }
+
 /* ── Show/Hide subjects toggle + Dashed add subject button ── */
 .planner-show-subjects-btn { width: 100%; background: transparent; border: none; color: var(--gold); font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; padding: 8px 0 4px; text-align: center; transition: color 0.15s; }
 .planner-show-subjects-btn:hover { color: var(--gold-light); }
@@ -177,24 +180,8 @@
 }
 
 /* ── Undo Sick Day confirmation sheet ── */
-.undo-sick-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 200;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-.undo-sick-sheet {
-  width: 100%;
-  max-width: 480px;
-  background: var(--bg-base);
-  border-radius: 20px 20px 0 0;
-  padding-bottom: env(safe-area-inset-bottom, 16px);
-  animation: undo-sick-up 0.25s ease;
-}
+.undo-sick-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 200; display: flex; align-items: flex-end; justify-content: center; }
+.undo-sick-sheet { width: 100%; max-width: 480px; background: var(--bg-base); border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom, 16px); animation: undo-sick-up 0.25s ease; }
 
 @keyframes undo-sick-up {
   from { transform: translateY(100%); }
@@ -294,7 +281,12 @@
 
 @media (min-width: 768px) {
   .planner-body { margin-top: 48px; margin-left: 200px; max-width: none; }
-  .planner-main { padding: 24px 28px 90px; }
-  .planner-subjects { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+  .planner-main { padding: 24px 28px 100px; }
+  .planner-subjects { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
   .planner-action-bar { left: 200px; max-width: none; margin: 0; }
+  .planner-day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .planner-day-title { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px; line-height: 1.1; }
+  .planner-day-subtitle { font-size: 13px; color: var(--text-muted); font-weight: 400; margin: 0; }
+  .planner-day-add-btn { background: var(--ink); color: var(--gold-light); border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+  .planner-day-add-btn:hover { background: var(--ink-light); }
 }

@@ -184,6 +184,12 @@
 /* ── Desktop (≥768px) — single-row header ── */
 /* Mobile layout is COMPLETELY UNCHANGED — all rules below are additive */
 @media (min-width: 768px) {
+  /* Larger logo + font at desktop */
+  .header-top { padding: 0 20px; }
+  .header-logo { width: 42px; height: 42px; }
+  .header-school-line1 { font-size: 14px; }
+  .header-school-line2 { font-size: 12px; }
+
   /* Lift week nav into row 1: position absolute over header-top */
   /* .header is position:fixed, so absolute children position relative to it */
   .header-week {

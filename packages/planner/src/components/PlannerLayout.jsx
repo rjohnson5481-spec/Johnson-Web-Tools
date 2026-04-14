@@ -94,7 +94,9 @@ export default function PlannerLayout({
   const allDayData = dayData['__allday__'] ?? null, hasAllDay = Boolean(allDayData);
   const [showSubjects, setShowSubjects] = useState(false);
   const isSickDay = sickDayIndices?.has(day);
+  const regularSubjects = subjects.filter(s => s !== '__allday__');
   const hasSubjects = subjects.length > 0;
+  const doneCount = regularSubjects.filter(s => dayData[s]?.done).length;
 
   return (
     <div className="planner">
@@ -127,26 +129,23 @@ export default function PlannerLayout({
         )}
 
         <main className="planner-main">
+          {/* Desktop-only day header */}
+          <div className="planner-day-header">
+            <div>
+              <h2 className="planner-day-title">{DAY_NAMES[day]}, {weekDates[day]?.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</h2>
+              <p className="planner-day-subtitle">{regularSubjects.length} subjects · {doneCount} completed</p>
+            </div>
+            <button className="planner-day-add-btn" onClick={() => setShowAddSubject(true)}>+ Add</button>
+          </div>
+
           {/* Empty state — shown when day has no subjects */}
           {!subjectsLoading && !hasSubjects && (
             <div className="planner-empty">
               <div className="planner-empty-icon">📋</div>
               <p className="planner-empty-title">Nothing planned yet</p>
-              <p className="planner-empty-subtitle">
-                Import a PDF or add a subject to get started
-              </p>
-              <button
-                className="planner-empty-import-btn"
-                onClick={() => setShowUpload(true)}
-              >
-                📄 Import PDF
-              </button>
-              <button
-                className="planner-empty-add-btn"
-                onClick={() => setShowAddSubject(true)}
-              >
-                + Add Subject
-              </button>
+              <p className="planner-empty-subtitle">Import a PDF or add a subject to get started</p>
+              <button className="planner-empty-import-btn" onClick={() => setShowUpload(true)}>📄 Import PDF</button>
+              <button className="planner-empty-add-btn" onClick={() => setShowAddSubject(true)}>+ Add Subject</button>
             </div>
           )}
 
@@ -156,7 +155,7 @@ export default function PlannerLayout({
             {showSubjects ? 'Hide subjects ↑' : 'Show subjects ↓'}</button>}
           {(!hasAllDay || showSubjects) && (
             <div className="planner-subjects">
-              {subjects.filter(s => s !== '__allday__').map(subject => (
+              {regularSubjects.map(subject => (
                 <SubjectCard
                   key={subject}
                   subject={subject}
