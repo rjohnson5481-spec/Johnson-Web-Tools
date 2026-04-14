@@ -1,0 +1,120 @@
+.log-page {
+  min-height: 100vh;
+  background: var(--bg-base);
+}
+
+.log-body {
+  margin-top: 56px;
+  padding: 20px 16px;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.log-student-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.log-avatar {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.log-student-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.log-student-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.log-student-balance {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.log-empty {
+  text-align: center;
+  padding: 60px 0;
+}
+
+.log-empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.log-empty-text {
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.log-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.log-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.log-entry-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.log-entry-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.log-entry-note {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.log-entry-note--empty {
+  color: var(--text-muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.log-entry-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.log-entry-pts {
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.log-entry-pts--award  { color: #2a9d4a; }
+.log-entry-pts--deduct { color: #c97c2a; }
+.log-entry-pts--spend  { color: var(--red); }

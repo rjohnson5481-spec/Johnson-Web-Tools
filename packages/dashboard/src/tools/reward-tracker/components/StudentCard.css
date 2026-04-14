@@ -1,0 +1,115 @@
+.sc-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+/* Gold accent bar */
+.sc-gold-bar {
+  height: 3px;
+  background: linear-gradient(90deg, #c9a84c, #e8c97a);
+}
+
+.sc-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px 0;
+}
+
+.sc-avatar {
+  font-size: 40px;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sc-name-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sc-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.sc-cash {
+  font-size: 13px;
+  font-weight: 500;
+  color: #2a9d4a;
+}
+
+/* Points */
+.sc-points-block {
+  text-align: center;
+  padding: 18px 20px 4px;
+}
+
+.sc-points {
+  display: block;
+  font-size: 56px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.sc-points-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* Action buttons 2×2 grid */
+.sc-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 16px 20px 20px;
+}
+
+.sc-btn {
+  padding: 11px 0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.sc-btn:hover { opacity: 0.85; }
+
+.sc-btn--award {
+  background: #22252e;
+  color: #e8c97a;
+  border: none;
+}
+
+.sc-btn--deduct {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.sc-btn--spend {
+  background: var(--red-lt);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.sc-btn--log {
+  background: var(--gold-pale);
+  color: var(--gold);
+  border: 1px solid var(--gold);
+}
