@@ -34,14 +34,18 @@
   line-height: 1.45;
 }
 
+/* ── Regular subject card: [checkbox | content | flag] ── */
 .subject-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 13px;
-  padding: 12px 14px 14px;
+  padding: 12px 14px;
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(34, 37, 46, .07), 0 2px 8px rgba(34, 37, 46, .04);
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, background 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, background 0.2s, opacity 0.2s;
 }
 
 .subject-card:hover {
@@ -50,9 +54,10 @@
   transform: translateY(-1px);
 }
 
-/* Done state: faint warm tint + strikethrough */
+/* Done state: dimmed background + reduced opacity */
 .subject-card--done {
-  background: #fdfcf8;
+  background: var(--bg-surface);
+  opacity: 0.75;
 }
 
 .subject-card--done .subject-card-lesson {
@@ -66,12 +71,54 @@
   background: #fdf8f7;
 }
 
-/* ── Top row: subject label + indicators ── */
+[data-mode="dark"] .subject-card--flag {
+  background: rgba(224, 82, 82, 0.08);
+}
+
+/* ── Large done checkbox on the left ── */
+.subject-card-checkbox {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.subject-card-checkbox:hover {
+  border-color: var(--gold);
+}
+
+.subject-card-checkbox--done {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.subject-card-checkbox--done:hover {
+  background: var(--gold-light);
+  border-color: var(--gold-light);
+}
+
+/* ── Card content column (flex 1) ── */
+.subject-card-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Top row: subject name + note dot */
 .subject-card-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
+  gap: 8px;
 }
 
 .subject-card-name {
@@ -79,14 +126,7 @@
   font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--ink);
-}
-
-/* Wrapper for note dot + flag button */
-.subject-card-indicators {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  color: var(--text-primary);
 }
 
 /* 8×8 note indicator dot */
@@ -103,28 +143,6 @@
 .subject-card-note-dot--active {
   background: var(--gold);
   border-color: var(--gold);
-}
-
-.subject-card-flag-btn {
-  background: none;
-  border: 1px solid transparent;
-  font-size: 15px;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 2px 5px;
-  line-height: 1;
-  border-radius: 4px;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.subject-card-flag-btn--active {
-  background: var(--red-lt);
-  border-color: #f5cfc6;
-  color: var(--red);
-}
-
-.subject-card-flag-btn:hover:not(.subject-card-flag-btn--active) {
-  color: var(--text-secondary);
 }
 
 /* ── Lesson ── */
@@ -145,6 +163,42 @@
   color: var(--text-muted);
 }
 
-/* ── Footer: hint text (shown only when not done) ── */
-.subject-card-footer { margin-top: 8px; }
-.subject-card-hint { font-size: 11px; font-weight: 300; color: var(--text-muted); }
+.subject-card-hint {
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── Flag button on the right ── */
+.subject-card-flag-btn {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 15px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.subject-card-flag-btn--active {
+  background: var(--red-lt);
+  border-color: #f5cfc6;
+  color: var(--red);
+}
+
+.subject-card-flag-btn:hover:not(.subject-card-flag-btn--active) {
+  color: var(--text-secondary);
+}
+
+[data-mode="dark"] .subject-card-flag-btn--active {
+  border-color: rgba(224, 82, 82, 0.4);
+}
