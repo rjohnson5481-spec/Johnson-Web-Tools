@@ -23,8 +23,13 @@ export function subscribeDaySubjects(uid, weekId, student, dayIndex, cb) {
 // data shape: { lesson: string, note: string, done: boolean, flag: boolean }
 // Creating a cell document IS adding that subject to that day.
 export function updateCell(uid, weekId, student, subject, dayIndex, data) {
-  const ref = doc(db, cellPath(uid, weekId, student, dayIndex, subject));
-  return setDoc(ref, data, { merge: true });
+  const path = cellPath(uid, weekId, student, dayIndex, subject);
+  console.log('[updateCell] uid:', uid, 'weekId:', weekId, 'student:', student,
+    'dayIndex:', dayIndex, 'subject:', subject, 'data:', JSON.stringify(data), 'path:', path);
+  const ref = doc(db, path);
+  const p = setDoc(ref, data, { merge: true });
+  p.catch(err => console.error('[updateCell] Firestore FAILED:', err.code, err.message));
+  return p;
 }
 
 // Reads one day cell. Returns data object or null if the document doesn't exist.
