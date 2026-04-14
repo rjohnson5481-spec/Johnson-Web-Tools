@@ -12,10 +12,10 @@ const SEEDS = { Orion: 50, Malachi: 60 };
 
 // Path helpers
 function studentDocPath(uid, student) {
-  return `users/${uid}/rewardTracker/students/${student}`;
+  return `users/${uid}/rewardTracker/${student}`;
 }
 function logColPath(uid, student) {
-  return `users/${uid}/rewardTracker/students/${student}/log`;
+  return `users/${uid}/rewardTracker/${student}/log`;
 }
 
 // Seeds initial points for each student if the doc does not already exist.

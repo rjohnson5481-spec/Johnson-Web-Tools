@@ -134,10 +134,10 @@ sickDays collection: one document per calendar date that was marked sick.
 Filtered client-side by current week dates — collection is small (~360 docs/year max).
 
 ## Reward Tracker — Firestore data model
-/users/{uid}/rewardTracker/students/{studentName}
+/users/{uid}/rewardTracker/{studentName}
   → { points: number }
 
-/users/{uid}/rewardTracker/students/{studentName}/log/{docId}
+/users/{uid}/rewardTracker/{studentName}/log/{docId}
   → { type: 'award' | 'deduct' | 'spend', points: number, note: string, createdAt: serverTimestamp }
 
 Initial seed: Orion 50 pts, Malachi 60 pts. Seeding guarded by localStorage flag
