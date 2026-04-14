@@ -1,99 +1,144 @@
-# HANDOFF — Session 15 (morning summary + desktop sidebar)
+# HANDOFF — Session 16 (SubjectCard polish + batch add)
 
 ## What was completed this session
 
-### Fix 1 — Dead tool card links wired to shell tabs
-- `ToolCard.jsx`: added `onClick` prop — renders `<button>` instead of `<a>` when provided
-- `ToolCard.css`: added `button.tool-card-link` reset styles
-- `HomeTab.jsx`: accepts `onTabChange` prop; Planner + Rewards cards call `onTabChange`
-- `App.jsx`: passes `onTabChange={setActiveTab}` to `<HomeTab>`
+### Fix 1 — Large done checkbox on SubjectCard
+- `SubjectCard.jsx`: restructured to three-column flex layout — [checkbox | content | flag]
+  - Destructured `onToggleDone` prop (was listed in comment but unused)
+  - Added a 36px × 36px checkbox button on the LEFT with `onClick` calling
+    `e.stopPropagation()` before `onToggleDone()`
+  - When `done`, renders an inline SVG checkmark (`polyline 20 6 9 17 4 12`,
+    `stroke-width: 3`, white stroke)
+  - Flag button moved to the RIGHT, sized 28×28, also stops propagation
+  - Note-dot stays inline next to the subject name in the content column
+  - `allday` rendering branch untouched (full-width #22252e banner with edit on tap)
+- `SubjectCard.css`:
+  - `.subject-card` now `display: flex; align-items: flex-start; gap: 12px`
+  - `.subject-card-checkbox` — 36×36, border-radius 10px, 2px border in light
+    mode; gold background + border when done
+  - `.subject-card-checkbox:hover` → border becomes gold
+  - `.subject-card--done` now uses `var(--bg-surface)` + `opacity: 0.75`
+    (replaced the old `#fdfcf8` cream tint)
+  - `.subject-card-content` flex 1, min-width 0
+  - `.subject-card-flag-btn` resized to 28×28, 7px radius
+  - Subject name color switched from `var(--ink)` to `var(--text-primary)` —
+    fixes the dark-mode contrast issue (Fix 2 overlap)
+  - Dark-mode override for `.subject-card--flag` background (rgba red tint)
 
-### Fix 2 — Morning summary dashboard
-- New hook `packages/dashboard/src/hooks/useHomeSummary.js`:
-  - Live onSnapshot subscriptions to: student settings list, today's subjects for
-    active student, Orion's points, Malachi's points
-  - Returns: `{ students, activeStudent, setActiveStudent, subjects, dayIndex, weekId, points }`
-- `HomeTab.jsx`: complete rewrite — today's date, student selector pills, 3 summary cards
-  (lessons done/total, Orion pts + cash value, Malachi pts + cash value), tappable lesson
-  list (opens planner tab), quick action buttons (Open Planner, Award Points)
-- `HomeTab.css`: complete rewrite — `.home-content`, `.home-summary-row`, `.home-summary-card`,
-  `.home-lesson-list`, `.home-actions`
+### Fix 2 — Dark mode contrast on labels
+- `SubjectCard.css`: `.subject-card-name` uses `var(--text-primary)` (done in Fix 1
+  since both fixes touch the same file)
+- `EditSheet.css`:
+  - `.edit-sheet-label` — `var(--text-muted)` → `var(--text-secondary)`
+  - New `[data-mode="dark"] .edit-sheet-toggle--done` rule: text color becomes
+    `var(--gold-light)` (the hardcoded `#8a6a20` was unreadable on dark gold-pale)
+- `AddSubjectSheet.css`:
+  - `.add-sheet-section-label` — `var(--text-muted)` → `var(--text-secondary)`
 
-### Fix 3 — Dark mode toggle + sign-out on HomeTab
-- Added `<header className="home-header">` to HomeTab:
-  - Left: logo + "IRON & LIGHT / JOHNSON ACADEMY" (LIGHT in `#e8c97a`)
-  - Right: dark mode toggle (🌙/☀️) using `useDarkMode` hook, sign-out (🚪) using `signOut`
-    from `@homeschool/shared`
-  - `color-mode` localStorage key — stays in sync with planner and reward tracker
-  - Hidden on desktop via `@media (min-width: 768px)` (sidebar provides branding there)
-
-### Fix 4 — CLAUDE.md netlify.toml section
-- Removed `/planner/*` and `/reward-tracker/*` redirect docs (both retired session 14)
-- Updated to reflect current 3-redirect config (`/api/*`, `/te-extractor/*`, `/*`)
-- Added note that packages/planner and packages/reward-tracker are retired
-
-### Feature — Desktop left sidebar
-- `BottomNav.jsx`: added brand section (logo + name + tagline, desktop-only) and sign-out
-  footer with version string (desktop-only). Both hidden on mobile via CSS.
-- `BottomNav.css`: `@media (min-width: 768px)` — nav becomes 200px fixed left sidebar,
-  full viewport height, brand at top, tabs stacked vertically (icon + label row),
-  sign-out + `v0.21.2` at bottom
-- `App.css`: desktop `.shell-content` gets `margin-left: 200px; padding-bottom: 0`
-- `App.css`: `.shell-content .day-strip` overrides revert the planner's DayStrip from its
-  desktop fixed-sidebar mode to sticky/horizontal — prevents two 200px sidebars at `left: 0`
-- `App.css`: `.shell-content .planner-action-bar` corrected to `left: 200px; bottom: 0`
-  (shell nav is now sidebar, no bottom bar to clear)
+### Fix 3 — Batch add subject
+- `AddSubjectSheet.jsx` (full rewrite, ~175 lines):
+  - New props: `weekDates`, `currentDayIndex`, `currentStudent`, `students`
+  - `onAdd(subject, cells)` — cells array is `[{ dayIndex, student }, …]`
+  - State: `subject` (single input), `selectedDays` (Set<number>),
+    `selectedStudents` (Set<string>)
+  - Defaults: `selectedDays = new Set([currentDayIndex])`,
+    `selectedStudents = new Set([currentStudent])`
+  - Subject input is now a single full-width field; preset pills tap to populate
+    it (removed the old side-by-side custom input + "Add" button)
+  - Preset pill becomes visibly active when `trimmed === presetName`
+  - "ADD TO DAYS" row with 5 day pills showing DAY_SHORT + date number,
+    plus "Select all" and "Clear" link buttons
+  - "ADD FOR STUDENTS" row with per-student pills — emoji from
+    `STUDENT_EMOJI = { Orion: '😎', Malachi: '🐼' }`, default `🧒` for
+    any other student (reads list from `students` prop, not hardcoded)
+  - Summary line shows when subject + days + students are selected:
+    "Adding [Subject] to [N] days for [student description]"
+  - Confirm button: "Add [N] cells →" where N = days × students;
+    disabled when no subject or zero cells
+  - All Day Event branch unchanged — still renders the inline form the same way
+- `AddSubjectSheet.css`:
+  - `.add-sheet-preset-btn--active` — #22252e bg, #e8c97a text (spec colors)
+  - `.add-sheet-row-header` flex layout for "label + Select all / Clear" line
+  - `.add-sheet-link-btn` — transparent link-style buttons in gold
+  - `.add-sheet-day-pills` — flex row of 5 pills, each showing MON/TUE/… + date
+  - `.add-sheet-day-pill` / `.add-sheet-day-pill--active` — #22252e / #e8c97a selected
+  - `.add-sheet-student-pills` + `.add-sheet-student-pill` — rounded pills with emoji
+  - `.add-sheet-summary` — 13px secondary text; subject wrapped in `<strong>`
+  - `.add-sheet-confirm-btn` — full-width ink button with gold-light text
+- `PlannerLayout.jsx`:
+  - Dropped `addSubject` from destructured props (no longer used;
+    `App.jsx` still passes it — it's just ignored)
+  - New `handleBatchAddSubject(subject, cells)` handler — `Promise.all` of
+    `importCell(weekId, cellStudent, subject, dayIndex, { lesson: '', note: '',
+    done: false, flag: false }, false)` for each cell. `overwrite: false` so
+    existing cells are preserved (skip-if-exists via `readCell` check in
+    `useSubjects.importCell`).
+  - `<AddSubjectSheet>` now receives `weekDates`, `currentDayIndex={day}`,
+    `currentStudent={student}`, `students`, and `onAdd={handleBatchAddSubject}`
+  - All Day Event path (`onAddAllDay`) still uses `updateCell` directly —
+    untouched. `onEditAllDay` still sets `editTarget`.
+- Build verified clean (dashboard ~638 KB, te-extractor 20 KB).
+  VITE env warnings on te-extractor are expected (no local env file — Netlify fills).
 
 ---
 
 ## What is currently incomplete / pending
 
-1. **Verify desktop layout in browser** — not tested; confirm:
-   - Sidebar visible at 200px left, content area shifted right
-   - Planner DayStrip shows horizontal (not a sidebar) inside the shell
-   - Planner action bar at correct position (bottom: 0, left: 200px)
-   - HomeTab header hidden on desktop
+1. **Browser smoke test** — none of the three fixes have been exercised in
+   a live browser. Walk through:
+   - Tap the new checkbox → cell done toggles, card dims, strikethrough lesson,
+     card click still opens EditSheet from non-checkbox/non-flag areas.
+   - Flag button still toggles independently.
+   - Dark mode: subject names readable on cards, sheet labels readable,
+     done toggle inside EditSheet readable.
+   - AddSubjectSheet: pre-selects current day + student. Multi-select works.
+     "Select all" fills all 5 days. Confirm shows correct N. Existing cells
+     on other days are preserved when batch-adding a subject they already have.
+     All Day Event flow unchanged.
 
-2. **Import merge bug** — `calm-whistling-clock.md` plan at `/root/.claude/plans/`
-   - Rob reported: second PDF import with "Replace existing schedule" OFF still overwrites data
-   - Next step: add console.logs to `UploadSheet.jsx`, `PlannerLayout.jsx`, `useSubjects.js`
-     in `packages/dashboard/src/tools/planner/` (the shell copy — NOT any retired package)
-   - Confirm still reproducible, then fix
+2. **Import merge bug** (inherited from session 15) —
+   `calm-whistling-clock.md` plan at `/root/.claude/plans/`. Rob reported
+   second PDF import with "Replace existing schedule" OFF still overwrites
+   data. Not touched this session.
 
-3. **BottomNav.css minor bug** — `.bn-signout` has `font-family` declared twice
-   (once `inherit`, once emoji stack). Harmless, fix next session.
+3. **BottomNav.css minor bug** (inherited) — `.bn-signout` has `font-family`
+   declared twice. Harmless.
 
-4. **Chunk size** — JS bundle ~635 KB. Known/expected. Address with dynamic imports
-   if load time is a concern.
+4. **Desktop layout verification** (inherited) — session 15 desktop sidebar
+   work not yet tested in browser.
 
-5. **CLAUDE.md needs updating** — Add HomeTab architecture, desktop sidebar decisions,
-   and update tools status for dashboard.
+5. **Chunk size** — JS bundle ~638 KB (grew ~3 KB this session).
+   Known/expected.
+
+6. **CLAUDE.md updates** — needs:
+   - SubjectCard layout note (three-column: checkbox | content | flag)
+   - AddSubjectSheet batch-add architecture (cells array, skip-if-exists via
+     `importCell` overwrite=false)
+   - Dark-mode contrast rule: new labels/section headings should use
+     `var(--text-secondary)` (not `var(--text-muted)`), subject-like labels
+     should use `var(--text-primary)` (not `var(--ink)`, which is too dark
+     on dark mode)
 
 ---
 
 ## What the next session should start with
 
 1. Read CLAUDE.md + HANDOFF.md (standard)
-2. Test desktop layout in browser — confirm sidebar + planner layout
-3. Update CLAUDE.md with session 15 decisions (HomeTab arch, desktop sidebar, tools status)
-4. If import merge bug confirmed by Rob: follow `calm-whistling-clock.md` plan
+2. Browser smoke test all three fixes — record any regressions
+3. Update CLAUDE.md with session 16 decisions (SubjectCard layout,
+   batch-add model, dark-mode token rule)
+4. If import merge bug still repros: follow `calm-whistling-clock.md` plan
 
 ---
 
 ## Key file locations (updated this session)
 
 ```
-packages/dashboard/src/
-├── App.css                       # desktop: margin-left 200px + planner DayStrip overrides
-├── App.jsx                       # passes onTabChange to HomeTab
-├── components/
-│   ├── BottomNav.jsx             # brand + tabs + sign-out footer (desktop sidebar)
-│   ├── BottomNav.css             # desktop sidebar media query
-│   ├── ToolCard.jsx              # onClick prop support added
-│   └── ToolCard.css              # button.tool-card-link reset added
-├── hooks/
-│   └── useHomeSummary.js         # NEW — live Firestore for home tab
-└── tabs/
-    ├── HomeTab.jsx               # morning summary + brand header
-    └── HomeTab.css               # morning summary styles
+packages/dashboard/src/tools/planner/components/
+├── SubjectCard.jsx                # three-column layout, large checkbox
+├── SubjectCard.css                # checkbox + done/flag styles, dark-mode overrides
+├── EditSheet.css                  # label → text-secondary; dark toggle-done → gold-light
+├── AddSubjectSheet.jsx            # full rewrite — batch add with day/student selectors
+├── AddSubjectSheet.css            # pills, link buttons, summary, confirm
+└── PlannerLayout.jsx              # handleBatchAddSubject; new props to AddSubjectSheet
 ```
