@@ -1,40 +1,98 @@
-// Home tab — tool cards wired to shell tab switching.
-// Planner + Rewards switch tabs in-shell; TE Extractor navigates externally.
-import ToolCard from '../components/ToolCard';
+// HomeTab — morning summary dashboard.
+// Shows today's date, lesson progress, point balances, and quick actions.
+// Header with dark mode + sign-out is added in Fix 3 (above .home-content).
+import { useAuth } from '@homeschool/shared';
+import { useHomeSummary } from '../hooks/useHomeSummary.js';
 import './HomeTab.css';
 
+const DAY_NAMES   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function cashValue(pts) {
+  return (Math.floor(pts / 15 * 100) / 100).toFixed(2);
+}
+
 export default function HomeTab({ onTabChange }) {
+  const { user } = useAuth();
+  const { students, activeStudent, setActiveStudent, subjects, points } = useHomeSummary(user?.uid);
+
+  const today      = new Date();
+  const dateLabel  = `${DAY_NAMES[today.getDay()]}, ${MONTH_NAMES[today.getMonth()]} ${today.getDate()}`;
+  const subjectKeys  = Object.keys(subjects).filter(s => s !== 'allday');
+  const totalLessons = subjectKeys.length;
+  const doneLessons  = subjectKeys.filter(s => subjects[s].done).length;
+
   return (
     <div className="home-tab">
-      <p className="home-section-label">Tools</p>
-      <div className="home-tool-grid">
-        <ToolCard
-          name="Weekly Planner"
-          description="Plan and track weekly lessons for Orion and Malachi."
-          icon="PL"
-          available
-          onClick={() => onTabChange('planner')}
-        />
-        <ToolCard
-          name="Reward Tracker"
-          description="Earn and redeem points for good work and character."
-          icon="RT"
-          available
-          onClick={() => onTabChange('rewards')}
-        />
-        <ToolCard
-          name="TE Extractor"
-          description="Extract questions and vocabulary from BJU Press Teacher Edition PDFs."
-          icon="TE"
-          href="/te-extractor/"
-          available
-        />
-        <ToolCard
-          name="Academic Records"
-          description="Transcripts, grades, and attendance — coming soon."
-          icon="AR"
-          available={false}
-        />
+      <div className="home-content">
+
+        <div className="home-date-row">
+          <span className="home-date">{dateLabel}</span>
+          <span className="home-greeting">Good morning</span>
+        </div>
+
+        {students.length > 1 && (
+          <div className="home-student-row">
+            {students.map(s => (
+              <button
+                key={s}
+                className={`home-student-pill${s === activeStudent ? ' home-student-pill--active' : ''}`}
+                onClick={() => setActiveStudent(s)}
+              >{s}</button>
+            ))}
+          </div>
+        )}
+
+        <div className="home-summary-row">
+          <div className="home-summary-card">
+            <div className="home-summary-label">Today's Lessons</div>
+            <div className="home-summary-value">{doneLessons}/{totalLessons}</div>
+            <div className="home-summary-sub">
+              {totalLessons === 0 ? 'No lessons' : `${totalLessons - doneLessons} left`}
+            </div>
+          </div>
+          {['Orion', 'Malachi'].map(name => (
+            <div key={name} className="home-summary-card">
+              <div className="home-summary-label">{name}</div>
+              <div className="home-summary-value">
+                {points[name] !== null ? points[name] : '…'}
+              </div>
+              <div className="home-summary-sub">
+                {points[name] !== null ? `$${cashValue(points[name])}` : 'pts'}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {totalLessons > 0 && (
+          <div className="home-section">
+            <p className="home-section-label">Today — {activeStudent}</p>
+            <div className="home-lesson-list">
+              {subjectKeys.map(subject => (
+                <button key={subject} className="home-lesson-row" onClick={() => onTabChange('planner')}>
+                  <span className={`home-lesson-dot${subjects[subject].done ? ' home-lesson-dot--done' : ''}`} />
+                  <div className="home-lesson-body">
+                    <span className="home-lesson-subject">{subject}</span>
+                    {subjects[subject].lesson && (
+                      <span className="home-lesson-text">{subjects[subject].lesson}</span>
+                    )}
+                  </div>
+                  <span className="home-lesson-chevron">›</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="home-actions">
+          <button className="home-action-btn home-action-btn--primary" onClick={() => onTabChange('planner')}>
+            📅 Open Planner
+          </button>
+          <button className="home-action-btn home-action-btn--ghost" onClick={() => onTabChange('rewards')}>
+            🏅 Award Points
+          </button>
+        </div>
+
       </div>
     </div>
   );

@@ -1,7 +1,114 @@
+/* ── Outer wrapper — no padding; header (Fix 3) will be full-width ── */
 .home-tab {
-  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Inner content — max-width + padding ── */
+.home-content {
   max-width: 480px;
+  width: 100%;
   margin: 0 auto;
+  padding: 20px 16px 24px;
+}
+
+/* ── Date + greeting ── */
+.home-date-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.home-date {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.home-greeting {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* ── Student selector ── */
+.home-student-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.home-student-pill {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.home-student-pill--active {
+  background: var(--gold-pale);
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* ── Summary cards row ── */
+.home-summary-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.home-summary-card {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-align: center;
+  min-width: 0;
+  box-shadow: 0 1px 4px rgba(34, 37, 46, 0.06);
+}
+
+.home-summary-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-summary-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.home-summary-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ── Lesson list section ── */
+.home-section {
+  margin-bottom: 20px;
 }
 
 .home-section-label {
@@ -10,11 +117,108 @@
   letter-spacing: 0.10em;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin: 0 0 12px;
+  margin: 0 0 10px;
 }
 
-.home-tool-grid {
+.home-lesson-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 2px;
+}
+
+.home-lesson-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  transition: background 0.15s;
+}
+
+.home-lesson-row:hover { background: var(--bg-card-hover); }
+
+.home-lesson-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.home-lesson-dot--done { background: var(--gold); }
+
+.home-lesson-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-lesson-subject {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.home-lesson-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 300;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-lesson-chevron {
+  font-size: 18px;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+/* ── Quick action buttons ── */
+.home-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.home-action-btn {
+  width: 100%;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.home-action-btn--primary {
+  background: var(--ink);
+  color: var(--gold-light);
+  border: none;
+}
+
+.home-action-btn--primary:hover { background: var(--ink-light); }
+
+.home-action-btn--ghost {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.home-action-btn--ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Desktop: header hidden (sidebar provides branding) */
+@media (min-width: 768px) {
+  .home-header { display: none; }
 }
