@@ -306,10 +306,72 @@ Before closing, do both of these:
 ---
 ## Tools status
 - shared         → ✅ Complete — tokens, fonts, Firebase init, auth hook
-- dashboard      → ✅ Complete — deployed to Netlify, Google auth working, PWA ready
+- dashboard      → 🔄 In progress — promoted to app shell with bottom nav; tool migration next session
 - planner        → ✅ Complete — merged to main, deployed to /planner
 - te-extractor   → ✅ Complete — vanilla HTML/CSS/JS, deployed to /te-extractor
 - reward-tracker → ✅ Built — deployed to /reward-tracker, v0.21.2
+
+## Dashboard — app shell architecture
+The dashboard is being promoted from a tool launcher to a unified app shell.
+Current state: shell foundation complete, tools not yet migrated.
+
+### Shell layout
+- `App.jsx` owns auth + tab state (`activeTab` string, default `'home'`)
+- After auth: renders `<div class="app-shell">` → `<div class="shell-content">` + `<BottomNav>`
+- `.app-shell`: min-height 100vh, flex column
+- `.shell-content`: flex 1, padding-bottom calc(56px + safe-area) to clear nav bar
+- `<BottomNav>` is `position: fixed; bottom: 0` — always visible, z-index 100
+
+### Bottom nav tabs (in order)
+1. `home` → HomeTab (tool card grid for now; morning summary next session)
+2. `planner` → PlannerTab (placeholder; full planner migrates next session)
+3. `rewards` → RewardsTab (placeholder; reward tracker migrates next session)
+4. `te` → external: `window.location.href = '/te-extractor/'` (never migrates — vanilla JS tool)
+5. `academic` → AcademicRecordsTab (coming soon placeholder)
+
+### File structure — dashboard shell
+packages/dashboard/src/
+├── main.jsx                 # app entry, seeds color-mode, mounts App
+├── App.jsx                  # auth + tab state + shell layout
+├── App.css                  # global resets + .app-shell + .shell-content
+├── components/
+│   ├── BottomNav.jsx        # 5-tab persistent nav, always #22252e background
+│   ├── BottomNav.css        # nav styles
+│   ├── Header.jsx           # old dashboard header — kept but currently unused
+│   ├── Header.css           # header styles
+│   ├── Dashboard.jsx        # old tool card wrapper — kept but currently unused
+│   ├── Dashboard.css        # old styles — kept but currently unused
+│   ├── ToolCard.jsx         # tool card — still used by HomeTab
+│   ├── ToolCard.css         # card styles
+│   ├── SignIn.jsx           # Google sign-in screen
+│   └── SignIn.css
+├── tabs/
+│   ├── HomeTab.jsx          # tool card grid (header removed)
+│   ├── HomeTab.css          # home tab styles
+│   ├── PlannerTab.jsx       # migration-in-progress placeholder
+│   ├── RewardsTab.jsx       # migration-in-progress placeholder
+│   ├── AcademicRecordsTab.jsx # coming-soon placeholder
+│   └── PlaceholderTab.css   # shared styles for the three placeholder tabs
+├── hooks/
+│   └── useDarkMode.js       # dark mode toggle (color-mode localStorage key)
+└── constants/
+    ├── tools.js             # TOOLS array — still drives HomeTab tool cards
+    └── school.js            # school name constants
+
+### Bottom nav design rules
+- Background: always `#22252e` — never changes in dark mode (same as all headers)
+- Height: 56px fixed
+- Active tab: icon + label `#e8c97a`, icon pill `rgba(201,168,76,0.15)` background
+- Inactive tab: `rgba(255,255,255,0.45)`
+- Icon font size: 18px; label font size: 9px
+- No border-top (dark background is anchor enough)
+- Safe area inset bottom for iPhone home bar
+
+### Migration plan (next session)
+- Planner: embed planner app code inside PlannerTab — remove /planner/ separate build
+- Reward Tracker: embed inside RewardsTab — remove /reward-tracker/ separate build
+- HomeTab: replace tool card grid with morning summary dashboard
+- TE Extractor stays external — vanilla JS, cannot be migrated into React shell
 
 ## Phase tracking — planner
 Phase 1 — COMPLETE:
