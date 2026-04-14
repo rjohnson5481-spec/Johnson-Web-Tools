@@ -51,7 +51,6 @@ All package.json entries use exact versions — no ^ or ~ prefixes.
 
 ## netlify.toml
 [build]
-  base = "packages/dashboard"
   command = "npm install && npm run build"
   publish = "dist"
 
@@ -61,8 +60,8 @@ All package.json entries use exact versions — no ^ or ~ prefixes.
   status = 200
 
 [[redirects]]
-  from = "/planner/*"
-  to = "/planner/index.html"
+  from = "/te-extractor/*"
+  to = "/te-extractor/index.html"
   status = 200
 
 [[redirects]]
@@ -70,10 +69,12 @@ All package.json entries use exact versions — no ^ or ~ prefixes.
   to = "/index.html"
   status = 200
 
-Order is required: /api/* and /planner/* must precede /* or the
+Order is required: /api/* and /te-extractor/* must precede /* or the
 dashboard catch-all swallows them. Never reorder these blocks.
-base = "packages/dashboard" tells Netlify where to run the build command.
+No base directory — build runs from repo root via workspaces.
 command includes npm install so Netlify installs deps before building.
+packages/planner and packages/reward-tracker were retired (session 14) —
+their redirects are removed. Both tools now live inside the dashboard shell.
 
 ---
 
