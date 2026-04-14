@@ -100,6 +100,23 @@
   color: var(--gold);
 }
 
+/* ── Show/Hide subjects toggle (visible when All Day Event exists) ── */
+.planner-show-subjects-btn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 8px 0 4px;
+  text-align: center;
+  transition: color 0.15s;
+}
+
+.planner-show-subjects-btn:hover { color: var(--gold-light); }
+
 /* ── Dashed add subject button ── */
 .planner-add-btn {
   width: 100%;

@@ -1,5 +1,5 @@
 // Full page layout — receives all state and handlers as props from App.jsx.
-// No hook calls here. If this file grows, extract the sheet handlers first.
+import { useState } from 'react';
 import Header          from './Header.jsx';
 import DayStrip        from './DayStrip.jsx';
 import SubjectCard     from './SubjectCard.jsx';
@@ -91,6 +91,8 @@ export default function PlannerLayout({
     pdfImport.addLog(`Navigation: jumping to week of ${parsedData.weekId}, student=${parsedData.student}`);
   }
 
+  const allDayData = dayData['__allday__'] ?? null, hasAllDay = Boolean(allDayData);
+  const [showSubjects, setShowSubjects] = useState(false);
   const isSickDay = sickDayIndices?.has(day);
   const hasSubjects = subjects.length > 0;
 
@@ -145,20 +147,29 @@ export default function PlannerLayout({
             </div>
           )}
 
-          <div className="planner-subjects">
-            {subjects.map(subject => (
-              <SubjectCard
-                key={subject}
-                subject={subject}
-                data={dayData[subject]}
-                onEdit={() => setEditTarget({ subject, day })}
-                onToggleDone={() => handleToggleDone(subject)}
-                onToggleFlag={() => handleToggleFlag(subject)}
-              />
-            ))}
-          </div>
+          {hasAllDay && <SubjectCard subject="__allday__" data={allDayData}
+            onEdit={() => setEditTarget({ subject: '__allday__', day })}
+            onToggleDone={() => {}} onToggleFlag={() => {}} />}
+          {hasAllDay && <button className="planner-show-subjects-btn"
+            onClick={() => setShowSubjects(s => !s)}>
+            {showSubjects ? 'Hide subjects ↑' : 'Show subjects ↓'}
+          </button>}
+          {(!hasAllDay || showSubjects) && (
+            <div className="planner-subjects">
+              {subjects.filter(s => s !== '__allday__').map(subject => (
+                <SubjectCard
+                  key={subject}
+                  subject={subject}
+                  data={dayData[subject]}
+                  onEdit={() => setEditTarget({ subject, day })}
+                  onToggleDone={() => handleToggleDone(subject)}
+                  onToggleFlag={() => handleToggleFlag(subject)}
+                />
+              ))}
+            </div>
+          )}
 
-          {!subjectsLoading && hasSubjects && (
+          {!subjectsLoading && hasSubjects && (!hasAllDay || showSubjects) && (
             <button className="planner-add-btn" onClick={() => setShowAddSubject(true)}>
               + Add Subject
             </button>
