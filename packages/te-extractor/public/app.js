@@ -3,7 +3,7 @@
    app.js
    ============================================================ */
 
-const VERSION = '0.20.3';
+const VERSION = '0.20.4';
 
 const SYSTEM_PROMPT = `You are a teacher question extraction assistant for Teacher Edition PDFs at Iron & Light Johnson Academy.
 

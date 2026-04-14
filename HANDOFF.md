@@ -1,64 +1,83 @@
-# HANDOFF — Session ending 2026-04-13 (seventh session)
+# HANDOFF — Session ending 2026-04-14 (eighth session)
 
 ## What was completed this session
 
-### TE Extractor v0.20.3 — 7 UI fixes
+### TE Extractor v0.20.4 — Firebase Auth, Firestore history, progress indicator
 
-All 7 fixes applied to `packages/te-extractor/public/`. Committed and pushed to main.
+All changes on main. 4 commits + version bump + CLAUDE.md + HANDOFF.
 
-**Fix 3 — manifest.json icons (commit 91046d6)**
-- Updated `manifest.json` icons to reference `logo.png` instead of SVG placeholders
+**Step 1 — Firebase Auth CDN (commit dd4b075)**
+- Added inline `<script type="module">` in index.html that imports Firebase 10.11.0 from CDN
+- Config values use Vite's `%VITE_FIREBASE_*%` HTML replacement (replaced at build time from Netlify env vars)
+- Exposes `window.__teAuth`, `window.__teDb`, `window.__teUid`, `window.__teFirestore` on window
+- `onAuthStateChanged`: redirects to `/` if not signed in; dispatches `te-auth-ready` event when authenticated
+- Firebase script placed before app.js in HTML
 
-**Fix 1 — Mobile version + cache clear footer (commit 8ab374b)**
-- Added `.extract-footer` div at bottom of `tab-extract` panel (hidden on desktop, shown at ≤640px)
-- Contains `versionDisplayMobile` span and `clearCacheBtnMobile` button
-- JS stamps version into all three version displays; cache clear wired to shared `clearCacheAndReload()`
+**Step 2 — Firestore extraction history (commit a96965f)**
+- Session Log tab updated: subtitle changed to "saved across all sessions", loading spinner while fetching
+- `state.history` replaces `state.sessionLog` — persisted to Firestore
+- Firestore path: `/users/{uid}/teExtractor/extractions/items/{docId}`
+- Fields stored: `fileName`, `lessons`, `html`, `previewText` (200 chars, tags stripped), `createdAt` (serverTimestamp)
+- Optimistic local update first, then Firestore save (non-blocking — extraction doesn't fail if Firestore fails)
+- On auth-ready: loads history with getDocs, renders immediately
+- Per-entry actions: Open (new tab), Download, Delete (from Firestore + local state)
+- Empty state: "No extractions yet. Extract your first lesson to get started."
+- `formatDate()` added for cross-session date display
 
-**Fix 2 — Mobile icon-only nav tabs (commit 845c367)**
-- Added `<span class="nav-label">` and `<span class="nav-mobile-icon">` to all nav buttons
-- At ≤768px: labels + SVG icons hidden, emoji icons shown, tabs equal-width full-width, no scroll
-- Emoji: Extract=📄, Copy Prompt=📋, QC Prompt=✅, Session Log=🕐, Debug Log=🔍
+**Step 3 — Extraction progress indicator (commit 5663d36)**
+- Gold animated progress bar below the Extract button (shown during API call)
+- Rotating status messages every 5 seconds: "Scanning PDF…", "Extracting questions…", "Building HTML…", "Almost done…"
+- Elapsed time counter (right-aligned, bold)
+- Progress bar fills 0→90% over 90 seconds (never reaches 100% until `stopProgress()` clears it)
+- Starts at top of `runExtraction()`, stops in finally block (on success OR error)
 
-**Fix 4 — SYSTEM_PROMPT Ink & Gold colors (commit 5a15804)**
-- Lora → Lexend (weights 300-700)
-- `#2d5a3d` → `#22252e`, `#3d7a52` → `#c9a84c`, `#f3f8f5` → `#f2f0ed`
-- Lesson banners: `#22252e` bg + `#e8c97a` lesson number text
-- Vocab pills: New=`#22252e` filled white, Review=`#c9a84c` outlined
-- Print bar: `#22252e` bg
-- Also updated Copy Prompt tab text in index.html to match
+**Version + CLAUDE.md (this commit)**
+- VERSION bumped to 0.20.4 in app.js and package.json
+- CLAUDE.md updated: system prompt note updated (removed green color note, added Ink & Gold note), added Firebase CDN pattern section documenting the window globals, auth flow, and Firestore path
 
-**Fix 5 — Debug Log tab (commit c3a4d27)**
-- Added Debug Log nav item (5th tab) with 🔍 icon and badge
-- Added `tab-debug-log` panel with toolbar (Copy All, Clear), empty state, entries container
-- `addDebugLog()` and `renderDebugLog()` functions in app.js
-- Each successful extraction logs: file name, file size, lessons, API response time (s), output size, output preview (300 chars)
-- Copy All copies all entries as plain text; Clear resets the log
+---
 
-**Fix 6 + 7 + version bump (commit 24266e2)**
-- Fix 6: Credit error detection — if API error message contains "credit", shows: "API credits needed — visit console.anthropic.com to add credits and try again."
-- Fix 7: File-too-large (pageCount > 100) now shows inline error only — no trimmer panel: "This PDF is too large. Please upload a smaller section — ideally under 50 pages — and try again."
-- VERSION bumped to 0.20.3 in app.js and package.json
+## CRITICAL — must verify before first use
+
+1. **Firebase CDN script requires Netlify env vars at build time:**
+   `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`
+   These should already be set (planner uses them), but if the TE Extractor redirects to `/` on load,
+   confirm these vars are set in Netlify → Site configuration → Environment variables.
+
+2. **Firestore security rules** — confirm the rules allow reads/writes to:
+   `/users/{uid}/teExtractor/extractions/items/{docId}`
+   The planner's existing rules may not cover the `teExtractor` subcollection path.
+   Check Firebase Console → Firestore → Rules and add if needed:
+   ```
+   match /users/{uid}/teExtractor/extractions/items/{docId} {
+     allow read, write: if request.auth.uid == uid;
+   }
+   ```
 
 ---
 
 ## Current state
 
-All 7 fixes committed and pushed to main. Netlify deploying.
+Committed and pushed to main. Netlify deploying.
 
 ---
 
 ## What to do first next session
 
-1. Test the 7 fixes end-to-end on a real device:
-   - Mobile: confirm icon-only equal-width nav, extract footer visible with version + cache clear
-   - Run an extraction: confirm debug log appears with timing
-   - Check output colors: Lexend font, `#22252e` banners, `#c9a84c` accents
+1. Test the v0.20.4 changes end-to-end:
+   - Open /te-extractor/ — should redirect to / if not signed in, or load normally if signed in
+   - Session Log tab: should show loading spinner, then empty state (or existing history if prior extractions exist)
+   - Run an extraction: progress bar appears, rotates messages, shows elapsed time
+   - After extraction: Session Log shows the entry with Open/Download/Delete actions
+   - Delete an entry: confirm it disappears from Firestore and local state
+   - Reload page: confirm history re-loads from Firestore
 
-2. Planner smoke-test (still pending from previous sessions):
+2. Check Firestore security rules (see CRITICAL above)
+
+3. Planner smoke-test (still pending):
    - Import second PDF with toggle OFF — existing done/note data should be preserved
-   - Confirm the import wipe fix (8dc3b64) is working
 
-3. reward-tracker: still needs migrating into monorepo structure.
+4. reward-tracker: still needs migrating into monorepo structure.
 
 ---
 
@@ -67,5 +86,8 @@ All 7 fixes committed and pushed to main. Netlify deploying.
 - reward-tracker: not migrated
 - Academic Records: coming-soon placeholder only
 - CLAUDE.md Layout section still says "2 rows, total 80px" — should be "3 rows, total 132px"
-- The VITE_ANTHROPIC_API_KEY must be set in Netlify env vars for TE Extractor to work
-  (was noted in previous HANDOFF as a critical step Rob must do)
+- app.js is ~970+ lines — violates the 300-line hard limit; should be split into modules
+  (extraction logic, history, debug log, progress, PDF splitter are natural seams)
+- The `historyOpen()` function falls back to `state.history[0]` if id not found — this is a
+  code smell; entries without IDs (optimistic before Firestore save completes) can't be opened
+  until the docRef.id is backfilled. Consider disabling Open button until ID is confirmed.

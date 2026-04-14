@@ -317,11 +317,25 @@ Phase 2 (do not build yet):
 - Served at /te-extractor/ via netlify.toml redirect
 - Calls api.anthropic.com directly using VITE_ANTHROPIC_API_KEY — see exception note above
 - System prompt (SYSTEM_PROMPT const) lives in app.js — not in a Netlify Function
-- System prompt green colors (#2d5a3d) in OUTPUT HTML are intentional — printable doc styling
+- System prompt output uses Ink & Gold colors (#22252e banners, #c9a84c accents, #e8c97a lesson numbers)
 - Ink & Gold only applies to the extractor app UI chrome (sidebar, buttons, form)
 - Logo at packages/te-extractor/public/logo.png (copy of shared/src/assets/logo.png)
 - pdf-lib lazy-loaded from CDN for PDF splitter — do not remove or replace
 - Source migrated from github.com/rjohnson5481-spec/Claude-Test (flat repo root)
+
+## TE Extractor — Firebase CDN pattern
+Firebase Auth + Firestore are loaded via CDN ES module imports in an inline
+`<script type="module">` block in index.html (NOT npm packages or app.js imports).
+Firebase config uses Vite's `%VITE_FIREBASE_*%` HTML replacement syntax (replaced at build time).
+The inline script runs before app.js and exposes:
+  window.__teAuth      — Firebase Auth instance
+  window.__teDb        — Firestore instance
+  window.__teUid       — authenticated user's uid (set after onAuthStateChanged fires)
+  window.__teFirestore — { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, serverTimestamp }
+app.js listens for `document.dispatchEvent('te-auth-ready')` to know when uid is available.
+If not signed in, the inline script redirects to / immediately.
+Firestore path for extraction history: /users/{uid}/teExtractor/extractions/items/{docId}
+Fields: { fileName, lessons, html, previewText (200 char), createdAt (serverTimestamp) }
 
 ---
 
