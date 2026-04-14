@@ -234,6 +234,8 @@ export default function PlannerLayout({
           existingSubjects={subjects}
           presets={plannerSubjects}
           onAdd={subject => { addSubject(subject); setShowAddSubject(false); }}
+          onAddAllDay={(name, note) => { updateCell('__allday__', day, { lesson: name, note, done: false, flag: false }); setShowAddSubject(false); }}
+          onEditAllDay={() => { setShowAddSubject(false); setEditTarget({ subject: '__allday__', day }); }}
           onClose={() => setShowAddSubject(false)}
         />
       )}

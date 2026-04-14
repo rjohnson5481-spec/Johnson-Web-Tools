@@ -124,6 +124,46 @@
 .add-sheet-add-btn:hover:not(:disabled) { background: var(--ink-light); }
 .add-sheet-add-btn:disabled { opacity: 0.4; cursor: default; }
 
+/* ── All Day Event section ── */
+.add-sheet-allday {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-sheet-allday-btn {
+  width: 100%;
+  background: #22252e;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8c97a;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: opacity 0.15s;
+}
+
+.add-sheet-allday-btn:hover { opacity: 0.85; }
+
+.add-sheet-allday-btn--edit {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.add-sheet-allday-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-sheet-divider {
+  height: 1px;
+  background: var(--border);
+}
+
 /* ── Quick-add presets ── */
 .add-sheet-section-label {
   font-size: 11px;

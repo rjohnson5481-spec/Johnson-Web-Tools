@@ -2,10 +2,15 @@ import { useState } from 'react';
 import { SUBJECT_PRESETS } from '../constants/subjects.js';
 import './AddSubjectSheet.css';
 
-// Props: existingSubjects (string[]), presets (string[]|undefined), onAdd (fn), onClose (fn)
+// Props: existingSubjects (string[]), presets (string[]|undefined),
+//        onAdd (fn), onAddAllDay (name, note) (fn), onEditAllDay (fn), onClose (fn)
 // presets: per-student Firestore subjects; falls back to SUBJECT_PRESETS if absent.
-export default function AddSubjectSheet({ existingSubjects, presets, onAdd, onClose }) {
-  const [custom, setCustom] = useState('');
+export default function AddSubjectSheet({ existingSubjects, presets, onAdd, onAddAllDay, onEditAllDay, onClose }) {
+  const [custom, setCustom]           = useState('');
+  const [showAllDayForm, setShowAllDayForm] = useState(false);
+  const [allDayName, setAllDayName]   = useState('');
+  const [allDayNote, setAllDayNote]   = useState('');
+  const hasAllDay = existingSubjects.includes('__allday__');
 
   const available = (presets ?? SUBJECT_PRESETS).filter(s => !existingSubjects.includes(s));
 
@@ -17,6 +22,12 @@ export default function AddSubjectSheet({ existingSubjects, presets, onAdd, onCl
 
   function handleKeyDown(e) {
     if (e.key === 'Enter') handleCustomAdd();
+  }
+
+  function handleAddAllDay() {
+    const name = allDayName.trim();
+    if (!name) return;
+    onAddAllDay(name, allDayNote.trim());
   }
 
   return (
@@ -31,6 +42,36 @@ export default function AddSubjectSheet({ existingSubjects, presets, onAdd, onCl
         </header>
 
         <div className="add-sheet-body">
+          {/* All Day Event option */}
+          <div className="add-sheet-allday">
+            {hasAllDay ? (
+              <button className="add-sheet-allday-btn add-sheet-allday-btn--edit"
+                onClick={onEditAllDay}>
+                Edit All Day Event ›
+              </button>
+            ) : showAllDayForm ? (
+              <div className="add-sheet-allday-form">
+                <input className="add-sheet-input" type="text" value={allDayName}
+                  onChange={e => setAllDayName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleAddAllDay()}
+                  placeholder="Event name…" autoFocus />
+                <input className="add-sheet-input" type="text" value={allDayNote}
+                  onChange={e => setAllDayNote(e.target.value)}
+                  placeholder="Note (optional)…" />
+                <button className="add-sheet-add-btn" onClick={handleAddAllDay}
+                  disabled={!allDayName.trim()}>
+                  Add Event
+                </button>
+              </div>
+            ) : (
+              <button className="add-sheet-allday-btn"
+                onClick={() => setShowAllDayForm(true)}>
+                + All Day Event
+              </button>
+            )}
+          </div>
+          <div className="add-sheet-divider" />
+
           {/* Custom subject input */}
           <div className="add-sheet-custom">
             <input
@@ -40,7 +81,6 @@ export default function AddSubjectSheet({ existingSubjects, presets, onAdd, onCl
               onChange={e => setCustom(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Custom subject name…"
-              autoFocus
             />
             <button
               className="add-sheet-add-btn"
