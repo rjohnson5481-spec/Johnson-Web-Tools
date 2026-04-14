@@ -102,3 +102,34 @@ export function subscribeSickDays(uid, dateStrings, cb) {
     cb(sickDays);
   });
 }
+
+// One-time migration: moves data from known bad weekIds (Tuesday) to correct Monday weekIds.
+// Reads student list from Firestore, copies cells without overwriting good data, then deletes
+// the bad week. Uses localStorage flags to prevent re-runs across page reloads.
+const BAD_WEEK_MIGRATIONS = [
+  { bad: '2026-04-07', good: '2026-04-06' },
+  { bad: '2026-04-14', good: '2026-04-13' },
+];
+
+export async function migrateBadWeeks(uid) {
+  const settingsSnap = await getDoc(doc(db, `users/${uid}/settings/students`));
+  const students = settingsSnap.exists() ? (settingsSnap.data().names ?? []) : [];
+  if (students.length === 0) return;
+
+  for (const { bad, good } of BAD_WEEK_MIGRATIONS) {
+    const key = `weekMigration_${bad}`;
+    if (localStorage.getItem(key) === 'done') continue;
+
+    for (const student of students) {
+      for (let dayIndex = 0; dayIndex <= 4; dayIndex++) {
+        const subjects = await readDaySubjectsOnce(uid, bad, student, dayIndex);
+        for (const [subject, data] of Object.entries(subjects)) {
+          const existing = await readCell(uid, good, student, dayIndex, subject);
+          if (!existing) await updateCell(uid, good, student, subject, dayIndex, data);
+        }
+      }
+      await deleteWeek(uid, bad, student);
+    }
+    localStorage.setItem(key, 'done');
+  }
+}

@@ -10,6 +10,7 @@ import { usePdfImport }  from './hooks/usePdfImport.js';
 import { usePlannerUI }  from './hooks/usePlannerUI.js';
 import { useSettings }   from './hooks/useSettings.js';
 import PlannerLayout     from './components/PlannerLayout.jsx';
+import { migrateBadWeeks } from './firebase/planner.js';
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
@@ -23,6 +24,12 @@ export default function App() {
   } = useSubjects(user?.uid, weekId, ui.student, ui.day);
   const pdfImport = usePdfImport();
   const { students, subjectsByStudent } = useSettings(user?.uid, ui.student);
+
+  // One-time migration: move any data from bad Tuesday weekIds to correct Monday weekIds.
+  useEffect(() => {
+    if (!user?.uid) return;
+    migrateBadWeeks(user.uid).catch(() => {});
+  }, [user?.uid]);
 
   // Unauthenticated users go back to the dashboard sign-in.
   useEffect(() => {
