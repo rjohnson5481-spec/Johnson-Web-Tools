@@ -1,0 +1,296 @@
+.planner {
+  min-height: 100vh;
+}
+
+/* Pushes body content below the 132px fixed header (48px row 1 + 52px row 2 + 32px row 3). */
+.planner-body {
+  margin-top: 132px;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.planner-main {
+  padding: 16px 20px 146px; /* 90px action bar + 56px bottom nav */
+}
+
+/* ── Sick day banner ── */
+.planner-sick-banner {
+  margin: 0 14px 8px;
+  padding: 6px 14px;
+  background: var(--red-lt);
+  color: var(--red);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ── Subject card list ── */
+.planner-subjects {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* ── Empty state ── */
+.planner-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: 48px;
+  margin-bottom: 24px;
+}
+
+.planner-empty-icon {
+  font-size: 2.2rem;
+  margin-bottom: 12px;
+}
+
+.planner-empty-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.planner-empty-subtitle {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--text-muted);
+  margin-top: 6px;
+  margin-bottom: 20px;
+}
+
+.planner-empty-import-btn {
+  width: 100%;
+  background: var(--ink);
+  color: var(--gold-light);
+  border: none;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background 0.15s;
+}
+
+.planner-empty-import-btn:hover { background: var(--ink-light); }
+
+.planner-empty-add-btn {
+  width: 100%;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.planner-empty-add-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Desktop-only day title header — hidden on mobile ── */
+.planner-day-header { display: none; }
+
+/* ── Show/Hide subjects toggle + Dashed add subject button ── */
+.planner-show-subjects-btn { width: 100%; background: transparent; border: none; color: var(--gold); font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; padding: 8px 0 4px; text-align: center; transition: color 0.15s; }
+.planner-show-subjects-btn:hover { color: var(--gold-light); }
+.planner-add-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.planner-add-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Fixed bottom action bar ── */
+/* bottom: 56px lifts bar above the shell's bottom nav (56px fixed). */
+/* No env(safe-area-inset-bottom) here — the nav bar below already covers it. */
+.planner-action-bar {
+  position: fixed;
+  bottom: 56px;
+  left: 0;
+  right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 12px rgba(34, 37, 46, .07);
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  z-index: 40;
+}
+
+.planner-action-btn {
+  flex: 1;
+  border-radius: 10px;
+  padding: 11px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.planner-action-btn--sick {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.planner-action-btn--clear {
+  background: var(--red-lt);
+  color: var(--red);
+  border: 1px solid #f5cfc6;
+}
+
+.planner-action-btn--import {
+  background: var(--ink);
+  color: var(--gold-light);
+  border: none;
+}
+
+.planner-action-btn--import:hover { background: var(--ink-light); }
+
+.planner-action-btn--undo {
+  background: var(--red-lt);
+  color: var(--red);
+  border: 1px solid #f5cfc6;
+}
+
+/* ── Undo Sick Day confirmation sheet ── */
+.undo-sick-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 200; display: flex; align-items: flex-end; justify-content: center; }
+.undo-sick-sheet { width: 100%; max-width: 480px; background: var(--bg-base); border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom, 16px); animation: undo-sick-up 0.25s ease; }
+
+@keyframes undo-sick-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.undo-sick-handle {
+  width: 40px;
+  height: 5px;
+  background: #d4cfc8;
+  border-radius: 3px;
+  margin: 10px auto 0;
+}
+
+.undo-sick-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 14px;
+  background: var(--ink);
+}
+
+.undo-sick-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.undo-sick-close {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, .12);
+  border: none;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, .8);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s;
+}
+
+.undo-sick-close:hover { background: rgba(255, 255, 255, .22); color: #fff; }
+
+.undo-sick-body {
+  padding: 20px 20px 8px;
+}
+
+.undo-sick-msg {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.undo-sick-footer {
+  display: flex;
+  gap: 10px;
+  padding: 12px 20px 16px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+}
+
+.undo-sick-cancel {
+  flex: 1;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.undo-sick-cancel:hover { border-color: var(--gold); color: var(--gold); }
+
+.undo-sick-confirm {
+  flex: 2;
+  background: var(--red);
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.undo-sick-confirm:hover { opacity: 0.85; }
+
+@media (min-width: 768px) {
+  .planner-body { margin-top: 48px; margin-left: 200px; max-width: none; }
+  .planner-main { padding: 24px 28px 156px; } /* 100px action bar + 56px bottom nav */
+  .planner-subjects { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+  .planner-action-bar { left: 200px; max-width: none; margin: 0; }
+  .planner-action-btn { flex: 0 0 auto; padding: 11px 20px; }
+  .planner-action-btn--import { margin-left: auto; }
+  .planner-day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .planner-day-title { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px; line-height: 1.1; }
+  .planner-day-subtitle { font-size: 13px; color: var(--text-muted); font-weight: 400; margin: 0; }
+  .planner-day-add-btn { background: var(--ink); color: var(--gold-light); border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+  .planner-day-add-btn:hover { background: var(--ink-light); }
+}

@@ -1,0 +1,224 @@
+.sick-day-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sick-day-sheet {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-base);
+  border-radius: 20px 20px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+  animation: sick-day-up 0.25s ease;
+}
+
+@keyframes sick-day-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.sick-day-handle {
+  width: 40px;
+  height: 5px;
+  background: #d4cfc8;
+  border-radius: 3px;
+  margin: 10px auto 0;
+}
+
+/* ── Header — ink background ── */
+.sick-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 14px;
+  background: var(--ink);
+}
+
+.sick-day-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.sick-day-close {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, .12);
+  border: none;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, .8);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s;
+}
+
+.sick-day-close:hover {
+  background: rgba(255, 255, 255, .22);
+  color: #fff;
+}
+
+.sick-day-list {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px 4px;
+  max-height: 48vh;
+  overflow-y: auto;
+  gap: 0;
+}
+
+.sick-day-loading {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 16px 8px;
+  text-align: center;
+}
+
+/* ── Day group ── */
+.sick-day-group {
+  margin-bottom: 8px;
+}
+
+.sick-day-group:last-child {
+  margin-bottom: 0;
+}
+
+.sick-day-group-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold);
+  padding: 4px 4px 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sick-day-group-tag {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--red);
+  background: var(--red-lt);
+  border-radius: 4px;
+  padding: 1px 5px;
+  letter-spacing: 0.03em;
+}
+
+.sick-day-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+  width: 100%;
+}
+
+.sick-day-item:hover {
+  background: var(--bg-card-hover);
+}
+
+.sick-day-item--checked {
+  background: var(--gold-pale);
+  border-color: rgba(201, 168, 76, 0.25);
+}
+
+.sick-day-check {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+  flex-shrink: 0;
+  background: var(--bg-card);
+  transition: border-color 0.15s;
+}
+
+.sick-day-item--checked .sick-day-check {
+  border-color: var(--gold);
+  background: var(--gold-pale);
+}
+
+.sick-day-subject {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.sick-day-lesson {
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+
+.sick-day-friday-warning {
+  font-size: 12px;
+  color: var(--red);
+  padding: 6px 20px 0;
+}
+
+/* ── Footer ── */
+.sick-day-footer {
+  display: flex;
+  gap: 10px;
+  padding: 12px 20px 16px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+}
+
+.sick-day-cancel {
+  flex: 1;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.sick-day-cancel:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.sick-day-confirm {
+  flex: 2;
+  background: var(--ink);
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gold-light);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.sick-day-confirm:hover:not(:disabled) { background: var(--ink-light); }
+.sick-day-confirm:disabled { opacity: 0.4; cursor: default; }

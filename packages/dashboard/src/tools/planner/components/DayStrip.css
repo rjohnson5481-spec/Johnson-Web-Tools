@@ -1,0 +1,196 @@
+/* ── Floating pill container — sits below the fixed header ── */
+.day-strip {
+  position: sticky;
+  top: 132px;
+  z-index: 50;
+  display: flex;
+  gap: 3px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 5px;
+  margin: 0 14px 14px;
+  box-shadow: 0 1px 4px rgba(34, 37, 46, 0.08);
+}
+
+/* ── Each day button ── */
+.day-strip-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 6px 4px;
+  font-family: inherit;
+  transition: background 0.15s;
+  position: relative;
+}
+
+/* ── Active day: dark pill ── */
+.day-strip-tab--active {
+  background: #22252e;
+}
+
+/* ── Inactive text: muted name, primary number ── */
+.day-strip-name {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.day-strip-date {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+/* ── Active day: white text ── */
+.day-strip-tab--active .day-strip-name {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.day-strip-tab--active .day-strip-date {
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ── Today: gold number + 2px underline below the date ── */
+.day-strip-tab--today .day-strip-date {
+  color: var(--gold);
+  font-weight: 700;
+  border-bottom: 2px solid var(--gold);
+  padding-bottom: 1px;
+}
+
+/* Active today: keep gold underline but lighten text for contrast on dark bg */
+.day-strip-tab--active.day-strip-tab--today .day-strip-date {
+  color: var(--gold-light);
+  border-bottom-color: var(--gold-light);
+}
+
+/* Desktop-only elements — hidden on mobile */
+.day-strip-students { display: none; }
+.day-strip-full-name { display: none; }
+
+/* ── Sick day: 6px red dot centered below the date number ── */
+.day-strip-tab--sick::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+/* ── Desktop sidebar (≥768px) — all rules additive, mobile unchanged ── */
+@media (min-width: 768px) {
+  .day-strip {
+    position: fixed;
+    left: 0;
+    top: 48px;
+    bottom: 0;
+    width: 200px;
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: 0;
+    margin: 0;
+    padding: 12px 8px;
+    gap: 0;
+    overflow-y: auto;
+    background: #22252e;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    box-shadow: none;
+    z-index: 50;
+  }
+
+  /* Student section revealed at desktop */
+  .day-strip-students {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 2px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 8px;
+  }
+
+  .day-strip-student-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.55);
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .day-strip-student-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  .day-strip-student-btn--active {
+    background: rgba(201,168,76,0.15);
+    border-color: var(--gold);
+    color: var(--gold-light);
+    font-weight: 600;
+  }
+
+  /* Day rows: horizontal layout */
+  .day-strip-tab {
+    flex: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 9px 10px;
+    gap: 8px;
+    border-radius: 8px;
+    margin-bottom: 2px;
+  }
+
+  .day-strip-tab:hover:not(.day-strip-tab--active) { background: rgba(255,255,255,0.06); }
+
+  /* Short name + full name + date — all white-tinted on dark sidebar */
+  .day-strip-name { font-size: 10px; min-width: 28px; color: rgba(255,255,255,0.35); }
+
+  /* Full day name revealed */
+  .day-strip-full-name {
+    display: block;
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.55);
+    text-align: left;
+    line-height: 1;
+  }
+
+  .day-strip-tab--active .day-strip-name { color: rgba(255,255,255,0.5); }
+  .day-strip-tab--active .day-strip-full-name { color: #fff; }
+
+  /* Date number on the right */
+  .day-strip-date { font-size: 13px; font-weight: 600; border-bottom: none; padding-bottom: 0; color: rgba(255,255,255,0.55); }
+
+  .day-strip-tab--active .day-strip-date { color: #fff; }
+  .day-strip-tab--today .day-strip-date { color: var(--gold-light); border-bottom: none; padding-bottom: 0; }
+  .day-strip-tab--active.day-strip-tab--today .day-strip-date { color: var(--gold-light); }
+
+  /* Sick dot repositioned to top-right of row */
+  .day-strip-tab--sick::after {
+    top: 6px;
+    right: 6px;
+    bottom: auto;
+    left: auto;
+    transform: none;
+  }
+}
