@@ -120,6 +120,9 @@ Do not revert this to a Netlify Function without Rob's explicit instruction.
   Path uses subjectPresets (not settings/defaultSubjects) for valid 4-segment Firestore doc path.
 
 weekId / dateString format: "YYYY-MM-DD" (weekId = Monday of that week)
+Always normalize external weekId strings (e.g., from AI parse results) via mondayWeekId()
+in constants/days.js before any Firestore writes. new Date('YYYY-MM-DD') parses as UTC
+midnight — use new Date(y, m-1, d) (local date) inside mondayWeekId to avoid timezone shift.
 
 Subjects are implicit — a subject exists on a given day only when its
 document exists. No separate subject list document. Querying all subjects
@@ -204,15 +207,17 @@ packages/planner/src/
 - Desktop breakpoint: 768px. Never add desktop-only JSX — CSS media queries only.
 
 ## All Day Event — data model
-- Stored as `__allday__` key in the existing per-day subjects collection.
-  Path: /users/{uid}/weeks/{weekId}/students/{student}/days/{dayIndex}/subjects/__allday__
+- Stored as `allday` key in the existing per-day subjects collection.
+  Path: /users/{uid}/weeks/{weekId}/students/{student}/days/{dayIndex}/subjects/allday
   Fields: { lesson: eventName, note: eventNote, done: false, flag: false }
 - `hasAllDayEvent(subjects)` and `getAllDayEvent(subjects)` helpers in firebase/planner.js.
-- `subjects` (Object.keys(dayData)) includes `__allday__` — always filter it from regular
-  subject lists using `.filter(s => s !== '__allday__')`.
-- SubjectCard renders a full-width #22252e banner when subject === '__allday__'.
-- EditSheet hides Done/Flag toggles and shows 'All Day Event' title when subject === '__allday__'.
+- `subjects` (Object.keys(dayData)) includes `allday` — always filter it from regular
+  subject lists using `.filter(s => s !== 'allday')`.
+- SubjectCard renders a full-width #22252e banner when subject === 'allday'.
+- EditSheet hides Done/Flag toggles and shows 'All Day Event' title when subject === 'allday'.
 - AddSubjectSheet shows '+ All Day Event' at top; if one exists, shows 'Edit All Day Event ›'.
+- IMPORTANT: `__allday__` (double-underscore) is rejected by Firestore as a reserved ID.
+  Key was renamed from `__allday__` to `allday` in v0.21.2.
 
 ---
 
@@ -323,13 +328,17 @@ Phase 1 — COMPLETE:
   ✓ 26. v0.19.0 polish — PWA theme_color #22252e; School Year & Compliance merged coming-soon;
          student delete with inline confirmation; Header students from Firestore;
          AddSubjectSheet quick-picks from per-student Firestore presets
-  ✓ 27. v0.21.0 — All Day Event (__allday__ key); desktop responsive layout ≥768px
+  ✓ 27. v0.21.0 — All Day Event (allday key); desktop responsive layout ≥768px
          (single-row header, 200px DayStrip sidebar, auto-fill card grid, action bar shift)
   ✓ 28. v0.21.1 — 11-fix polish pass: All Day Event banner no longer flashes on save;
          sidebar always #22252e dark; header logo 42px + larger fonts at desktop;
          card grid gap:14px; desktop day-title header with subject count;
          header icons right-aligned + emoji font; done-pill replaced with tap-to-edit hint;
          desktop action bar Import pushed right
+  ✓ 29. v0.21.2 — Fix 1: renamed allday key (was __allday__, rejected by Firestore);
+         Fix 2A: weekId normalized to Monday in handleApplySchedule (mondayWeekId helper);
+         Fix 2B: one-time migration from two bad Tuesday weekIds (2026-04-07, 2026-04-14)
+         to correct Monday weekIds without overwriting good data
 
 Phase 2 (do not build yet):
   - Auto-roll flagged lessons to next week
