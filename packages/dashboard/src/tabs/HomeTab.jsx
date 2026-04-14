@@ -1,7 +1,9 @@
-// HomeTab — morning summary dashboard.
-// Shows today's date, lesson progress, point balances, and quick actions.
-// Header with dark mode + sign-out is added in Fix 3 (above .home-content).
-import { useAuth } from '@homeschool/shared';
+// HomeTab — morning summary dashboard with brand header.
+// Header provides dark mode toggle + sign-out on mobile.
+// Header is hidden on desktop (sidebar provides branding).
+import { useAuth, signOut } from '@homeschool/shared';
+import logo from '@homeschool/shared/assets/logo.png';
+import { useDarkMode } from '../hooks/useDarkMode.js';
 import { useHomeSummary } from '../hooks/useHomeSummary.js';
 import './HomeTab.css';
 
@@ -14,6 +16,7 @@ function cashValue(pts) {
 
 export default function HomeTab({ onTabChange }) {
   const { user } = useAuth();
+  const { mode, toggle } = useDarkMode();
   const { students, activeStudent, setActiveStudent, subjects, points } = useHomeSummary(user?.uid);
 
   const today      = new Date();
@@ -24,6 +27,23 @@ export default function HomeTab({ onTabChange }) {
 
   return (
     <div className="home-tab">
+      <header className="home-header">
+        <div className="home-header-brand">
+          <img src={logo} alt="ILA" className="home-header-logo" />
+          <div className="home-header-name">
+            IRON & <span className="home-header-accent">LIGHT</span>
+            <br />JOHNSON ACADEMY
+          </div>
+        </div>
+        <div className="home-header-actions">
+          <button className="home-header-btn" onClick={toggle} aria-label="Toggle dark mode">
+            {mode === 'dark' ? '☀️' : '🌙'}
+          </button>
+          <button className="home-header-btn" onClick={signOut} aria-label="Sign out">
+            🚪
+          </button>
+        </div>
+      </header>
       <div className="home-content">
 
         <div className="home-date-row">

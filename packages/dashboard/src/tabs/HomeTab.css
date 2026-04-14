@@ -1,8 +1,66 @@
-/* ── Outer wrapper — no padding; header (Fix 3) will be full-width ── */
+/* ── Outer wrapper — no padding; header is full-width ── */
 .home-tab {
   display: flex;
   flex-direction: column;
 }
+
+/* ── Brand header — dark bar with dark mode toggle + sign-out ── */
+.home-header {
+  background: #22252e;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.home-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.home-header-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.home-header-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.home-header-accent { color: #e8c97a; }
+
+.home-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-header-btn {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+  transition: background 0.15s;
+}
+
+.home-header-btn:hover { background: rgba(255, 255, 255, 0.14); }
 
 /* ── Inner content — max-width + padding ── */
 .home-content {
