@@ -13,13 +13,13 @@
   status = 200
 
 [[redirects]]
-  from = "/planner/*"
-  to = "/planner/index.html"
+  from = "/reward-tracker/*"
+  to = "/reward-tracker/index.html"
   status = 200
 
 [[redirects]]
-  from = "/reward-tracker/*"
-  to = "/reward-tracker/index.html"
+  from = "/planner/*"
+  to = "/planner/index.html"
   status = 200
 
 [[redirects]]
