@@ -197,3 +197,154 @@
   border-color: var(--gold);
   color: var(--gold);
 }
+
+.add-sheet-preset-btn--active {
+  background: #22252e;
+  border-color: #22252e;
+  color: #e8c97a;
+}
+
+.add-sheet-preset-btn--active:hover {
+  background: #22252e;
+  border-color: #22252e;
+  color: #e8c97a;
+  opacity: 0.9;
+}
+
+/* ── Row header (label + link actions) ── */
+.add-sheet-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.add-sheet-row-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.add-sheet-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gold);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.add-sheet-link-btn:hover { color: var(--gold-light); }
+
+/* ── Day pills row (MON/TUE/WED/THU/FRI + date) ── */
+.add-sheet-day-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.add-sheet-day-pill {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 4px;
+  font-family: inherit;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.add-sheet-day-pill--active {
+  background: #22252e;
+  border-color: #22252e;
+  color: #e8c97a;
+}
+
+.add-sheet-day-short {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.add-sheet-day-date {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ── Student pills ── */
+.add-sheet-student-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.add-sheet-student-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.add-sheet-student-pill--active {
+  background: #22252e;
+  border-color: #22252e;
+  color: #e8c97a;
+}
+
+.add-sheet-student-emoji {
+  font-size: 15px;
+  line-height: 1;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+}
+
+/* ── Summary line ── */
+.add-sheet-summary {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 4px 0 0;
+}
+
+.add-sheet-summary strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ── Confirm button ── */
+.add-sheet-confirm-btn {
+  width: 100%;
+  background: var(--ink);
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gold-light);
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 4px;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.add-sheet-confirm-btn:hover:not(:disabled) { background: var(--ink-light); }
+
+.add-sheet-confirm-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

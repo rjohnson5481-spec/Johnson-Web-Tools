@@ -16,7 +16,7 @@ export default function PlannerLayout({
   user,
   weekId,
   weekDates, prevWeek, nextWeek,
-  subjects, dayData, subjectsLoading, updateCell, addSubject, removeSubject,
+  subjects, dayData, subjectsLoading, updateCell, removeSubject,
   importCell, jumpToWeek, deleteWeek, wipeWeek,
   performSickDay, performUndoSickDay, sickDayIndices,
   loadWeekDataFrom,
@@ -52,6 +52,16 @@ export default function PlannerLayout({
   function handleDeleteWeek() {
     if (!window.confirm('Clear all lessons for this week? This cannot be undone.')) return;
     deleteWeek();
+  }
+
+  // Batch-add an empty cell for each (dayIndex, student) pair.
+  // Uses importCell with overwrite=false so existing cells are preserved.
+  async function handleBatchAddSubject(subject, cells) {
+    await Promise.all(cells.map(({ dayIndex, student: cellStudent }) =>
+      importCell(weekId, cellStudent, subject, dayIndex,
+        { lesson: '', note: '', done: false, flag: false }, false)
+    ));
+    setShowAddSubject(false);
   }
 
   async function handleSickDayConfirm(selectedSubjects) {
@@ -233,7 +243,11 @@ export default function PlannerLayout({
         <AddSubjectSheet
           existingSubjects={subjects}
           presets={plannerSubjects}
-          onAdd={subject => { addSubject(subject); setShowAddSubject(false); }}
+          weekDates={weekDates}
+          currentDayIndex={day}
+          currentStudent={student}
+          students={students}
+          onAdd={handleBatchAddSubject}
           onAddAllDay={(name, note) => { updateCell('allday', day, { lesson: name, note, done: false, flag: false }); setShowAddSubject(false); }}
           onEditAllDay={() => { setShowAddSubject(false); setEditTarget({ subject: 'allday', day }); }}
           onClose={() => setShowAddSubject(false)}
