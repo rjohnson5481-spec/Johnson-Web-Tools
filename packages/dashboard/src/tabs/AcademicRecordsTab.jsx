@@ -1,26 +1,48 @@
 import { useState } from 'react';
 import { useAuth } from '@homeschool/shared';
 import { useCourses } from '../tools/academic-records/hooks/useCourses.js';
-import CourseCatalogSheet from '../tools/academic-records/components/CourseCatalogSheet.jsx';
-import AddEditCourseSheet from '../tools/academic-records/components/AddEditCourseSheet.jsx';
+import { useEnrollments } from '../tools/academic-records/hooks/useEnrollments.js';
+import CourseCatalogSheet     from '../tools/academic-records/components/CourseCatalogSheet.jsx';
+import AddEditCourseSheet     from '../tools/academic-records/components/AddEditCourseSheet.jsx';
+import EnrollmentSheet        from '../tools/academic-records/components/EnrollmentSheet.jsx';
+import AddEditEnrollmentSheet from '../tools/academic-records/components/AddEditEnrollmentSheet.jsx';
 import './AcademicRecordsTab.css';
 
-// Phase 2 entry point. Only the Course Catalog flow is wired this session;
-// other quick actions are placeholders. The two sheets stack — catalog at
-// z-index 300, AddEditCourseSheet at 310 — so editing a course visually
-// returns to the catalog when the editor is dismissed.
+// Phase 2 entry point. Two flows wired this session:
+//   - Course Catalog (z-index 300 list / 310 editor)
+//   - Enrollments    (z-index 300 list / 310 editor — same level; never both
+//                     list sheets open at once)
+// Other quick actions are still placeholders.
 export default function AcademicRecordsTab() {
   const { user } = useAuth();
   const uid = user?.uid;
+
+  // Course catalog state
   const { courses, loading, error, addCourse, updateCourse, removeCourse } = useCourses(uid);
 
+  // Enrollment state — pass courses so the hook can look up names for the
+  // optional planner-sync write to /users/{uid}/subjectPresets/{student}.
+  const {
+    enrollments,
+    loading: enrollmentsLoading,
+    error:   enrollmentsError,
+    addEnrollment, updateEnrollment, removeEnrollment,
+  } = useEnrollments(uid, courses);
+
+  // Course catalog sheet state
   const [catalogSheetOpen, setCatalogSheetOpen] = useState(false);
   const [addEditSheetOpen, setAddEditSheetOpen] = useState(false);
   const [editingCourse, setEditingCourse]       = useState(null);
 
-  function openCatalog()   { setCatalogSheetOpen(true); }
-  function closeCatalog()  {
-    // Closing catalog dismisses both — editor doesn't make sense without it.
+  // Enrollment sheet state
+  const [enrollmentSheetOpen, setEnrollmentSheetOpen]               = useState(false);
+  const [addEditEnrollmentSheetOpen, setAddEditEnrollmentSheetOpen] = useState(false);
+  const [editingEnrollment, setEditingEnrollment]                   = useState(null);
+  const [enrollingStudent, setEnrollingStudent]                     = useState(null);
+
+  // ─── Course catalog handlers ───
+  function openCatalog()  { setCatalogSheetOpen(true); }
+  function closeCatalog() {
     setCatalogSheetOpen(false);
     setAddEditSheetOpen(false);
     setEditingCourse(null);
@@ -30,38 +52,70 @@ export default function AcademicRecordsTab() {
     setEditingCourse(course);
     setAddEditSheetOpen(true);
   }
-
   function handleAddCourse() {
     setEditingCourse(null);
     setAddEditSheetOpen(true);
   }
-
   function closeAddEdit() {
-    // Catalog stays open behind.
     setAddEditSheetOpen(false);
     setEditingCourse(null);
   }
 
   async function handleSaveCourse(data) {
-    // Permanent guard: if uid is unresolved, fail loudly rather than letting
-    // the hook's throw bubble up as an opaque "useCourses: uid is required".
     if (!uid) {
       console.warn('AcademicRecordsTab: uid missing on save — course will not persist');
       return;
     }
-    if (editingCourse) {
-      await updateCourse(editingCourse.id, data);
-    } else {
-      await addCourse(data);
-    }
+    if (editingCourse) await updateCourse(editingCourse.id, data);
+    else               await addCourse(data);
     closeAddEdit();
   }
 
   async function handleDeleteCourse() {
     if (!editingCourse) return;
     await removeCourse(editingCourse.id);
-    // Editor closes; catalog reloads via useCourses' reload-after-write.
     closeAddEdit();
+  }
+
+  // ─── Enrollment handlers ───
+  function openEnrollments()  { setEnrollmentSheetOpen(true); }
+  function closeEnrollments() {
+    setEnrollmentSheetOpen(false);
+    setAddEditEnrollmentSheetOpen(false);
+    setEditingEnrollment(null);
+    setEnrollingStudent(null);
+  }
+
+  function handleEditEnrollment(enrollment) {
+    setEditingEnrollment(enrollment);
+    setEnrollingStudent(enrollment.student);
+    setAddEditEnrollmentSheetOpen(true);
+  }
+  function handleAddEnrollment(student) {
+    setEnrollingStudent(student);
+    setEditingEnrollment(null);
+    setAddEditEnrollmentSheetOpen(true);
+  }
+  function closeAddEditEnrollment() {
+    setAddEditEnrollmentSheetOpen(false);
+    setEditingEnrollment(null);
+    setEnrollingStudent(null);
+  }
+
+  async function handleSaveEnrollment(data) {
+    if (!uid) {
+      console.warn('AcademicRecordsTab: uid missing on save — enrollment will not persist');
+      return;
+    }
+    if (editingEnrollment) await updateEnrollment(editingEnrollment.id, data);
+    else                   await addEnrollment(data);
+    closeAddEditEnrollment();
+  }
+
+  async function handleDeleteEnrollment() {
+    if (!editingEnrollment) return;
+    await removeEnrollment(editingEnrollment.id);
+    closeAddEditEnrollment();
   }
 
   return (
@@ -82,10 +136,10 @@ export default function AcademicRecordsTab() {
             <span className="ar-action-chevron" aria-hidden="true">›</span>
           </button>
 
-          <button className="ar-action ar-action--disabled" disabled>
+          <button className="ar-action" onClick={openEnrollments}>
             <span className="ar-action-icon" aria-hidden="true">👤</span>
             <span className="ar-action-label">Manage Enrollments</span>
-            <span className="ar-action-soon">Soon</span>
+            <span className="ar-action-chevron" aria-hidden="true">›</span>
           </button>
 
           <button className="ar-action ar-action--disabled" disabled>
@@ -124,6 +178,27 @@ export default function AcademicRecordsTab() {
         onSave={handleSaveCourse}
         onDelete={handleDeleteCourse}
         course={editingCourse}
+      />
+
+      <EnrollmentSheet
+        open={enrollmentSheetOpen}
+        onClose={closeEnrollments}
+        enrollments={enrollments}
+        courses={courses}
+        loading={enrollmentsLoading}
+        error={enrollmentsError}
+        onEditEnrollment={handleEditEnrollment}
+        onAddEnrollment={handleAddEnrollment}
+      />
+
+      <AddEditEnrollmentSheet
+        open={addEditEnrollmentSheetOpen}
+        onClose={closeAddEditEnrollment}
+        onSave={handleSaveEnrollment}
+        onDelete={handleDeleteEnrollment}
+        student={enrollingStudent}
+        courses={courses}
+        enrollment={editingEnrollment}
       />
 
     </div>
