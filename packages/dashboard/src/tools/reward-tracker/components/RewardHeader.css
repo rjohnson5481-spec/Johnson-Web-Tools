@@ -116,3 +116,11 @@
 .rh-mode-btn:hover {
   background: rgba(255, 255, 255, 0.16);
 }
+
+/* ── Desktop (≥768px) — reward tracker header hidden inside the shell ── */
+/* Mobile layout is COMPLETELY UNCHANGED. Shell sidebar provides branding,
+   nav, sign-out, and dark-mode toggle on desktop — the tool's own header
+   is redundant there. */
+@media (min-width: 768px) {
+  .rh-header { display: none; }
+}
