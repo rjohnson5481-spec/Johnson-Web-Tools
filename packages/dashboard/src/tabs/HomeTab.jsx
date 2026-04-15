@@ -5,6 +5,7 @@ import { useAuth } from '@homeschool/shared';
 import logo from '@homeschool/shared/assets/logo.png';
 import { useHomeSummary } from '../hooks/useHomeSummary.js';
 import './HomeTab.css';
+import './HomeHeader.css';
 
 const DAY_NAMES   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
