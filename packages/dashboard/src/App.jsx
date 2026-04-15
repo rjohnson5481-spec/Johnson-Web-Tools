@@ -7,6 +7,7 @@ import PlannerTab          from './tabs/PlannerTab';
 import RewardsTab          from './tabs/RewardsTab';
 import AcademicRecordsTab  from './tabs/AcademicRecordsTab';
 import { useSettings }     from './tools/planner/hooks/useSettings.js';
+import { useDarkMode }     from './hooks/useDarkMode.js';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -16,6 +17,12 @@ export default function App() {
   // header still uses these same props — behavior is unchanged.
   const [plannerStudent, setPlannerStudent] = useState('Orion');
   const { students, subjectsByStudent } = useSettings(user?.uid, plannerStudent);
+  // Dark-mode toggle is exposed through the desktop sidebar so every
+  // tab (including Home, which has no visible header on desktop) can
+  // flip modes. The hook writes to `localStorage.color-mode` and the
+  // <html data-mode> attribute, so it stays in sync with every other
+  // tool's useDarkMode subscriber.
+  const { mode: colorMode, toggle: toggleDarkMode } = useDarkMode();
 
   if (loading) return null;
   if (!user)   return <SignIn />;
@@ -41,6 +48,8 @@ export default function App() {
         students={students}
         activeStudent={plannerStudent}
         onStudentChange={setPlannerStudent}
+        colorMode={colorMode}
+        onToggleDarkMode={toggleDarkMode}
       />
     </div>
   );

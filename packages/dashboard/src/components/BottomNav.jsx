@@ -12,14 +12,18 @@ const TABS = [
 ];
 
 // Props: activeTab (string), onTabChange (fn),
-//        students (string[]), activeStudent (string), onStudentChange (fn).
+//        students (string[]), activeStudent (string), onStudentChange (fn),
+//        colorMode ('light' | 'dark'), onToggleDarkMode (fn).
 // The student section renders only when activeTab === 'planner' and only
-// on desktop (hidden on mobile via CSS).
+// on desktop (hidden on mobile via CSS). The footer (sign-out + dark-mode
+// toggle + version) is always rendered and shown only on desktop via CSS.
 export default function BottomNav({
   activeTab, onTabChange,
   students, activeStudent, onStudentChange,
+  colorMode, onToggleDarkMode,
 }) {
   const showStudents = activeTab === 'planner' && (students?.length ?? 0) > 0;
+  const isDark = colorMode === 'dark';
 
   return (
     <nav className="bottom-nav">
@@ -77,11 +81,23 @@ export default function BottomNav({
         </div>
       )}
 
-      {/* Desktop-only footer with sign-out + version */}
+      {/* Desktop-only footer with dark-mode toggle + sign-out + version */}
       <div className="bn-footer">
-        <button className="bn-signout" onClick={() => signOut()}>
-          🚪 Sign out
-        </button>
+        <div className="bn-footer-row">
+          {onToggleDarkMode && (
+            <button
+              className="bn-mode-btn"
+              onClick={onToggleDarkMode}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? '☀️' : '🌙'}
+            </button>
+          )}
+          <button className="bn-signout" onClick={() => signOut()}>
+            🚪 Sign out
+          </button>
+        </div>
         <div className="bn-version">v{pkg.version}</div>
       </div>
 
