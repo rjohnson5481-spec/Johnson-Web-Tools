@@ -4,12 +4,12 @@ import { formatWeekLabel } from '../constants/days.js';
 import { version } from '../../../../package.json';
 import './Header.css';
 
-// Props: students, student, onStudentChange, weekDates, prevWeek, nextWeek, onUpload, onCalendar, onSettings
+// Props: students, student, onStudentChange, weekDates, prevWeek, nextWeek, onUpload, onCalendar
 export default function Header({
   students,
   student, onStudentChange,
   weekDates, prevWeek, nextWeek,
-  onUpload, onCalendar, onSettings,
+  onUpload, onCalendar,
 }) {
   return (
     <header className="header">
@@ -34,9 +34,6 @@ export default function Header({
           </button>
           <button className="header-btn" onClick={onUpload} aria-label="Import schedule" title="Import schedule">
             ⬆️
-          </button>
-          <button className="header-btn" onClick={onSettings} aria-label="Settings" title="Settings">
-            ⚙️
           </button>
           <button className="header-btn" onClick={() => signOut()} aria-label="Sign out" title="Sign out">
             🚪
