@@ -13,3 +13,17 @@
   flex-direction: column;
   gap: 16px;
 }
+
+/* ── Desktop (≥768px): full-width content, two-column card grid ── */
+/* Mobile layout above is COMPLETELY UNCHANGED. Reward header is hidden
+   on desktop (see RewardHeader.css), so no 56px top margin needed. */
+@media (min-width: 768px) {
+  .rl-body {
+    margin-top: 0;
+    max-width: none;
+    padding: 24px 28px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+  }
+}
