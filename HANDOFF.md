@@ -1,308 +1,209 @@
-# HANDOFF — v0.23.1 Phase 2 Session 2: Course Catalog UI
+# HANDOFF — v0.23.1 bug fixes (Course Catalog save + dual-mount)
 
 ## What was completed this session
 
-Five code commits landed on main covering the Course Catalog flow:
-the `useCourses` hook, the `CourseCatalogSheet` bottom sheet, the
-`AddEditCourseSheet` stacked editor, wiring into `AcademicRecordsTab`,
-and the version bump. The HANDOFF commit timed out twice during the
-original run; this prompt closes it out.
+Two-bug-fix session within v0.23.1. Three commits land on main.
+No version bump — these are bug fixes inside the v0.23.1 line.
 
-### Commit log (origin/main)
+### Commit 1 — `fix: resolve uid in AcademicRecordsTab, throw on missing uid in useCourses` (90e3320)
 
+Two surgical edits, two files.
+
+**`packages/dashboard/src/tools/academic-records/hooks/useCourses.js`**
+— replaced the silent `if (!uid) return` early return at the top
+of `addCourse` and `updateCourse` with:
+```js
+if (!uid) throw new Error('useCourses: uid is required');
 ```
-22f964c chore: bump version to v0.23.1
-39db1c2 feat: wire course catalog into AcademicRecordsTab (v0.23.1)
-296dadb feat: add AddEditCourseSheet with stacked sheet pattern
-e56f4de feat: add CourseCatalogSheet
-76da07b feat: add useCourses hook
+Now if a save is somehow attempted before auth resolves, the
+console gets a clear, attributable failure instead of a no-op.
+
+`removeCourse` was deliberately NOT changed — the spec called out
+only `addCourse` and `updateCourse`. Worth flagging for next
+session: the same silent guard is still on `removeCourse` (line 70),
+so a delete attempted with no uid would still no-op silently.
+Trivially fixable later if Rob wants symmetry.
+
+**`packages/dashboard/src/tabs/AcademicRecordsTab.jsx`** —
+`handleSaveCourse` got a permanent guard prepended:
+```js
+if (!uid) {
+  console.warn('AcademicRecordsTab: uid missing on save — course will not persist');
+  return;
+}
 ```
+This catches the same condition one layer up so the failure mode
+is attributable to the tab (not a deep-stack hook throw the user
+might not notice). The component-level warn names the component;
+the hook's throw names the hook. Either appears in DevTools.
 
-### Commit 1 — `feat: add useCourses hook` (76da07b)
+**Auth pattern check** — Spec asked to confirm AcademicRecordsTab
+gets uid the same way as HomeTab. Both files use:
+```js
+const { user } = useAuth();
+```
+HomeTab passes `user?.uid` inline at the call site; AcademicRecordsTab
+captures it as a local `const uid = user?.uid;`. Functionally
+identical. AcademicRecordsTab keeps the local `uid` variable since
+it's used in three downstream call sites (the hook + the two sheet
+prop pass-throughs at the bottom of the component, although after
+Fix 2 the catalog sheet no longer takes uid). Pattern is the same;
+no auth-call refactor needed.
 
-`packages/dashboard/src/tools/academic-records/hooks/useCourses.js`
-(81 lines).
+App.jsx already gates the entire shell behind
+`if (!user) return <SignIn />`, so under normal flow `uid` should
+always be defined by the time AcademicRecordsTab renders. The new
+guards are defensive — they don't fix a known race, they make any
+future regression visible.
 
-Wraps the four course functions from `firebase/academicRecords.js`
-(`getCourses`, `addCourse`, `saveCourse`, `deleteCourse`) into a React
-hook. Pattern matches the planner hooks: `useState` + `useEffect`
-+ `useCallback`-wrapped mutators that call Firestore and then reload
-the list so the UI stays in sync after every write.
+### Commit 2 — `fix: pass courses as props to CourseCatalogSheet, remove duplicate useCourses` (6f50fef)
 
-Returns: `{ courses, loading, error, addCourse, updateCourse,
-removeCourse }`. `addCourse` returns the new document id; the other
-two mutators are fire-and-reload. All three throw on failure (so
-callers can `await` and catch) AND set `error` state.
+Two files. Removes an architectural bug introduced in v0.23.1
+Session 2.
 
-`hooks/.gitkeep` placeholder removed in this commit (first real
-hook file landed).
+**Before:** `useCourses(uid)` was mounted in TWO places —
+`AcademicRecordsTab.jsx:15` and `CourseCatalogSheet.jsx:24`. Each
+instance had isolated React state. When the parent's mutator wrote
+to Firestore and reloaded ITS list, the child sheet's instance
+never knew. Newly added courses only appeared after the catalog
+was closed and reopened (which remounted the child's hook).
 
-### Commit 2 — `feat: add CourseCatalogSheet` (e56f4de)
+**After:** Single source of truth — the parent's `useCourses(uid)`
+is the only instance. The child receives `courses`, `loading`,
+`error` as props.
 
-- `components/CourseCatalogSheet.jsx` — 89 lines
-- `components/CourseCatalogSheet.css` — 241 lines
+**`CourseCatalogSheet.jsx` changes:**
+- Removed `import { useCourses } from '../hooks/useCourses.js';`
+- Removed the `uid` prop from the destructure
+- Removed `const { courses, loading } = useCourses(uid);`
+- Added `courses`, `loading`, `error` to the props destructure
+- Updated the props docstring to reflect the new contract
+- Added an inline error display under the section label:
+  `{error && <p className="cc-loading" role="alert">⚠ {error}</p>}`
+  — re-uses `.cc-loading` styling for now (same muted, centered
+  text); a dedicated error class can be added later if Rob wants
+  red styling. CSS file was deliberately untouched per spec.
 
-Bottom sheet listing the user's course catalog. Mounts the
-`useCourses(uid)` hook directly (no prop-drilling courses through
-the parent — the hook owns the data). Fires `onEditCourse(course)`
-or `onAddCourse()` to the parent, which decides whether to open
-the AddEditCourseSheet.
+**`AcademicRecordsTab.jsx` changes:**
+- Destructured `courses, loading, error` from the existing
+  `useCourses(uid)` call (these were already returned by the hook,
+  just not previously captured).
+- Replaced `uid={uid}` on `<CourseCatalogSheet>` with three new
+  prop forwards: `courses={courses}`, `loading={loading}`,
+  `error={error}`.
 
-Sheet chrome matches the AddSubjectSheet conventions: overlay +
-slide-up panel + drag handle + ink header + scrollable body. Class
-prefix `cc-` to avoid collisions with planner sheets. Sheet panel
-animation is `@keyframes cc-sheet-up` (translateY 100% → 0, 0.3s
-ease).
+Behavior change: after a save in the editor sheet, the parent's
+`useCourses` reloads and propagates the new `courses` array down
+to the open catalog sheet via React's normal re-render cycle. No
+more close-and-reopen needed.
 
-Course rows: 8px color dot (cycled through 8 brand-aligned hex
-colors by index), course name (bold), curriculum (small muted text
-if present), grading-type badge (gold-pale "Letter" or blue-tint
-"E/S/N/U" with dark-mode override), chevron `›`. Empty state and
-loading state both render as plain centered muted text.
+### Commit 3 — `docs: update HANDOFF v0.23.1`
 
-`+ Add Course` button at the bottom matches `.planner-add-btn`
-exactly (dashed border, hover turns gold).
+This file.
 
-z-index: **300** on `.cc-sheet-overlay`. Comment block at the top
-of the CSS file documents the stacking contract with
-AddEditCourseSheet.css.
+---
 
-Large-phone `@media (min-width: 400px) and (max-width: 1023px)`
-block at the end scales up font sizes and padding. No
-`@media (min-width: 1024px)` block — sheets behave the same on
-desktop (per spec).
+## Why the catalog appeared "not saving to Firestore"
 
-### Commit 3 — `feat: add AddEditCourseSheet with stacked sheet pattern` (296dadb)
+Pre-fix, two things could mask a real save:
+1. **Hook silent early-return** — if `uid` was somehow falsy when
+   `addCourse` ran, the hook returned `undefined` cleanly, the
+   await resolved, the editor closed, no console output, no
+   network call.
+2. **Dual-mount stale list** — even when the save succeeded, the
+   open catalog sheet's child hook never reloaded, so the new
+   course was invisible until the sheet was closed and reopened.
+   This visually looked like "the save didn't happen" even when
+   it had.
 
-- `components/AddEditCourseSheet.jsx` — 136 lines
-- `components/AddEditCourseSheet.css` — 286 lines
+After Fix 1, condition (1) is loud: a real uid problem now throws
+inside the hook AND warns in the component. After Fix 2, condition
+(2) is impossible: there's only one source of truth for the
+`courses` array, and React's normal re-render flow propagates
+changes from the parent to the open child immediately.
 
-Stacked bottom sheet for adding or editing one course. **New pattern
-for this app** — sheets are stackable now. The catalog stays open
-behind while the editor is up; closing the editor returns to the
-catalog instead of dismissing both.
+If saves still don't appear in Firestore after deploy, the next
+diagnostic is browser DevTools → Console for the warn or thrown
+error, then DevTools → Network tab for the actual addDoc XHR
+(should hit firestore.googleapis.com), then Firebase rules.
 
-z-index contract:
-- `.cc-sheet-overlay`  → 300 (catalog backdrop)
-- `.aec-sheet-overlay` → 310 (editor backdrop, sits above catalog)
-- `.aec-sheet`         → 311 (editor panel, sits above its own backdrop)
+---
 
-Both CSS files document this contract in their top comment block —
-do not change without coordinating with the other.
+## Build verification
 
-Form fields:
-- **Course Name** (required) — text input, 16px font-size to
-  prevent iOS Safari auto-zoom on focus, autofocus on open
-- **Curriculum** (optional) — text input, 16px
-- **Grading Scale** (required) — two side-by-side toggle buttons:
-  "Letter (A–F)" or "E / S / N / U". Selected state uses
-  gold-pale background + gold border + gold text. Default is Letter.
-
-Edit mode adds a small red text "Remove Course" button below the
-fields. Tapping it inline-confirms ("Remove this course? This
-cannot be undone." with Cancel + Confirm in a red-tint card). No
-separate confirmation sheet — inline only.
-
-Footer: Cancel (ghost) + Save (gold). Save disabled while name
-is empty. Save fires `onSave({ name, curriculum, gradingType })`
-with trimmed values; gradingType is `'letter'` or `'esnu'` from
-`constants/academics.js`.
-
-State re-seeds from props every time the sheet opens — passing in
-a new `course` while the sheet is open will reset the form to that
-course's values (works because `useEffect` watches `[open, course]`).
-
-`components/.gitkeep` placeholder removed in this commit (first
-real component file landed).
-
-### Commit 4 — `feat: wire course catalog into AcademicRecordsTab (v0.23.1)` (39db1c2)
-
-- `tabs/AcademicRecordsTab.jsx` — 123 lines (rewrote the
-  Coming Soon placeholder; was 12 lines)
-- `tabs/AcademicRecordsTab.css` — 132 lines (new)
-
-Tab now renders:
-- Header: title "Academic Records", subtitle "2025–2026" (hardcoded
-  for now — will become dynamic when the school year UI lands)
-- Quick Actions section with 5 vertical action rows:
-  - 📚 Manage Course Catalog → opens CourseCatalogSheet
-  - 👤 Manage Enrollments → disabled, "Soon" badge
-  - 📥 Import Curriculum Data → disabled
-  - 🗓️ Manage School Year & Quarters → disabled
-  - 📄 Generate Report Card → disabled
-
-Sheet state lives in this component:
-- `catalogSheetOpen` — toggles CourseCatalogSheet visibility
-- `addEditSheetOpen` — toggles AddEditCourseSheet visibility
-- `editingCourse` — null in Add mode; course object in Edit mode
-
-Handler logic per spec:
-- Tap a course in catalog → `setEditingCourse(course)` +
-  `setAddEditSheetOpen(true)` (catalog stays open behind)
-- Tap "+ Add Course" → `setEditingCourse(null)` +
-  `setAddEditSheetOpen(true)`
-- `onSave`: if `editingCourse` exists call `updateCourse`, else
-  `addCourse`; close editor only
-- `onDelete`: call `removeCourse(editingCourse.id)`, close editor;
-  catalog reloads itself via `useCourses` reload-after-write
-- Closing the editor leaves the catalog open
-- Closing the catalog closes both and clears `editingCourse`
-
-**uid plumbing decision** — App.jsx renders
-`<AcademicRecordsTab />` with no props (verified by reading
-App.jsx in full). Two existing patterns in the codebase: HomeTab
-calls `useAuth()` itself; SettingsTab takes `user` as a prop.
-Followed HomeTab's pattern (`useAuth()` direct call) since it
-requires zero changes to App.jsx. Spec said to stop and report
-if App.jsx needed changes — by going with `useAuth()` directly,
-no stop was needed.
-
-### Commit 5 — `chore: bump version to v0.23.1` (22f964c)
-
-- `packages/dashboard/package.json`:    0.23.0 → **0.23.1**
-- `packages/shared/package.json`:       0.23.0 → **0.23.1**
-- `packages/te-extractor/package.json`: 0.23.0 → **0.23.1**
-
-Patch bump — Phase 2 Session 2 is incremental on the v0.23 line,
-not a new feature boundary.
-
-Build verified clean at every commit
+`npm run build` passes clean at both code commits
 (`@homeschool/dashboard@0.23.1`, `@homeschool/te-extractor@0.23.1`).
-
-### HANDOFF retry note
-
-The HANDOFF.md commit (commit 6 of the original 6-commit build
-order) timed out twice during the original session. This prompt
-is the third attempt. All five code commits landed and pushed
-clean before the timeouts; only the docs commit was missing.
-Push status confirmed before writing — origin/main is at
-`22f964c chore: bump version to v0.23.1`.
-
----
-
-## File size report (post-session)
-
-All new files under 300 lines. None of the existing >200-line
-files were touched.
-
-| File | Lines |
-|---|---|
-| `hooks/useCourses.js` | 81 |
-| `components/CourseCatalogSheet.jsx` | 89 |
-| `components/CourseCatalogSheet.css` | 241 |
-| `components/AddEditCourseSheet.jsx` | 136 |
-| `components/AddEditCourseSheet.css` | 286 |
-| `tabs/AcademicRecordsTab.jsx` | 123 |
-| `tabs/AcademicRecordsTab.css` | 132 |
-
-Closest to the limit is AddEditCourseSheet.css at 286 — comfortable
-margin under 300, but worth watching if much more is added to that
-file before splitting.
-
----
-
-## What was NOT built (intentionally)
-
-Per spec: "No grade entry, no enrollment, no report card yet."
-
-- ❌ `useEnrollments`, `useGrades`, `useSchoolYears`, `useQuarters`
-  hooks — not yet wired
-- ❌ The other 4 quick-action buttons are visually disabled with
-  "Soon" badges
-- ❌ The "2025–2026" subtitle is hardcoded — will become dynamic
-  when the school-year UI lands
-- ❌ No deletion-cascade UX — the data layer documented earlier
-  (deleteCourse won't cascade-delete enrollments) is still the
-  caller's responsibility, but the editor doesn't warn about
-  enrollments yet (no enrollment UI exists to dangle)
-- ❌ No CLAUDE.md entries for the new tool yet — file structure,
-  data model description for academics, etc.
+No new file-size violations; no files crossed any thresholds.
 
 ---
 
 ## What is currently incomplete / pending
 
 1. **Browser smoke test** — not run. Priority checks:
-   - Open Academic Records tab → see header, subtitle "2025–2026",
-     and 5 quick-action rows (1 enabled, 4 disabled with "Soon"
-     badges).
-   - Tap "Manage Course Catalog" → catalog sheet slides up.
-   - Empty state on first load: "No courses yet…" message.
-   - Tap "+ Add Course" → AddEditCourseSheet stacks on top
-     (catalog still visible behind through its overlay tint).
-     Confirm Letter is selected by default. Type a name + curriculum.
-     Tap Save → editor closes, catalog reloads with the new course
-     visible.
-   - Tap an existing course → editor opens with form pre-filled.
-     Change something, tap Save → row updates in catalog.
-   - In editor, tap "Remove Course" → inline confirm appears in
-     red tint card. Tap Cancel → reverts. Tap Confirm → editor
-     closes, course gone from catalog.
-   - On a wide phone (≥400px), confirm large-phone scaling
-     applies (taller rows, larger fonts).
-   - On iOS Safari, focus an input — confirm no auto-zoom
-     (16px font-size guard should prevent it).
-   - Confirm grading-type badge colors render correctly in both
-     light and dark modes (E/S/N/U badge has a dark-mode override).
+   - Open Academic Records → Manage Course Catalog → tap
+     "+ Add Course" → fill in name + curriculum → Save.
+     Expected: editor closes, **catalog list updates immediately
+     with the new course visible** (no close-and-reopen needed).
+   - Tap an existing course in the catalog → editor opens
+     pre-filled → change name → Save. Expected: editor closes,
+     catalog row reflects the new name immediately.
+   - In editor, tap "Remove Course" → Confirm. Expected: editor
+     closes, course removed from catalog immediately.
+   - DevTools console: should be silent on a normal save. If it
+     logs the warn or the error, uid is unresolved — surface the
+     failure to Rob with timing context.
 
-2. **CLAUDE.md drift** — academic-records tool tree, data model,
-   and Phase 2 progress are not documented yet. Worth a sweep
-   when convenient. Low priority — runtime unaffected.
+2. **`removeCourse` still has the silent `if (!uid) return` guard**
+   (line 70 of useCourses.js). Spec only called out addCourse and
+   updateCourse. Trivial 1-line fix to mirror — defer to next
+   session unless it bites.
 
-3. **Carry-overs (untouched, still open):**
-   - iPad portrait breakpoint decision (still falls into
-     large-phone band)
+3. **Error styling.** The new `error` display in CourseCatalogSheet
+   re-uses `.cc-loading` styles (muted gray, centered) for now.
+   If errors should look distinct (red, prominent), add a
+   `.cc-error` class to CourseCatalogSheet.css and switch the JSX.
+   Spec said do not change CSS this session — flagged for later.
+
+4. **Carry-overs (untouched, still open):**
+   - iPad portrait breakpoint decision
    - iPhone SE 300px grid overflow
    - Planner Phase 2 features (auto-roll, week history, copy
      last week, export PDF)
    - Import merge bug (inherited from v0.22.3)
+   - CLAUDE.md drift — academic-records tool not yet documented
+     in CLAUDE.md trees / data-model / phase-status sections
 
 ---
 
 ## What the next session should start with
 
 1. Read CLAUDE.md + HANDOFF.md (standard).
-2. Smoke test v0.23.1 — the full Course Catalog flow.
-3. Begin **Phase 2 Session 3 — Enrollment UI**:
-   - Likely scope: `useEnrollments` hook,
-     EnrollmentListSheet (similar bottom sheet),
-     AddEditEnrollmentSheet (stacked editor that picks a course +
-     student + year), and a "Manage Enrollments" quick action
-     becoming live in the tab.
-   - Cascade-delete UX: when removing a course, warn if
-     enrollments reference it; offer to delete them too OR
-     keep them (orphan handling is a real UX question).
-   - Decide whether to lift `useCourses` results into the tab
-     and pass `courses[]` down to the enrollment editor (vs.
-     remounting `useCourses` inside that sheet too).
+2. Smoke test the catalog save flow on device — confirm the
+   immediate-update behavior works as designed.
+3. If the bug is fully resolved, proceed with **Phase 2 Session 3
+   — Enrollment UI** (per the v0.23.1 Session 2 HANDOFF):
+   `useEnrollments` hook, EnrollmentListSheet,
+   AddEditEnrollmentSheet (course picker + student picker + year
+   picker), and wire the second quick-action row.
+4. Optional cleanup pass: mirror the `removeCourse` guard fix,
+   add a `.cc-error` class for distinct error styling.
 
 ---
 
-## Key file locations (created/modified this session)
+## Key file locations (touched this session)
 
 ```
 packages/dashboard/
-├── package.json                                                    # v0.23.1
-├── src/
-│   ├── tabs/
-│   │   ├── AcademicRecordsTab.jsx                                  # 123 lines (replaced 12-line placeholder)
-│   │   └── AcademicRecordsTab.css                                  # NEW — 132 lines
-│   └── tools/academic-records/
-│       ├── components/
-│       │   ├── CourseCatalogSheet.jsx                              # NEW — 89 lines
-│       │   ├── CourseCatalogSheet.css                              # NEW — 241 lines (z-index 300)
-│       │   ├── AddEditCourseSheet.jsx                              # NEW — 136 lines
-│       │   ├── AddEditCourseSheet.css                              # NEW — 286 lines (z-index 310/311)
-│       │   └── (.gitkeep)                                          # REMOVED in commit 2
-│       └── hooks/
-│           ├── useCourses.js                                       # NEW — 81 lines
-│           └── (.gitkeep)                                          # REMOVED in commit 1
-packages/shared/package.json                                        # v0.23.1
-packages/te-extractor/package.json                                  # v0.23.1
+└── src/
+    ├── tabs/
+    │   └── AcademicRecordsTab.jsx                                  # +6 lines (warn guard + props pass)
+    └── tools/academic-records/
+        ├── components/
+        │   └── CourseCatalogSheet.jsx                              # -2 lines net (drop useCourses, add 3 props + error)
+        └── hooks/
+            └── useCourses.js                                       # 2 lines changed (silent return → throw)
 ```
 
-Total new-file additions: 7 source files (1088 lines combined),
-2 `.gitkeep` placeholders removed (folders now have real files).
-1 existing file rewritten (AcademicRecordsTab.jsx). 3 package.json
-version bumps. App.jsx untouched (used `useAuth()` direct-call
-pattern).
+Net diff across the two code commits: 25 insertions, 9 deletions
+across 3 source files. No version bump (bug fixes within v0.23.1).
+No Firestore writes deployed yet — push pending after this commit.
