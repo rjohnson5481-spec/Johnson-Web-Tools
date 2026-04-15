@@ -284,7 +284,7 @@
 
 .undo-sick-confirm:hover { opacity: 0.85; }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   /* Planner-body fills the shell content area. No margin-left here —
      shell's own margin-left: 200px in App.css handles the sidebar
      offset; mobile's margin-left/right: auto keeps it centered. */

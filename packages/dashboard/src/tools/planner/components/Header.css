@@ -182,9 +182,9 @@
 
 /* Week nav now has its own row — school name visible on all screen widths */
 
-/* ── Desktop (≥768px) — planner header hidden inside the shell ── */
+/* ── Desktop (≥1024px) — planner header hidden inside the shell ── */
 /* Mobile layout is COMPLETELY UNCHANGED — all rules below are additive.
    Shell sidebar provides branding + nav; week nav moves into content. */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .header { display: none; }
 }

@@ -276,9 +276,9 @@
 
 .home-action-btn--ghost:hover { border-color: var(--gold); color: var(--gold); }
 
-/* ── Desktop (≥768px) — full-width content; sidebar owns branding ── */
+/* ── Desktop (≥1024px) — full-width content; sidebar owns branding ── */
 /* Mobile layout above is COMPLETELY UNCHANGED. */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .home-header { display: none; }
 
   /* Content fills the shell column with generous horizontal padding */

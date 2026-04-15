@@ -14,10 +14,10 @@
   gap: 16px;
 }
 
-/* ── Desktop (≥768px): full-width content, two-column card grid ── */
+/* ── Desktop (≥1024px): full-width content, two-column card grid ── */
 /* Mobile layout above is COMPLETELY UNCHANGED. Reward header is hidden
    on desktop (see RewardHeader.css), so no 56px top margin needed. */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .rl-body {
     margin-top: 0;
     max-width: none;

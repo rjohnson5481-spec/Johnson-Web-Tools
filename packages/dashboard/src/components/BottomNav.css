@@ -72,7 +72,7 @@
 }
 
 /* ── Desktop: fixed left sidebar ── */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .bottom-nav {
     top: 0;
     right: auto;

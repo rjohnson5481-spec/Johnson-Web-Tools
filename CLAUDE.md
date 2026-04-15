@@ -216,19 +216,19 @@ packages/dashboard/src/tools/planner/
 - Each sheet has its own overlay class (not shared) to avoid CSS conflicts
 - safe-area-inset-bottom applied to all sheets for iPhone home bar
 
-## Desktop layout (≥768px) — all rules are additive media queries; mobile is UNCHANGED
+## Desktop layout (≥1024px) — all rules are additive media queries; mobile is UNCHANGED
 Desktop = shell sidebar at left + planner content column to the right.
 
-- Planner Header: `display: none` at ≥768px. Shell sidebar provides branding, nav, sign-out, and a Student selector when the Planner tab is active.
-- Shell `<BottomNav>` flips to a 200px fixed left sidebar at ≥768px (`#22252e`, gold active state, vertical tab list). Student selector renders only when `activeTab === 'planner'` and hides on all other tabs.
-- `.shell-content { margin-left: 200px; padding-bottom: 0 }` at ≥768px — clears the sidebar.
+- Planner Header: `display: none` at ≥1024px. Shell sidebar provides branding, nav, sign-out, and a Student selector when the Planner tab is active.
+- Shell `<BottomNav>` flips to a 200px fixed left sidebar at ≥1024px (`#22252e`, gold active state, vertical tab list). Student selector renders only when `activeTab === 'planner'` and hides on all other tabs.
+- `.shell-content { margin-left: 200px; padding-bottom: 0 }` at ≥1024px — clears the sidebar.
 - Desktop week nav lives inside `.planner-body` as `.planner-week-nav-desktop` (JSX, not in Header) — sits above the DayStrip. Gold chevrons, ink label.
-- `.day-strip` is `position: static` in the shell at ≥768px — sticky behavior is dropped on desktop because the shell scrolls as a whole and a sticky strip would clip the day title scrolling beneath it. Mobile stays sticky at `top: 132px` for the fixed header.
+- `.day-strip` is `position: static` in the shell at ≥1024px — sticky behavior is dropped on desktop because the shell scrolls as a whole and a sticky strip would clip the day title scrolling beneath it. Mobile stays sticky at `top: 132px` for the fixed header.
 - `.planner-body` on desktop: `margin-top: 0; max-width: none;` (mobile margin-left/right: auto centers inside shell content).
 - `.planner-subjects`: grid `repeat(auto-fill, minmax(340px, 1fr))`, gap 14px.
 - `.planner-action-bar` on desktop: `left: 200px; right: 0; bottom: 0; max-width: none; margin: 0` (set in App.css so the planner layer stays sidebar-unaware).
 - Desktop-only day header (.planner-day-header) reveals day title + subject count. The inline "+ Add" is `display: none` on desktop (redundant with the bottom dashed "+ Add Subject").
-- Desktop breakpoint: 768px. Never add desktop-only JSX — CSS media queries only.
+- Desktop breakpoint: 1024px. Never add desktop-only JSX — CSS media queries only. (Raised from 768px in v0.22.7 — the 768px breakpoint was triggering the desktop sidebar on wide mobile phones like the Galaxy S25 Ultra.)
 
 ### Where desktop rules live (avoid re-creating conflicts)
 - `App.css` @media → shell-aware concerns only: `.shell-content` offset, `.shell-content .day-strip` non-sticky, `.shell-content .planner-action-bar` alignment. Anything referencing the 200px sidebar or the `.shell-content` scope lives here.
@@ -333,7 +333,7 @@ Before closing, do both of these:
 ## Dashboard — app shell architecture
 The dashboard is the unified app shell. Planner and reward tracker are
 integrated as tabs. Navigation is a bottom bar on mobile and a 200px
-fixed left sidebar on desktop (≥768px).
+fixed left sidebar on desktop (≥1024px).
 
 ### Shell layout
 - `App.jsx` owns auth + tab state (`activeTab` string, default `'home'`) AND the lifted `plannerStudent` state (so the sidebar can show/change the active student when the Planner tab is visible).
@@ -354,7 +354,7 @@ fixed left sidebar on desktop (≥768px).
 - Width 200px, fixed left, full viewport height, `#22252e` background (hardcoded — never changes with dark-mode toggle, consistent with all header-like surfaces).
 - Brand block at top: logo + "IRON & LIGHT / JOHNSON ACADEMY" + tagline — rendered on desktop only via `.bn-brand { display: none }` mobile base.
 - Tab list: vertical rows (icon + label). Active tab uses `rgba(201,168,76,0.12)` background + gold-light icon/label + `rgba(201,168,76,0.18)` border.
-- Student section: `.bn-students` renders only when `activeTab === 'planner' && students.length > 0` (JSX gate) and only on desktop via CSS (`display: none` base, `display: block` inside the ≥768px block). Label "STUDENT" in small caps / 9px / white-35%. Student pills full-width, active uses gold-pale bg + gold-light text.
+- Student section: `.bn-students` renders only when `activeTab === 'planner' && students.length > 0` (JSX gate) and only on desktop via CSS (`display: none` base, `display: block` inside the ≥1024px block). Label "STUDENT" in small caps / 9px / white-35%. Student pills full-width, active uses gold-pale bg + gold-light text.
 - Footer: sign-out button + `v{pkg.version}` — desktop only.
 
 ### File structure — dashboard shell
@@ -590,7 +590,7 @@ No backward-compat aliases — all components now use Ink & Gold tokens directly
 
 **Layout (current, v0.22+)**
 - Mobile: planner header is a 132px fixed 3-row stack (`#22252e`). Shell has `<BottomNav>` as a 56px fixed bottom bar.
-- Desktop (≥768px): planner header is `display: none` — the shell's 200px fixed left sidebar owns branding + nav + sign-out + Student selector. Content column has `margin-left: 200px`. Planner's own week nav sits above the DayStrip inside `.planner-body`.
+- Desktop (≥1024px): planner header is `display: none` — the shell's 200px fixed left sidebar owns branding + nav + sign-out + Student selector. Content column has `margin-left: 200px`. Planner's own week nav sits above the DayStrip inside `.planner-body`.
 - All chrome backgrounds are `#22252e` (hardcoded) — never changes between light/dark.
 
 **Header**

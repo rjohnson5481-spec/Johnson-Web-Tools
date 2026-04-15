@@ -352,7 +352,7 @@
 }
 
 /* ── Desktop: two-column grid ── */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .st-tab { padding: 24px 28px 32px; }
   .st-grid {
     display: grid;
