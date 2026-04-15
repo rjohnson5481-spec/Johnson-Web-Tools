@@ -100,7 +100,7 @@
 /* ── Large phone (400–1023px) — reward header scaled up ── */
 @media (min-width: 400px) and (max-width: 1023px) {
   .rh-top              { height: 64px; }
-  .rh-back-btn         { width: 40px; height: 40px; font-size: 14px; }
+  .rh-back-btn         { width: 40px; height: 40px; font-size: 20px; }
   .rh-back-spacer      { width: 40px; }
   .rh-logo             { width: 38px; height: 38px; }
   .rh-school-line1     { font-size: 13px; }

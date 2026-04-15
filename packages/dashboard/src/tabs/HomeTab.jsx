@@ -55,7 +55,7 @@ export default function HomeTab({ onTabChange }) {
 
         <div className="home-summary-row">
           <div className="home-summary-card">
-            <div className="home-summary-label">Today's Lessons</div>
+            <div className="home-summary-label">Lessons</div>
             <div className="home-summary-value">{doneLessons}/{totalLessons}</div>
             <div className="home-summary-sub">
               {totalLessons === 0 ? 'No lessons' : `${totalLessons - doneLessons} left`}
