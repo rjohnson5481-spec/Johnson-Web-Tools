@@ -71,20 +71,10 @@ export function useSubjects(uid, weekId, student, day) {
   // Writes to an explicit weekId+student — used by PDF import.
   // overwrite=true: always write (wipe mode — used after deleteWeek).
   // overwrite=false: skip cells that already exist (merge mode — default).
-  // onLog (optional): fn(msg) — called with a trace line for each decision
-  //   so the PDF import log captures skip/write-new/write-overwrite per cell.
-  async function importCell(importWeekId, importStudent, subject, dayIndex, data, overwrite, onLog) {
-    const log = typeof onLog === 'function' ? onLog : () => {};
-    const where = `${importStudent}/${importWeekId}/d${dayIndex}/${subject}`;
+  async function importCell(importWeekId, importStudent, subject, dayIndex, data, overwrite) {
     if (!overwrite) {
       const existing = await dbReadCell(uid, importWeekId, importStudent, dayIndex, subject);
-      if (existing) {
-        log(`SKIP  ${where}  existing { lesson:"${existing.lesson ?? ''}", note:"${existing.note ?? ''}", done:${!!existing.done}, flag:${!!existing.flag} }`);
-        return;
-      }
-      log(`WRITE-NEW  ${where}  incoming { lesson:"${data.lesson ?? ''}" }`);
-    } else {
-      log(`WRITE-OVER ${where}  incoming { lesson:"${data.lesson ?? ''}" }`);
+      if (existing) return;
     }
     const cleaned = {
       ...data,

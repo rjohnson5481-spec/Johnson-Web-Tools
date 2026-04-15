@@ -24,7 +24,7 @@ function formatDayDate(weekId, dayIndex) {
 // Props: pdfImport ({ file, importing, result, error, log, selectFile, importSchedule, addLog }),
 //        onApply(parsedData, wipe), onClose
 export default function UploadSheet({ pdfImport, onApply, onClose }) {
-  const { file, importing, result, error, log, selectFile, importSchedule, addLog } = pdfImport;
+  const { file, importing, result, error, log, selectFile, importSchedule } = pdfImport;
 
   const [wipe, setWipe]       = useState(false);
   const [applied, setApplied] = useState(false);
@@ -38,7 +38,6 @@ export default function UploadSheet({ pdfImport, onApply, onClose }) {
     : 0;
 
   function handleApply() {
-    addLog?.(`Apply clicked — wipe toggle state: ${wipe}`);
     setApplied(true);
     onApply(result, wipe);
   }

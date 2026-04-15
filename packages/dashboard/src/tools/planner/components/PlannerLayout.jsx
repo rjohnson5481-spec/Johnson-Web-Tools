@@ -85,7 +85,7 @@ export default function PlannerLayout({
   // Does NOT auto-close — UploadSheet shows a success state; user closes manually.
   async function handleApplySchedule(parsedData, wipe) {
     const safeData = { ...parsedData, weekId: mondayWeekId(parsedData.weekId) };
-    pdfImport.addLog(`Applying — student: ${safeData.student}, week: ${safeData.weekId}, wipe: ${!!wipe}`);
+    pdfImport.addLog(`Applying — student: ${safeData.student}, week: ${safeData.weekId}${wipe ? ', wipe: true' : ''}`);
     if (wipe) {
       pdfImport.addLog('Wiping existing week...');
       await wipeWeek(safeData.weekId, safeData.student);
@@ -94,12 +94,14 @@ export default function PlannerLayout({
     const cells = (safeData.days ?? []).flatMap(({ dayIndex, lessons }) =>
       (lessons ?? []).map(({ subject, lesson }) => ({ dayIndex, subject, lesson }))
     );
-    pdfImport.addLog(`Planned ${cells.length} cells from parsed data.`);
+    cells.forEach(({ dayIndex, subject, lesson }) =>
+      pdfImport.addLog(`Writing: ${safeData.student} › ${DAY_SHORT[dayIndex]} › ${subject} › ${lesson}`)
+    );
     await Promise.all(cells.map(({ dayIndex, subject, lesson }) =>
       importCell(safeData.weekId, safeData.student, subject, dayIndex,
-        { lesson, note: '', done: false, flag: false }, wipe, pdfImport.addLog)
+        { lesson, note: '', done: false, flag: false }, wipe)
     ));
-    pdfImport.addLog(`Apply complete: processed ${cells.length} cells (see SKIP / WRITE-NEW / WRITE-OVER lines above for per-cell decisions)`);
+    pdfImport.addLog(`Apply complete: Applied ${cells.length} cells`);
     jumpToWeek(safeData.weekId);
     setStudent(safeData.student);
     pdfImport.addLog(`Navigation: jumping to week of ${safeData.weekId}, student=${safeData.student}`);
