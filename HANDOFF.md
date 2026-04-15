@@ -1,182 +1,177 @@
-# HANDOFF — v0.22.9 CLAUDE.md sync
+# HANDOFF — v0.22.10 cleanup pass
 
 ## What was completed this session
 
-No code changes. Single-file session: surgical rewrite of CLAUDE.md so
-every current-state claim matches the project as it actually ships at
-v0.22.9. Several sessions of features (v0.22.3 → v0.22.9) had drifted
-the doc; this session brings it fully current. Historical phase-log
-entries (lines ~460–525, covering v0.19.0 through v0.22.2) were
-preserved intact — those are history, not current state.
+Four-commit cleanup session tackling all the carry-overs flagged in
+the v0.22.9 HANDOFF plus a domain-URL freshness fix. No new features.
 
-### Section-by-section edits applied
+### Commit 1 — `fix: label, stepper, back-btn display fixes (v0.22.10)`
 
-1. **Deployment** — added primary custom domain
-   `homeschool.grasphislove.com` (live 2026-04-15) and
-   `ironandlight.netlify.app` as Netlify-default fallback. Clarified
-   no `/planner/*` or `/reward-tracker/*` routes exist — all tools
-   are tabs inside the shell.
+Three small display corrections, one per file:
 
-2. **File structure — planner tool** — removed the `planner.css` line
-   (deleted in v0.22.4 per git history), removed inline line-count
-   estimates (stale across the board), added `DebugSheet.{jsx,css}`
-   which was missing, flagged `SettingsSheet.{jsx,css}` as RETIRED
-   v0.22.6, noted the three CSS files currently over 300 lines
-   (PlannerLayout 360, UploadSheet 333, AddSubjectSheet 408).
+- **`packages/dashboard/src/tabs/HomeTab.jsx:58`** — summary card label
+  changed from `Today's Lessons` to `Lessons`. The CSS
+  (`.home-summary-label`: `text-transform: uppercase; white-space: nowrap;
+   overflow: hidden; text-overflow: ellipsis`) was rendering it as
+  "TODAY'S LESS…" on narrow phones. Shortening the literal is the
+  cleanest fix — keeps the CSS intact and the other two summary cards
+  (Orion / Malachi) still look consistent because their labels are
+  student names that already fit.
+- **`packages/dashboard/src/tools/reward-tracker/components/ActionSheet.css:207`**
+  — in the `@media (min-width: 400px) and (max-width: 1023px)` block,
+  `.action-stepper-value { font-size: 32px }` → `44px`. Base at line 91
+  is `40px`; scaling up from 40 → 44 matches the session's intent.
+  The 32px value was flagged as a likely spec typo in v0.22.9.
+- **`packages/dashboard/src/tools/reward-tracker/components/RewardHeader.css:103`**
+  — in the same large-phone @media, `.rh-back-btn { font-size: 14px }`
+  → `20px`. Base at line 25 is `18px`; 20px matches the scale-up
+  pattern (icon glyph gets slightly bigger on wide phones). Also
+  flagged as a likely spec typo in v0.22.9.
 
-3. **Mobile layout + Responsive breakpoints — NEW SECTION** (inserted
-   before the existing Desktop layout section). Documents: 16px
-   horizontal padding; no `max-width: 480px`; `.planner-subjects`
-   and `.rl-body` responsive grid at `minmax(300px, 1fr)`; the
-   bounded `@media (min-width: 400px) and (max-width: 1023px)`
-   large-phone scaling band; 16px iOS zoom guard on sheet inputs;
-   three-tier deferred to Phase 4. Plus a canonical breakpoints
-   table: `<400px` small, `400–1023` large phone, `≥1024` desktop.
+### Commit 2 — `chore: delete 8 dead files`
 
-4. **File size rules** — added an explicit "CLAUDE.md is exempt"
-   clause at the top of the section (the rule applies to source
-   files only). Added a flagged list of the five CSS files currently
-   over 300 lines: AddSubjectSheet (408), SettingsTab (376),
-   PlannerLayout (360), UploadSheet (333), HomeTab (324).
+All eight dead files confirmed orphaned by diagnostic session, then
+deleted. Pre-delete grep confirmed zero live imports; post-delete
+grep re-confirmed nothing broke:
 
-5. **Tools status** — bumped header `(v0.22.2)` → `(v0.22.9)`.
-   Expanded per-tool summaries with current feature highlights
-   (batch add, large checkbox, PDF import, unified Settings, etc.).
-   Added Academic Records (Phase 2) and school-year / ND compliance
-   (Phase 3) rows.
+```
+packages/dashboard/src/components/ToolCard.jsx
+packages/dashboard/src/components/ToolCard.css
+packages/dashboard/src/components/Header.jsx
+packages/dashboard/src/components/Header.css
+packages/dashboard/src/components/Dashboard.jsx
+packages/dashboard/src/components/Dashboard.css
+packages/dashboard/src/tools/planner/components/SettingsSheet.jsx
+packages/dashboard/src/tools/planner/components/SettingsSheet.css
+```
 
-6. **Shell layout** — rewrote the "state lifted to App.jsx" section
-   to enumerate the four lifted pieces (`activeTab`, `plannerStudent`,
-   `colorMode` + `toggleDarkMode`, `students` + `subjectsByStudent`).
-   Updated `.shell-content` padding-bottom to document the tri-level
-   responsive behavior (56px base, 68px at ≥400px, 200px margin-left
-   at ≥1024px).
+Total deletions: 821 lines removed. The only live code mention
+remaining is a comment in `packages/dashboard/src/tabs/SettingsTab.jsx:60`
+referring to the retired planner SettingsSheet — it's historical
+context, not an import, safe to leave.
 
-7. **Bottom nav / sidebar tabs** — rewrote from 5 tabs to 6 tabs as
-   of v0.22.6 (added Settings) and appended each tab's emoji icon.
+Build clean after deletion — nothing in the shell was depending on
+these files.
 
-8. **File structure — dashboard shell** — added the `SettingsTab.jsx`
-   / `SettingsTab.css` entries, flagged `ToolCard.{jsx,css}`,
-   `Header.{jsx,css}` (shell), and `Dashboard.{jsx,css}` as DEAD
-   (not imported anywhere), noted `HomeTab.css 324` and
-   `SettingsTab.css 376` as over the 300 limit. Added a trailing
-   note that dead files are pending a cleanup session.
+### Commit 3 — `fix: update settings footer URL to primary domain`
 
-9. **Bottom nav design rules** — rewrote the height/icon/label block
-   as a responsive tier (56/18/9 base, 68/24/12 at ≥400px,
-   sidebar at ≥1024px). Added the bounding-query rationale so the
-   next Claude instance knows why 400px is capped at 1023px.
+**`packages/dashboard/src/tabs/SettingsTab.jsx:225`** — the
+`.st-version-line` footer displayed `ironandlight.netlify.app`
+(the Netlify default / fallback URL). Updated to
+`homeschool.grasphislove.com`, which has been the primary domain
+since 2026-04-15. The old Netlify URL still resolves — it's
+mentioned in CLAUDE.md as the fallback — but the Settings
+tab should point at the primary.
 
-10. **Key decisions** — removed the obsolete "Mobile-first,
-    max-width 480px on all tools" line. Added eight new locked
-    decisions: custom domain primary / Netlify fallback;
-    1024px desktop breakpoint; 400–1023 large-phone band;
-    no max-width on mobile; TE Extractor links out (React rewrite
-    deferred to Phase 3); three-tier responsive deferred to Phase 4;
-    CLAUDE.md exempt from 300-line rule; unified Settings
-    (SettingsSheet retired v0.22.6); student state lifted to App.jsx.
+Only `SettingsTab.jsx` was touched. CLAUDE.md and HANDOFF.md
+references to `ironandlight.netlify.app` are documentation of the
+fallback relationship and stay as-is.
 
-11. **Dark mode token rule** — reformatted into "chrome literals OK"
-    vs. "tricky spots" with the specific `var(--text-primary) not
-    --ink` and `var(--text-secondary) not --text-muted` rules
-    promoted to clearer bullets.
+### Commit 4 — `chore: bump version to v0.22.10`
 
-12. **Reward Tracker Firestore data model** — added the path-segment
-    rationale (no `students/` between `rewardTracker/` and
-    `{studentName}` because Firestore document paths must have an
-    even number of segments — that was the v0.21.2 fix).
+- `packages/dashboard/package.json`:    0.22.9 → 0.22.10
+- `packages/shared/package.json`:       0.22.9 → 0.22.10
+- `packages/te-extractor/package.json`: 0.22.9 → 0.22.10
 
-13. **Phase roadmap — NEW SECTION** (inserted between the planner
-    Phase 2 list and the TE Extractor architecture notes). Cross-cutting
-    project-wide roadmap:
-    - **Phase 1 ✅ COMPLETE at v0.22.9** — unified app shell, planner,
-      reward tracker, HomeTab, unified Settings, custom domain,
-      responsive scaling, TE Extractor (vanilla).
-    - **Phase 2 🔒** — Academic Records, planner Phase-2 items
-      (auto-roll, week history, copy last week, export PDF).
-    - **Phase 3 🔒** — School year + ND compliance, TE Extractor
-      React rewrite.
-    - **Phase 4 🔒** — three-tier responsive typography, brand-agnostic
-      shell (remove hardcoded "Iron & Light Johnson Academy"),
-      50-state compliance database.
+Build verified clean at every commit
+(`@homeschool/dashboard@0.22.10`, `@homeschool/te-extractor@0.22.10`).
 
 ---
 
-## File size note
+## CLAUDE.md drift from this session
 
-CLAUDE.md is now 785 lines (up from 686). Per the new exemption
-clause it's documented in: this is fine. CLAUDE.md is a reference
-document; its value is completeness, not brevity.
+The v0.22.9 rewrite listed `ToolCard.{jsx,css}`, `Header.{jsx,css}`
+(shell), `Dashboard.{jsx,css}`, and `SettingsSheet.{jsx,css}` as
+DEAD with a note "will be deleted in a cleanup session." That's
+now done — those entries in the file-structure trees can be removed
+when CLAUDE.md is next touched. Not urgent; listing a nonexistent
+file as DEAD is self-consistent for now.
 
-## Deliberately NOT changed
-
-- Planner Phase 1 log entries (✓1 through ✓33). Those record the
-  session-by-session history of the planner build and are
-  intentionally preserved — rewriting them would misrepresent
-  what was shipped at each version.
-- The `**Layout (current, v0.22+)**` design-system subsection
-  (now around line 690). Still accurate — v0.22.9 is still in the
-  v0.22 series.
-- Phase 2 (planner) list. Still the same four items.
-- TE Extractor architecture notes + Firebase CDN pattern. Unchanged.
-- All token tables, font rules, header/DayStrip/cards/buttons
-  design-system blocks. Still accurate.
+The two "spec literal vs. intent follow-up" items in the v0.22.9
+HANDOFF are now resolved (32px → 44px, 14px → 20px). The new
+values are still not documented anywhere in CLAUDE.md — they'd
+only belong in a design-system subsection, which currently doesn't
+call out stepper or back-button sizing explicitly. Nothing to
+update unless Rob wants those spec'd.
 
 ---
 
 ## What is currently incomplete / pending
 
-1. **Cleanup session for dead files** — ToolCard.{jsx,css},
-   components/Header.{jsx,css}, Dashboard.{jsx,css},
-   tools/planner/components/SettingsSheet.{jsx,css}. All flagged
-   in CLAUDE.md, none imported. Delete in a dedicated cleanup pass.
+1. **Browser smoke test** — not run. Priority checks:
+   - **HomeTab** summary row — first card now reads `LESSONS`
+     (no ellipsis) on narrow phones like iPhone SE.
+   - **Reward tracker award/deduct/spend sheets** on a wide phone
+     (Galaxy S25 Ultra portrait ≥400px) — stepper number renders
+     at 44px (up from the previous 32px), feels appropriately
+     scaled vs. 40px base.
+   - **Reward tracker LogPage** on a wide phone — back arrow `←`
+     renders at 20px (up from the previous 14px).
+   - **Settings tab version footer** — now reads
+     `v0.22.10 · homeschool.grasphislove.com`.
 
-2. **CSS files over 300 lines** — five files listed in CLAUDE.md's
-   new subsection. Priority split target is HomeTab.css (324), the
-   only one that crossed in v0.22.9. Suggested split targets are
-   noted in v0.22.9 HANDOFF.
+2. **iPad portrait breakpoint decision** (carried from v0.22.7+)
+   — iPad portrait (~810px) still falls into the large-phone
+   mobile band. If Rob wants sidebar on iPad portrait, the
+   threshold needs to drop.
 
-3. **iPad portrait breakpoint decision** — carried from v0.22.7/8/9.
-   iPad portrait (~810px) currently falls into the large-phone band
-   (mobile shell). If Rob wants iPad portrait to flip to the desktop
-   sidebar, the threshold needs another revisit.
+3. **iPhone SE grid overflow** (carried from v0.22.8) —
+   `minmax(300px, 1fr)` grid in `.planner-subjects` / `.rl-body`
+   could overflow SE's 288px content area. Not touched.
 
-4. **Spec literal vs. intent follow-up from v0.22.9** —
-   `.action-stepper-value 32px` (base 40) and `.rh-back-btn 14px`
-   (base 18) both shrink at ≥400px. Flagged in v0.22.9 HANDOFF for
-   Rob's review.
+4. **CSS files over 300 lines** — five files, targets suggested
+   in v0.22.9 HANDOFF. Priority split is HomeTab.css (324).
 
-5. **iPhone SE grid overflow** (carried from v0.22.8) —
-   `minmax(300px, 1fr)` could overflow SE's 288px content area.
+5. **Planner Phase 2 features** — auto-roll flagged lessons,
+   week history browser, copy last week, export PDF. Still not
+   started.
 
-6. **Planner Phase 2 features** — auto-roll flagged lessons, week
-   history, copy last week, export PDF.
+6. **Academic Records tab** — still a Coming Soon placeholder.
 
-7. **Academic Records tab** — currently a placeholder.
+7. **Import merge bug** (inherited from v0.22.3) — still open.
 
-8. **Import merge bug** (inherited from v0.22.3) — still open.
+8. **CLAUDE.md DEAD entries** — now stale since the eight files
+   are actually deleted. Low priority — fix on next CLAUDE.md touch.
 
 ---
 
 ## What the next session should start with
 
-1. Read CLAUDE.md + HANDOFF.md (standard). CLAUDE.md is now
-   current through v0.22.9 — it can be trusted as the source of
-   truth for project structure, responsive strategy, and locked
-   decisions.
-2. Confirm the task: feature work (Academic Records? Planner
-   Phase 2? TE Extractor React rewrite?) vs. maintenance
-   (dead-file cleanup, CSS file splits, iPad portrait decision,
-   v0.22.9 spec-literal follow-ups).
+1. Read CLAUDE.md + HANDOFF.md (standard).
+2. Smoke test v0.22.10 — the three display fixes + the Settings
+   footer URL.
+3. Pick a direction: iPad portrait decision, CSS file splits,
+   HomeTab.css 324 → split, or start Phase 2 (planner) work.
 
 ---
 
 ## Key file locations (touched this session)
 
 ```
-CLAUDE.md                                                           # full sync to v0.22.9; 785 lines (exemption documented)
-HANDOFF.md                                                          # this file
+packages/dashboard/
+├── package.json                                                    # v0.22.10
+├── src/
+│   ├── components/                                                 # -6 dead files deleted
+│   │   ├── ToolCard.jsx  ┐
+│   │   ├── ToolCard.css  │
+│   │   ├── Header.jsx    │  all deleted
+│   │   ├── Header.css    │
+│   │   ├── Dashboard.jsx │
+│   │   └── Dashboard.css ┘
+│   ├── tabs/
+│   │   ├── HomeTab.jsx                                             # "Today's Lessons" → "Lessons"
+│   │   └── SettingsTab.jsx                                         # footer URL → homeschool.grasphislove.com
+│   └── tools/
+│       ├── planner/components/                                     # -2 dead files
+│       │   ├── SettingsSheet.jsx  ┐  both deleted
+│       │   └── SettingsSheet.css  ┘
+│       └── reward-tracker/components/
+│           ├── ActionSheet.css                                     # @400-1023 stepper-value 32 → 44
+│           └── RewardHeader.css                                    # @400-1023 back-btn 14 → 20
+packages/shared/package.json                                        # v0.22.10
+packages/te-extractor/package.json                                  # v0.22.10
 ```
 
-No source files were modified. No version bump this session (CLAUDE.md
-rewrite is docs-only; the live version stays v0.22.9).
+Total: 12 source files touched (3 edited, 8 deleted, 3 package.json
+version bumps, 1 edited again for the domain URL = SettingsTab.jsx
+touched twice). 821 lines deleted, 7 lines edited.
