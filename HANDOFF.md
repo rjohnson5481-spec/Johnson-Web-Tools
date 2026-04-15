@@ -1,113 +1,120 @@
-# HANDOFF — v0.22.3 cleanup
+# HANDOFF — v0.22.4 desktop layout fixes
 
 ## What was completed this session
 
-### Task 1 — Deleted orphaned planner / reward-tracker entry files
-Confirmed via grep that nothing in the codebase imports these files
-(only HANDOFF.md mentioned them, as pending-cleanup items). Deleted:
-- `packages/dashboard/src/tools/planner/App.jsx`
-- `packages/dashboard/src/tools/planner/main.jsx`
-- `packages/dashboard/src/tools/reward-tracker/App.jsx`
-- `packages/dashboard/src/tools/reward-tracker/main.jsx`
+All four fixes are additive via `@media (min-width: 768px)` only —
+mobile layout is untouched. Nothing in `packages/shared` or
+`packages/te-extractor` source was modified (only the version strings
+in their package.json).
 
-The active tab entry points are `packages/dashboard/src/tabs/PlannerTab.jsx`
-and `tabs/RewardsTab.jsx`, which own their own hook wiring. `migrateBadWeeks`
-in `tools/planner/firebase/planner.js` was only called from the retired
-planner App.jsx — it's now dead code (tree-shaken) but the function was
-left in place because it's a one-time migration that may still matter
-on devices that never ran it. Safe to remove in a future pass.
+### Fix 1 — Hide RewardHeader on desktop
+- `packages/dashboard/src/tools/reward-tracker/components/RewardHeader.css`:
+  - Actual class is `.rh-header` (not `.reward-header`). Confirmed by
+    reading the file in full.
+  - Appended a new `@media (min-width: 768px) { .rh-header { display: none; } }`
+    block after the mobile rules. Shell sidebar owns branding, nav,
+    sign-out, dark-mode — the tool's own header was redundant.
 
-Left in place (not required for deletion):
-- `tools/planner/planner.css`
-- `tools/reward-tracker/reward-tracker.css`
-These are only referenced by the deleted `main.jsx` files, so they
-no longer enter the bundle — but the CSS files themselves remain on
-disk. Candidate for a future cleanup pass.
+### Fix 2 — Rewards desktop layout: full width, two-column grid
+- `packages/dashboard/src/tools/reward-tracker/components/RewardLayout.css`:
+  - Actual container class is `.rl-body`. Confirmed via the JSX.
+  - Added a desktop `@media` block that:
+    - `.rl-body { margin-top: 0 }` — no need to clear a fixed header
+      (hidden on desktop per Fix 1).
+    - `max-width: none; padding: 24px 28px` — full content-area width
+      with generous horizontal padding.
+    - Switched from `flex-direction: column` to
+      `display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px`.
+      The prompt suggested `1fr 1fr`; I used `auto-fit minmax(320px, 1fr)`
+      because the prompt explicitly also required "If only one student
+      exists, the single card should still look good at full width" —
+      `auto-fit` collapses to 1 column for a single card, otherwise
+      2 columns on wide viewports, all without hardcoding a count.
 
-### Task 2 — Import merge bug: added diagnostic logging
-The `calm-whistling-clock.md` plan file at `/root/.claude/plans/` does
-not exist in this environment (directory is empty). Reconstructed the
-diagnostic from the bug description and code reading.
+### Fix 3 — Home tab desktop layout: full width
+- `packages/dashboard/src/tabs/HomeTab.css`:
+  - The existing desktop block only hid the `.home-header`. Extended
+    it with the following overrides (mobile layout still untouched):
+    - `.home-content { max-width: none; padding: 24px 28px 32px }` —
+      full column width with generous padding; previously capped at
+      480px centered.
+    - `.home-summary-row { gap: 16px; margin-bottom: 28px }`,
+      `.home-summary-card { padding: 20px 16px }`,
+      `.home-summary-value { font-size: 28px }` — cards get visibly
+      larger with the extra real estate; still a 3-card flex row.
+    - `.home-actions { flex-direction: row; justify-content: center;
+      gap: 12px; max-width: 520px; margin: 24px auto 0 }` and
+      `.home-action-btn { width: auto; padding: 13px 28px }` —
+      buttons go inline + centered on desktop (full-width stretched
+      badly across a wider column). The prompt said "full width or
+      centered, whichever looks better" — centered is the right call
+      here.
+  - Lesson list naturally fills the wider container (no width changes
+    needed; the base flex column already works at full width).
 
-**Code review first.** The skip-if-exists logic looks correct on paper:
-- `UploadSheet.handleApply(result, wipe)` passes the toggle state.
-- `PlannerLayout.handleApplySchedule(parsedData, wipe)` passes `wipe`
-  as the `overwrite` flag to `importCell`.
-- `useSubjects.importCell(..., overwrite)` — when `overwrite === false`,
-  reads the existing cell with `dbReadCell`; if it exists, returns
-  early (no write). Otherwise writes a fresh cell.
+### Fix 4 — Dark-mode toggle and sign-out in sidebar footer
+The sign-out button was already desktop-only and always rendered
+regardless of active tab — confirmed no conditional hide. The missing
+piece was the dark-mode toggle, so HomeTab (which hides its own header
+on desktop) had no way to switch modes.
 
-No obvious bug in that flow. So the fix this pass is instrumentation:
-wire the PDF import log all the way through so a reproduction in the
-browser will show exactly what happened per cell.
+- `packages/dashboard/src/App.jsx`:
+  - Imported `useDarkMode` from `./hooks/useDarkMode.js`.
+  - Called `const { mode: colorMode, toggle: toggleDarkMode } = useDarkMode();`
+    at the shell level. The hook writes to `localStorage.color-mode`
+    and `<html data-mode>`, so every other tool's `useDarkMode`
+    subscriber stays in sync automatically.
+  - Passes `colorMode` + `onToggleDarkMode` down to `<BottomNav>`.
+- `packages/dashboard/src/components/BottomNav.jsx`:
+  - Accepts the two new props.
+  - Inside the existing `.bn-footer` (desktop-only via CSS), introduced
+    a `.bn-footer-row` wrapper that holds a new `.bn-mode-btn`
+    (icon-only 🌙/☀️) alongside the existing `.bn-signout` button.
+    The version string stays below on its own line.
+  - Mode button is only rendered when `onToggleDarkMode` is provided —
+    keeps the component defensively functional if a caller ever omits
+    it.
+- `packages/dashboard/src/components/BottomNav.css`:
+  - Added `.bn-footer-row { display: flex; align-items: center; gap: 6px }`.
+  - Added `.bn-mode-btn` — 28×28 icon button, subtle white-tint
+    background (`rgba(255,255,255,0.06)`, border `rgba(255,255,255,0.10)`),
+    emoji font stack (mirrors the existing `.rh-mode-btn` pattern
+    from the reward tracker header for consistency), hover lifts
+    background + border opacity.
+  - Added `flex: 1` to `.bn-signout` so it takes the remaining row
+    width next to the square mode button.
 
-**Changes:**
-- `hooks/useSubjects.js` — `importCell` now takes an optional 7th
-  `onLog` param. When provided:
-  - Overwrite=false path: logs `SKIP student/weekId/day/subject existing { lesson, note, done, flag }` when a cell is preserved, or `WRITE-NEW ...` when creating a new cell.
-  - Overwrite=true path: logs `WRITE-OVER ...` for each cell.
-- `components/PlannerLayout.jsx` — `handleApplySchedule` now passes
-  `pdfImport.addLog` as the 7th arg on every `importCell` call.
-  The opening log line now always prints `wipe: true|false` (was
-  previously conditional on wipe being true — so merge-mode imports
-  didn't clearly state the wipe value in the log).
-  Dropped the misleading per-cell "Writing:" pre-log since the real
-  SKIP/WRITE-NEW/WRITE-OVER lines now convey actual decisions.
-- `components/UploadSheet.jsx` — `handleApply` logs
-  `Apply clicked — wipe toggle state: <bool>` before calling onApply.
-  This catches any mismatch between the UI toggle state and what
-  `handleApplySchedule` ends up seeing (e.g., stale closure).
+### Version bump to v0.22.4
+- `packages/dashboard/package.json`: 0.22.3 → 0.22.4
+- `packages/shared/package.json`:    0.22.3 → 0.22.4
+- `packages/te-extractor/package.json`: 0.22.3 → 0.22.4
 
-**How to reproduce and read the log:**
-1. Import a PDF with the "Replace existing schedule" toggle OFF.
-2. Wait for parse → Apply to Week → success banner.
-3. Manually mark one or two lessons `done` and add notes via EditSheet.
-4. Re-import the same PDF with the toggle OFF again.
-5. Open the UploadSheet's "View Log ({N})" button — the log now
-   contains a line-per-cell explanation. Expected:
-   - `Apply clicked — wipe toggle state: false`
-   - `Applying — … wipe: false`
-   - For each cell that already exists: `SKIP …/Math existing { lesson:"…", note:"Study more", done:true, flag:false }`
-   - For any new cells only: `WRITE-NEW …`
-6. If the bug still reproduces (done/note actually got wiped), the log
-   will reveal whether it was a phantom `WRITE-OVER` (wipe snuck in as
-   true), a spurious `WRITE-NEW` (dbReadCell didn't find the cell),
-   or data mutation happened from a different code path entirely.
-
-### Task 3 — BottomNav.css duplicate font-family
-- `.bn-signout` had `font-family: inherit` followed by
-  `font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif`.
-  The second declaration won, so the button's "Sign out" text was
-  falling back to system sans-serif instead of Lexend.
-- The button renders `🚪 Sign out` (emoji + text together). Unlike
-  the icon-only `.bn-icon` span which legitimately uses the emoji
-  font stack, a mixed emoji+text element should inherit Lexend —
-  browsers render emoji codepoints via system fallback automatically.
-- Fix: removed the second `font-family` declaration, kept `inherit`.
-
-### Version bump to v0.22.3
-- `packages/dashboard/package.json`: 0.22.2 → 0.22.3
-- `packages/shared/package.json`:    0.22.2 → 0.22.3
-- `packages/te-extractor/package.json`: 0.22.2 → 0.22.3
-
-Build clean at each step.
+Build verified clean at each step (`@homeschool/dashboard@0.22.4`,
+`@homeschool/te-extractor@0.22.4`).
 
 ---
 
 ## What is currently incomplete / pending
 
-1. **Import merge bug confirmation** — still unresolved. Rob needs to
-   reproduce with v0.22.3 deployed, then share the log output from
-   `View Log` in the UploadSheet. The log will now contain SKIP /
-   WRITE-NEW / WRITE-OVER lines that make the root cause obvious.
+1. **Browser smoke test** — verify visually on desktop:
+   - Rewards tab: no tool header, two cards side by side in a grid,
+     each card wider than before.
+   - Home tab: content fills the full column, summary cards are larger,
+     action buttons inline+centered, still no header (sidebar owns it).
+   - Sidebar footer: mode button (🌙/☀️) beside sign-out, both work,
+     mode change flips `<html data-mode>` and immediately re-themes
+     the page. Version string still appears below.
+   - Mobile unchanged everywhere.
 
-2. **Browser smoke test** — verify v0.22.2 desktop CSS cleanup still
-   looks right: day title no longer clipped on scroll, week nav flush
-   above day strip, card grid fills desktop width, action bar aligned
-   to sidebar edge.
+2. **Import merge bug confirmation** (inherited v0.22.3) — still
+   unresolved. Awaits Rob's reproduction + log dump from the
+   UploadSheet's View Log panel. See v0.22.3 HANDOFF for the repro
+   script and what each log line means.
 
-3. **Dead-ish code candidates** (not critical, future cleanup):
-   - `tools/planner/planner.css` and `tools/reward-tracker/reward-tracker.css` — no longer imported by any live file since their `main.jsx` entries were deleted.
+3. **Dead-ish code candidates** (inherited, not critical):
+   - `tools/planner/planner.css` and
+     `tools/reward-tracker/reward-tracker.css` — no live importers
+     since the retired `main.jsx` files were deleted in v0.22.3.
    - `migrateBadWeeks` in `tools/planner/firebase/planner.js` — no
      remaining callers after the orphaned App.jsx was deleted.
 
@@ -118,10 +125,9 @@ Build clean at each step.
 ## What the next session should start with
 
 1. Read CLAUDE.md + HANDOFF.md (standard).
-2. Ask Rob for the `View Log` output after reproducing the import
-   merge bug on the deployed v0.22.3 site.
-3. Diagnose from the log; apply the real fix in a follow-up commit.
-4. If time: remove the remaining dead-ish files in item 3 above.
+2. Browser smoke test v0.22.4 — all four fixes above.
+3. Follow up on the import merge bug once Rob captures the log output.
+4. If time: remove the dead-ish files in item 3.
 
 ---
 
@@ -129,20 +135,17 @@ Build clean at each step.
 
 ```
 packages/dashboard/
-├── package.json                                      # v0.22.3
+├── package.json                                       # v0.22.4
 ├── src/
+│   ├── App.jsx                                        # + useDarkMode at shell level; passes colorMode + onToggleDarkMode to BottomNav
 │   ├── components/
-│   │   └── BottomNav.css                             # duplicate font-family removed
-│   └── tools/planner/
-│       ├── hooks/useSubjects.js                      # importCell takes optional onLog
-│       └── components/
-│           ├── PlannerLayout.jsx                     # threads pdfImport.addLog into importCell; clearer wipe log
-│           └── UploadSheet.jsx                       # logs wipe state at click time
-Deleted:
-├── src/tools/planner/App.jsx
-├── src/tools/planner/main.jsx
-├── src/tools/reward-tracker/App.jsx
-└── src/tools/reward-tracker/main.jsx
-packages/shared/package.json                           # v0.22.3
-packages/te-extractor/package.json                     # v0.22.3
+│   │   ├── BottomNav.jsx                              # + .bn-mode-btn in footer row
+│   │   └── BottomNav.css                              # + .bn-footer-row + .bn-mode-btn styles; .bn-signout gains flex:1
+│   ├── tabs/
+│   │   └── HomeTab.css                                # desktop full-width content + larger summary cards + inline centered actions
+│   └── tools/reward-tracker/components/
+│       ├── RewardHeader.css                           # @media hides .rh-header on desktop
+│       └── RewardLayout.css                           # @media: full-width + auto-fit 2-col grid
+packages/shared/package.json                            # v0.22.4
+packages/te-extractor/package.json                      # v0.22.4
 ```
