@@ -13,9 +13,10 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Brand + footer hidden on mobile — shown on desktop */
-.bn-brand  { display: none; }
-.bn-footer { display: none; }
+/* Brand + student section + footer hidden on mobile — shown on desktop */
+.bn-brand    { display: none; }
+.bn-students { display: none; }
+.bn-footer   { display: none; }
 
 /* Tab row — fills the full bottom bar */
 .bn-tabs {
@@ -165,6 +166,51 @@
   }
 
   .bn-label { font-size: 12px; }
+
+  /* Student selector — only shown when activeTab === 'planner' (JSX gate) */
+  .bn-students {
+    display: block;
+    padding: 10px 8px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+  }
+
+  .bn-students-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+    padding: 0 10px;
+    margin-bottom: 6px;
+  }
+
+  .bn-student-btn {
+    display: block;
+    width: 100%;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    text-align: left;
+    color: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .bn-student-btn:not(.bn-student-btn--active):hover {
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .bn-student-btn--active {
+    background: rgba(201, 168, 76, 0.12);
+    border-color: rgba(201, 168, 76, 0.18);
+    color: #e8c97a;
+  }
 
   /* Footer with sign-out */
   .bn-footer {

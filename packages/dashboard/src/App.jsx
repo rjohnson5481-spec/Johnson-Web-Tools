@@ -6,10 +6,16 @@ import HomeTab             from './tabs/HomeTab';
 import PlannerTab          from './tabs/PlannerTab';
 import RewardsTab          from './tabs/RewardsTab';
 import AcademicRecordsTab  from './tabs/AcademicRecordsTab';
+import { useSettings }     from './tools/planner/hooks/useSettings.js';
 
 export default function App() {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('home');
+  // Planner student is lifted here so the desktop sidebar can show a
+  // student selector when the planner tab is active. Mobile planner
+  // header still uses these same props — behavior is unchanged.
+  const [plannerStudent, setPlannerStudent] = useState('Orion');
+  const { students, subjectsByStudent } = useSettings(user?.uid, plannerStudent);
 
   if (loading) return null;
   if (!user)   return <SignIn />;
@@ -18,11 +24,24 @@ export default function App() {
     <div className="app-shell">
       <div className="shell-content">
         {activeTab === 'home'     && <HomeTab onTabChange={setActiveTab} />}
-        {activeTab === 'planner'  && <PlannerTab />}
+        {activeTab === 'planner'  && (
+          <PlannerTab
+            student={plannerStudent}
+            setStudent={setPlannerStudent}
+            students={students}
+            subjectsByStudent={subjectsByStudent}
+          />
+        )}
         {activeTab === 'rewards'  && <RewardsTab />}
         {activeTab === 'academic' && <AcademicRecordsTab />}
       </div>
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        students={students}
+        activeStudent={plannerStudent}
+        onStudentChange={setPlannerStudent}
+      />
     </div>
   );
 }

@@ -4,8 +4,9 @@ import { getTodayDayIndex } from '../constants/days.js';
 // Holds all local UI state for the planner.
 // No Firebase, no business logic — only what the user currently sees.
 // Any new sheet or panel added to the planner gets its state here.
+// NOTE: the active student lives in the shell (App.jsx) so the desktop
+// sidebar can show a student selector — see PlannerTab props.
 export function usePlannerUI() {
-  const [student, setStudent]                   = useState('Orion');
   const [day, setDay]                           = useState(getTodayDayIndex);
   const [editTarget, setEditTarget]             = useState(null); // { subject, day }
   const [showUpload, setShowUpload]             = useState(false);
@@ -16,7 +17,6 @@ export function usePlannerUI() {
   const [showSettings, setShowSettings]         = useState(false);
 
   return {
-    student,       setStudent,
     day,           setDay,
     editTarget,    setEditTarget,
     showUpload,    setShowUpload,

@@ -11,8 +11,16 @@ const TABS = [
   { id: 'academic', icon: '🎓', label: 'Records' },
 ];
 
-// Props: activeTab (string), onTabChange (fn)
-export default function BottomNav({ activeTab, onTabChange }) {
+// Props: activeTab (string), onTabChange (fn),
+//        students (string[]), activeStudent (string), onStudentChange (fn).
+// The student section renders only when activeTab === 'planner' and only
+// on desktop (hidden on mobile via CSS).
+export default function BottomNav({
+  activeTab, onTabChange,
+  students, activeStudent, onStudentChange,
+}) {
+  const showStudents = activeTab === 'planner' && (students?.length ?? 0) > 0;
+
   return (
     <nav className="bottom-nav">
 
@@ -52,6 +60,22 @@ export default function BottomNav({ activeTab, onTabChange }) {
           );
         })}
       </div>
+
+      {/* Desktop-only student selector — only when Planner tab is active */}
+      {showStudents && (
+        <div className="bn-students">
+          <div className="bn-students-label">Student</div>
+          {students.map(name => (
+            <button
+              key={name}
+              className={`bn-student-btn${name === activeStudent ? ' bn-student-btn--active' : ''}`}
+              onClick={() => onStudentChange(name)}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Desktop-only footer with sign-out + version */}
       <div className="bn-footer">
