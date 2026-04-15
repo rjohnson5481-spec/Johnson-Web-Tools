@@ -1,9 +1,8 @@
 // HomeTab — morning summary dashboard with brand header.
-// Header provides dark mode toggle + sign-out on mobile.
-// Header is hidden on desktop (sidebar provides branding).
-import { useAuth, signOut } from '@homeschool/shared';
+// Header is mobile-only branding; dark mode + sign-out now live in the
+// Settings tab. Header is hidden on desktop (sidebar provides branding).
+import { useAuth } from '@homeschool/shared';
 import logo from '@homeschool/shared/assets/logo.png';
-import { useDarkMode } from '../hooks/useDarkMode.js';
 import { useHomeSummary } from '../hooks/useHomeSummary.js';
 import './HomeTab.css';
 
@@ -16,7 +15,6 @@ function cashValue(pts) {
 
 export default function HomeTab({ onTabChange }) {
   const { user } = useAuth();
-  const { mode, toggle } = useDarkMode();
   const { students, activeStudent, setActiveStudent, subjects, points } = useHomeSummary(user?.uid);
 
   const today      = new Date();
@@ -34,14 +32,6 @@ export default function HomeTab({ onTabChange }) {
             IRON & <span className="home-header-accent">LIGHT</span>
             <br />JOHNSON ACADEMY
           </div>
-        </div>
-        <div className="home-header-actions">
-          <button className="home-header-btn" onClick={toggle} aria-label="Toggle dark mode">
-            {mode === 'dark' ? '☀️' : '🌙'}
-          </button>
-          <button className="home-header-btn" onClick={signOut} aria-label="Sign out">
-            🚪
-          </button>
         </div>
       </header>
       <div className="home-content">

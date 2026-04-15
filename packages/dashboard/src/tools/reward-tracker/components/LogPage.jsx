@@ -14,8 +14,8 @@ function formatDate(ts) {
     + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
-// Props: uid (string), student (string), balance (number), onBack (fn), mode, onToggleDark
-export default function LogPage({ uid, student, balance, onBack, mode, onToggleDark }) {
+// Props: uid (string), student (string), balance (number), onBack (fn)
+export default function LogPage({ uid, student, balance, onBack }) {
   const [entries, setEntries] = useState([]);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function LogPage({ uid, student, balance, onBack, mode, onToggleD
 
   return (
     <div className="log-page">
-      <RewardHeader onBack={onBack} mode={mode} onToggleDark={onToggleDark} />
+      <RewardHeader onBack={onBack} />
 
       <div className="log-body">
         <div className="log-student-bar">

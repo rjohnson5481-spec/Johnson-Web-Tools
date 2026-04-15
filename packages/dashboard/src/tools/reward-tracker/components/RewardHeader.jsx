@@ -1,8 +1,10 @@
 import logo from '@homeschool/shared/assets/logo.png';
 import './RewardHeader.css';
 
-// Props: onBack (fn | null), mode ('light'|'dark'), onToggleDark (fn)
-export default function RewardHeader({ onBack, mode, onToggleDark }) {
+// Props: onBack (fn | null)
+// Dark-mode toggle was moved to the Settings tab; this header now only
+// shows branding + an optional back button (LogPage).
+export default function RewardHeader({ onBack }) {
   return (
     <header className="rh-header">
       <div className="rh-top">
@@ -24,13 +26,9 @@ export default function RewardHeader({ onBack, mode, onToggleDark }) {
           </div>
         </div>
 
-        <button
-          className="rh-mode-btn"
-          onClick={onToggleDark}
-          aria-label="Toggle dark mode"
-        >
-          {mode === 'dark' ? '☀️' : '🌙'}
-        </button>
+        {/* Symmetry spacer — keeps the brand centered now that the right
+            side has no button to balance the left back-btn. */}
+        <div className="rh-back-spacer" />
       </div>
     </header>
   );

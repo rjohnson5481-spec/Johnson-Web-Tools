@@ -1,7 +1,6 @@
 // Main screen — two student cards + sheet management + view routing.
 import { useState, useEffect } from 'react';
 import { subscribePoints, awardPoints, deductPoints, spendPoints } from '../firebase/rewardTracker.js';
-import { useDarkMode } from '../hooks/useDarkMode.js';
 import RewardHeader from './RewardHeader.jsx';
 import StudentCard  from './StudentCard.jsx';
 import AwardSheet   from './AwardSheet.jsx';
@@ -16,8 +15,9 @@ const STUDENTS = ['Orion', 'Malachi'];
 const MAIN = { page: 'main', student: null };
 
 // Props: uid (string)
+// Dark mode is now handled by the shell (Settings tab); the reward tracker
+// no longer needs its own useDarkMode subscriber.
 export default function RewardLayout({ uid }) {
-  const { mode, toggle: toggleDark } = useDarkMode();
   const [balances, setBalances] = useState({ Orion: 0, Malachi: 0 });
   const [view, setView]         = useState(MAIN);
   const [sheet, setSheet]       = useState(null); // { type: 'award'|'deduct'|'spend', student }
@@ -54,15 +54,13 @@ export default function RewardLayout({ uid }) {
         student={view.student}
         balance={balances[view.student]}
         onBack={() => setView(MAIN)}
-        mode={mode}
-        onToggleDark={toggleDark}
       />
     );
   }
 
   return (
     <div className="rl-page">
-      <RewardHeader onBack={null} mode={mode} onToggleDark={toggleDark} />
+      <RewardHeader onBack={null} />
 
       <div className="rl-body">
         {STUDENTS.map(student => (
