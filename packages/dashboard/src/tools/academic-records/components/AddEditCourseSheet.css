@@ -1,0 +1,286 @@
+/* Stacking: this sheet stacks ABOVE CourseCatalogSheet.
+   - CourseCatalogSheet overlay = z-index 300
+   - AddEditCourseSheet  overlay = z-index 310
+   - AddEditCourseSheet  panel   = z-index 311
+   Do not change without coordinating with CourseCatalogSheet.css. */
+
+/* ── Backdrop ── */
+.aec-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 310;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* ── Sheet panel ── */
+.aec-sheet {
+  position: relative;
+  z-index: 311;
+  width: 100%;
+  max-width: 100%;
+  max-height: 85vh;
+  background: var(--bg-base);
+  border-radius: 20px 20px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+  animation: aec-sheet-up 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes aec-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.aec-sheet-handle {
+  width: 40px;
+  height: 5px;
+  background: #d4cfc8;
+  border-radius: 3px;
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+
+/* ── Header — hardcoded #22252e per design system ── */
+.aec-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 14px;
+  background: #22252e;
+  flex-shrink: 0;
+}
+
+.aec-sheet-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.aec-sheet-close {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, .12);
+  border: none;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, .8);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s;
+}
+
+.aec-sheet-close:hover {
+  background: rgba(255, 255, 255, .22);
+  color: #fff;
+}
+
+/* ── Body — scrollable ── */
+.aec-sheet-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Field group: label above input ── */
+.aec-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aec-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* iOS auto-zoom prevention: every text input is 16px on mobile.
+   The large-phone @media bumps this to 16px too (no change) to keep
+   inputs above the iOS Safari zoom threshold. */
+.aec-input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--text-primary);
+  transition: border-color 0.15s;
+}
+
+.aec-input::placeholder { color: var(--text-muted); }
+
+.aec-input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+/* ── Grading scale toggle row ── */
+.aec-scale-options {
+  display: flex;
+  gap: 8px;
+}
+
+.aec-scale-btn {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.aec-scale-btn:hover:not(.aec-scale-btn--active) {
+  border-color: var(--gold-light);
+  color: var(--text-primary);
+}
+
+.aec-scale-btn--active {
+  background: var(--gold-pale);
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* ── Remove course (Edit mode only) ── */
+.aec-delete-btn {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  margin-top: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--red);
+  cursor: pointer;
+}
+
+.aec-delete-btn:hover { text-decoration: underline; }
+
+.aec-confirm {
+  background: var(--red-lt);
+  border: 1px solid #f5cfc6;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aec-confirm-msg {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--red);
+  margin: 0;
+}
+
+.aec-confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.aec-confirm-cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.aec-confirm-yes {
+  background: var(--red);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ── Footer ── */
+.aec-sheet-footer {
+  display: flex;
+  gap: 10px;
+  padding: 12px 20px 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.aec-cancel-btn {
+  flex: 1;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.aec-cancel-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.aec-save-btn {
+  flex: 2;
+  background: var(--gold);
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.aec-save-btn:hover:not(:disabled) { background: var(--gold-light); }
+.aec-save-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Large phone (400–1023px) — scaled up for wide phones ── */
+@media (min-width: 400px) and (max-width: 1023px) {
+  .aec-sheet-title  { font-size: 17px; }
+  .aec-sheet-body   { padding: 20px; gap: 18px; }
+  .aec-label        { font-size: 12px; }
+  .aec-input        { font-size: 16px; padding: 12px 14px; }
+  .aec-scale-btn    { padding: 14px 10px; font-size: 15px; }
+  .aec-delete-btn   { font-size: 14px; }
+  .aec-confirm-msg  { font-size: 14px; }
+  .aec-cancel-btn,
+  .aec-save-btn     { padding: 14px; font-size: 15px; }
+}
