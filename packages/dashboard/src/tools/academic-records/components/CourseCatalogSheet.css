@@ -1,0 +1,241 @@
+/* Stacking: catalog overlay z-index 300; AddEditCourseSheet stacks on top
+   at z-index 310 so the catalog stays visible beneath while the editor
+   is open. Do not change without coordinating with AddEditCourseSheet.css. */
+
+/* ── Backdrop ── */
+.cc-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 300;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* ── Sheet panel ── */
+.cc-sheet {
+  width: 100%;
+  max-width: 100%;
+  max-height: 85vh;
+  background: var(--bg-base);
+  border-radius: 20px 20px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+  animation: cc-sheet-up 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes cc-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.cc-sheet-handle {
+  width: 40px;
+  height: 5px;
+  background: #d4cfc8;
+  border-radius: 3px;
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+
+/* ── Header — hardcoded #22252e per design system; never a CSS var ── */
+.cc-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 14px;
+  background: #22252e;
+  flex-shrink: 0;
+}
+
+.cc-sheet-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.cc-sheet-close {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, .12);
+  border: none;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, .8);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s;
+}
+
+.cc-sheet-close:hover {
+  background: rgba(255, 255, 255, .22);
+  color: #fff;
+}
+
+/* ── Body — scrollable ── */
+.cc-sheet-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ── Section label with trailing rule ── */
+.cc-section-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+}
+.cc-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Loading + empty states ── */
+.cc-loading,
+.cc-empty {
+  font-size: 14px;
+  color: var(--text-muted);
+  padding: 20px 0;
+  text-align: center;
+  margin: 0;
+}
+
+/* ── Course list ── */
+.cc-course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.cc-course-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cc-course-row:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--gold-light);
+}
+
+.cc-course-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cc-course-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cc-course-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-course-curriculum {
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-course-badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 10px;
+  padding: 3px 8px;
+  flex-shrink: 0;
+}
+
+.cc-course-badge--letter {
+  color: var(--gold);
+  background: var(--gold-pale);
+}
+
+.cc-course-badge--esnu {
+  color: #1565c0;
+  background: rgba(21, 101, 192, 0.10);
+}
+
+[data-mode="dark"] .cc-course-badge--esnu {
+  color: #82b1ff;
+  background: rgba(130, 177, 255, 0.12);
+}
+
+.cc-course-chevron {
+  font-size: 18px;
+  color: var(--text-muted);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ── Dashed Add Course button — matches .planner-add-btn pattern ── */
+.cc-add-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.cc-add-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Large phone (400–1023px) — scaled up for wide phones ── */
+@media (min-width: 400px) and (max-width: 1023px) {
+  .cc-sheet-title       { font-size: 17px; }
+  .cc-sheet-body        { padding: 20px; }
+  .cc-section-label     { font-size: 11px; }
+  .cc-course-row        { padding: 14px 16px; gap: 14px; }
+  .cc-course-name       { font-size: 15px; }
+  .cc-course-curriculum { font-size: 13px; }
+  .cc-course-badge      { font-size: 11px; padding: 4px 10px; }
+  .cc-add-btn           { padding: 16px; font-size: 15px; }
+}
