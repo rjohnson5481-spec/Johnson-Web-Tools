@@ -43,6 +43,12 @@ export default function AcademicRecordsTab() {
   }
 
   async function handleSaveCourse(data) {
+    // Permanent guard: if uid is unresolved, fail loudly rather than letting
+    // the hook's throw bubble up as an opaque "useCourses: uid is required".
+    if (!uid) {
+      console.warn('AcademicRecordsTab: uid missing on save — course will not persist');
+      return;
+    }
     if (editingCourse) {
       await updateCourse(editingCourse.id, data);
     } else {

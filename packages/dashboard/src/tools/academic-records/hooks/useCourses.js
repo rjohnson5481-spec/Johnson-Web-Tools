@@ -44,7 +44,7 @@ export function useCourses(uid) {
   useEffect(() => { reload(); }, [reload]);
 
   const addCourse = useCallback(async (data) => {
-    if (!uid) return;
+    if (!uid) throw new Error('useCourses: uid is required');
     try {
       const id = await fbAddCourse(uid, data);
       await reload();
@@ -56,7 +56,7 @@ export function useCourses(uid) {
   }, [uid, reload]);
 
   const updateCourse = useCallback(async (courseId, data) => {
-    if (!uid) return;
+    if (!uid) throw new Error('useCourses: uid is required');
     try {
       await fbSaveCourse(uid, courseId, data);
       await reload();
