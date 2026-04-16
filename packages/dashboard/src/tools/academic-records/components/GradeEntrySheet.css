@@ -1,0 +1,124 @@
+/* Stacking: GradeEntrySheet stacks above the main Records view.
+   - GradeEntrySheet overlay = z-index 310
+   - GradeEntrySheet panel   = z-index 311
+   Class prefix: ge- */
+
+/* ── Backdrop ── */
+.ge-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 310;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* ── Sheet panel ── */
+.ge-sheet {
+  position: relative;
+  z-index: 311;
+  width: 100%;
+  max-width: 100%;
+  max-height: 85vh;
+  background: var(--bg-base);
+  border-radius: 20px 20px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+  animation: ge-sheet-up 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+@keyframes ge-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.ge-sheet-handle {
+  width: 40px; height: 5px;
+  background: #d4cfc8; border-radius: 3px;
+  margin: 10px auto 0; flex-shrink: 0;
+}
+
+/* ── Header — hardcoded #22252e per design system ── */
+.ge-sheet-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px 14px; background: #22252e; flex-shrink: 0;
+}
+.ge-sheet-title { font-size: 15px; font-weight: 600; color: #fff; margin: 0; }
+.ge-sheet-close {
+  width: 28px; height: 28px;
+  background: rgba(255, 255, 255, .12); border: none; border-radius: 50%;
+  color: rgba(255, 255, 255, .8); font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+  transition: background 0.15s;
+}
+.ge-sheet-close:hover { background: rgba(255, 255, 255, .22); color: #fff; }
+
+/* ── Body — scrollable ── */
+.ge-sheet-body {
+  padding: 16px 20px; overflow-y: auto; flex: 1;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.ge-empty { font-size: 13px; color: var(--text-muted); text-align: center; padding: 24px 0; margin: 0; }
+
+/* ── Grade row: one per enrollment ── */
+.ge-row {
+  display: flex; flex-direction: column; gap: 8px;
+  padding-bottom: 16px; border-bottom: 1px solid var(--border-light);
+}
+.ge-row:last-child { border-bottom: none; padding-bottom: 0; }
+.ge-row-header { display: flex; align-items: center; gap: 8px; }
+.ge-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.ge-course-name { font-size: 14px; font-weight: 600; color: var(--text-primary); flex: 1; min-width: 0; }
+.ge-scale-badge {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+  padding: 2px 7px; border-radius: 8px;
+  background: var(--gold-pale); color: var(--gold); border: 1px solid rgba(201, 168, 76, 0.2);
+  flex-shrink: 0;
+}
+
+/* ── Grade pills ── */
+.ge-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.ge-pill {
+  min-width: 40px; padding: 8px 12px;
+  background: var(--bg-card); border: 1.5px solid var(--border); border-radius: 10px;
+  font-family: inherit; font-size: 15px; font-weight: 600;
+  color: var(--text-secondary); cursor: pointer; text-align: center;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.ge-pill:hover:not(.active) { border-color: var(--gold-light); color: var(--text-primary); }
+.ge-pill.active {
+  background: var(--gold-pale); border-color: var(--gold); color: var(--gold); font-weight: 700;
+}
+
+/* ── Footer ── */
+.ge-sheet-footer {
+  display: flex; gap: 10px;
+  padding: 12px 20px 16px; padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: var(--bg-card); border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.ge-cancel-btn {
+  flex: 1; background: transparent;
+  border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 12px; font-size: 14px; font-weight: 500;
+  color: var(--text-secondary); cursor: pointer; font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ge-cancel-btn:hover { border-color: var(--gold); color: var(--gold); }
+.ge-save-btn {
+  flex: 2; background: var(--gold); border: none; border-radius: 10px;
+  padding: 12px; font-size: 14px; font-weight: 600;
+  color: #fff; cursor: pointer; font-family: inherit;
+  transition: background 0.15s, opacity 0.15s;
+}
+.ge-save-btn:hover:not(:disabled) { background: var(--gold-light); }
+.ge-save-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Large phone (400–1023px) ── */
+@media (min-width: 400px) and (max-width: 1023px) {
+  .ge-sheet-title { font-size: 17px; }
+  .ge-sheet-body  { padding: 20px; gap: 22px; }
+  .ge-course-name { font-size: 15px; }
+  .ge-pill        { padding: 10px 14px; font-size: 16px; min-width: 44px; }
+  .ge-cancel-btn, .ge-save-btn { padding: 14px; font-size: 15px; }
+}
