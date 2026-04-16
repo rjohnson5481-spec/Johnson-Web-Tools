@@ -1,69 +1,77 @@
-# HANDOFF — v0.23.6 Phase 2 Session 8: Attendance Detail Sheet + HomeTab Cards
+# HANDOFF — v0.23.7 Phase 2 Session 9A: Report Card Generator
 
 ## What was completed this session
 
 5 code commits + this docs commit on `main`:
 
 ```
-1e9c720 chore: bump version to v0.23.6
-ad198d6 feat: add per-student attendance cards to HomeTab (v0.23.6)
-7f96aad feat: wire AttendanceDetailSheet into AcademicRecordsTab
-4b37c27 refactor: remove attendance card, make stat tappable
-897d5d1 feat: add AttendanceDetailSheet
+ed63a91 chore: bump version to v0.23.7
+48ecad8 feat: wire report card generator into Records tab (v0.23.7)
+452b33b feat: add ReportCardGeneratorSheet with live preview
+dbe44bb feat: add report notes Firestore layer and useReportNotes hook
+de4c23b feat: add grade level to enrollments
 ```
 
-### Commit 1 — AttendanceDetailSheet (`897d5d1`) — 77 JSX + 89 CSS
+### Commit 1 — Grade level on enrollments (`de4c23b`)
 
-New bottom sheet (z-index 300) showing full attendance breakdown:
-- Big gold number (48px, 700 weight) with "days completed" subtitle.
-- Progress bar: gold gradient fill, width = attended/175 capped at 100%.
-- Detail rows: Days Attended, Sick Days (red if > 0), Break Days (if > 0), School Days, Days Required (175).
-- Note: "Sick days pulled automatically from Planner".
-- Props: open, onClose, attendanceDays, schoolYearLabel, student.
+- **academics.js** (56→58): Added `GRADE_LEVELS` constant (K through 12).
+- **academicRecords.js** (207→207): Updated enrollment data model comments to include `gradeLevel`.
+- **AddEditEnrollmentSheet.jsx** (203→218): Added `gradeLevel` state, grade level pill selector between Notes and Sync to Planner, and included `gradeLevel` in onSave data.
+- **AddEditEnrollmentForm.css** (261→270): Added `.aee-grade-pills` and `.aee-grade-pill` styles.
 
-### Commit 2 — RecordsMainView cleanup (`4b37c27`)
+### Commit 2 — Report notes layer + hook (`dbe44bb`)
 
-**RecordsMainView.jsx (197 → 173 lines):**
-- Removed the entire `.ar-attendance-card` block (large detail card with progress bar, labels, detail row, and note).
-- Made attendance stat card tappable: added `.ar-stat-card--tappable` class, onClick handler, role="button", tabIndex=0.
-- Added "View details ›" hint (`.ar-stat-detail-hint`) below the stat value.
-- Added `onAttendanceDetail` prop.
-- Removed unused `attendancePct` variable.
+- **academics.js** (58→65): Added `reportNotesCol`/`reportNoteDoc` path builders. Data model: `/users/{uid}/reportNotes/{noteId}` → `{ student, quarterId, notes }`.
+- **academicRecords.js** (207→243): Added `getReportNotes`, `getReportNote`, `saveReportNote`, `addReportNote` functions. Imported `reportNotesCol`/`reportNoteDoc`.
+- **useReportNotes.js** (59 lines, NEW): Hook following useCourses pattern. `saveNote(student, quarterId, notes)` upserts — checks existing notes for matching student+quarterId before choosing save vs add.
 
-**AcademicRecordsTab.css (263 → 266 lines):**
-- Added `.ar-stat-card--tappable` (cursor: pointer, hover border + shadow).
-- Added `.ar-stat-detail-hint` (10px, gold color, margin-top 6px).
+### Commit 3 — ReportCardGeneratorSheet (`452b33b`)
 
-### Commit 3 — Wiring (`7f96aad`)
+**ReportCardGeneratorSheet.jsx** (156 lines, NEW):
+- Student pills + quarter pills for report period selection.
+- Include toggles: Grades, Attendance, Teacher Notes, Signature Line (all default on).
+- Teacher notes textarea with auto-save on blur + "Saved" indicator for 2 seconds.
+- Live preview card: ink header with school name, student bar with grade level, grades table (course/curriculum/scale/grade+percent), attendance boxes (scheduled/absent/present/rate), notes block, footer with signature line.
+- Generate PDF button disabled with "Coming in 9B" placeholder.
 
-**AcademicRecordsTab.jsx (241 → 252 lines):**
-- Added `AttendanceDetailSheet` import.
-- Added `attendanceDetailOpen` state.
-- Passed `onAttendanceDetail` to RecordsMainView.
-- Rendered `<AttendanceDetailSheet>` with `summary.attendanceDays`, `summary.activeSchoolYear?.label`, and `selectedStudent`.
+**ReportCardGeneratorSheet.css** (115 lines, NEW):
+- Full sheet chrome, generator fields, toggle styles, preview card with ink header, grades table, attendance grid, notes block, footer.
 
-### Commit 4 — HomeTab attendance cards (`ad198d6`)
+### Commit 4 — Wiring (`48ecad8`)
 
-**useHomeSummary.js (55 → 113 lines):**
-- Added one-shot Firestore reads for attendance: school years, breaks, sick days.
-- Finds active school year (date range or most recent), counts weekdays, subtracts break + sick days.
-- Returns `attendance: { [studentName]: { attended, required: 175 } }`.
-- School years read once, sick days collection read once, shared across both students.
+**AcademicRecordsTab.jsx** (252→267):
+- Mounted `useReportNotes(uid)` and `ReportCardGeneratorSheet`.
+- Added `reportCardOpen` state.
+- Passed `onGenerateReport` to RecordsMainView.
+- Rendered `<ReportCardGeneratorSheet>` with all required props.
 
-**HomeTab.jsx (111 → 125 lines):**
-- Destructures `attendance` from useHomeSummary.
-- Renders two attendance cards after the points cards: gold value, "of 175 days" sub, thin gold gradient progress bar.
+**RecordsMainView.jsx** (173→173):
+- Added `onGenerateReport` prop.
+- Enabled both "Generate Report" buttons (action row + quick actions).
 
-**HomeTab.css (267 → 282 lines):**
-- Summary row now horizontally scrollable (overflow-x: auto, hidden scrollbar).
-- `.home-summary-card` min-width: 80px (prevents collapse with 5 cards).
-- Added `.home-attendance-value` (gold color), `.home-attendance-bar` (4px track), `.home-attendance-fill` (gold gradient fill).
+### Commit 5 — Version bump (`ed63a91`)
 
-### Commit 5 — Version bump (`1e9c720`)
-
-- 0.23.5 → **0.23.6** across all 3 workspace package.json files.
+- 0.23.6 → **0.23.7** across all 3 workspace package.json files.
 
 Build green at every commit.
+
+---
+
+## Firestore data model changes
+
+New collection:
+```
+/users/{uid}/reportNotes/{noteId}
+  → { student: string, quarterId: string, notes: string }
+```
+
+Updated enrollment fields:
+```
+/users/{uid}/enrollments/{enrollmentId}
+  → { courseId, student, yearId, notes, syncPlanner, gradeLevel }
+```
+
+`gradeLevel` is a string from GRADE_LEVELS (K–12) or null.
 
 ---
 
@@ -73,67 +81,71 @@ All under 300:
 
 | File | Lines |
 |---|---|
-| `components/AttendanceDetailSheet.jsx` | 77 |
-| `components/AttendanceDetailSheet.css` | 89 |
+| `constants/academics.js` | 65 |
+| `firebase/academicRecords.js` | 243 |
+| `hooks/useReportNotes.js` | 59 |
+| `components/AddEditEnrollmentSheet.jsx` | 218 |
+| `components/AddEditEnrollmentForm.css` | 270 |
+| `components/ReportCardGeneratorSheet.jsx` | 156 |
+| `components/ReportCardGeneratorSheet.css` | 115 |
 | `components/RecordsMainView.jsx` | 173 |
-| `tabs/AcademicRecordsTab.jsx` | 252 |
-| `tabs/AcademicRecordsTab.css` | 266 |
-| `hooks/useHomeSummary.js` | 113 |
-| `tabs/HomeTab.jsx` | 125 |
-| `tabs/HomeTab.css` | 282 |
+| `tabs/AcademicRecordsTab.jsx` | 267 |
 
 ---
 
 ## What is currently incomplete / pending
 
 - **Browser smoke test** — not run. Walk:
-  - Academic Records → attendance stat card shows "View details ›" hint.
-  - Tap stat card → AttendanceDetailSheet opens with big gold number, progress bar, detail rows.
-  - Sick Days row red if count > 0. Break Days row hidden if 0.
-  - Close sheet → returns to Records tab.
-  - Large attendance card no longer appears below the grade list.
-  - HomeTab → summary row shows 5 cards: Lessons + Orion pts + Malachi pts + Orion Attend. + Malachi Attend.
-  - Attendance cards show gold number + progress bar. Row scrolls horizontally on narrow phones.
+  - Enrollments → Edit enrollment → grade level pills K–12 appear between Notes and Sync. Tap to select, tap again to deselect. Saves with enrollment.
+  - Generate Report button (action row + quick actions) → opens ReportCardGeneratorSheet.
+  - Student pills switch report preview student. Quarter pills switch period.
+  - Include toggles show/hide grades table, attendance, notes, signature line in preview.
+  - Teacher notes auto-saves on blur. "Saved" indicator appears for 2 seconds.
+  - Preview shows grades with percent where available. Grade level shows if set on enrollment.
+  - Generate PDF button is disabled (Coming in 9B).
 
 - **Carry-overs (still open):**
+  - **Session 9B**: Wire Generate PDF button — actual PDF generation.
   - `useAcademicSummary` still fetches grades redundantly.
   - Cascading-delete UX warnings.
   - iPad portrait breakpoint decision.
   - iPhone SE 300px grid overflow.
   - Planner Phase 2 features.
   - Import merge bug (inherited v0.22.3).
-  - **CLAUDE.md drift** — academic-records still not documented after 8 sessions.
+  - **CLAUDE.md drift** — academic-records still not documented after 9 sessions.
   - SchoolYearSheet.css at 298 lines.
 
 ## What the next session should start with
 
 1. Read CLAUDE.md + HANDOFF.md.
-2. Smoke test attendance detail sheet and HomeTab cards.
+2. Smoke test report card generator end-to-end.
 3. Probable next directions:
+   - **Session 9B: PDF generation** — wire Generate PDF button to create a downloadable report card.
    - **CLAUDE.md sweep** — document academic-records.
-   - **Remove redundant grades fetch from useAcademicSummary**.
-   - **Phase 2 Session 9: Report Card generation**.
 
 ## Key file locations (touched this session)
 
 ```
 packages/dashboard/
-├── package.json                                                     # v0.23.6
+├── package.json                                                     # v0.23.7
 ├── src/
-│   ├── hooks/
-│   │   └── useHomeSummary.js                                        # 55 → 113 (attendance)
 │   ├── tabs/
-│   │   ├── HomeTab.jsx                                              # 111 → 125 (attendance cards)
-│   │   ├── HomeTab.css                                              # 267 → 282 (scrollable row + bar)
-│   │   ├── AcademicRecordsTab.jsx                                   # 241 → 252 (detail sheet wiring)
-│   │   └── AcademicRecordsTab.css                                   # 263 → 266 (tappable stat)
+│   │   └── AcademicRecordsTab.jsx                                   # 252 → 267
 │   └── tools/academic-records/
+│       ├── constants/
+│       │   └── academics.js                                         # 56 → 65
+│       ├── firebase/
+│       │   └── academicRecords.js                                   # 207 → 243
+│       ├── hooks/
+│       │   └── useReportNotes.js                                    # NEW — 59
 │       └── components/
-│           ├── AttendanceDetailSheet.jsx                             # NEW — 77
-│           ├── AttendanceDetailSheet.css                             # NEW — 89
-│           └── RecordsMainView.jsx                                  # 197 → 173 (card removed)
-packages/shared/package.json                                         # v0.23.6
-packages/te-extractor/package.json                                   # v0.23.6
+│           ├── AddEditEnrollmentSheet.jsx                           # 203 → 218
+│           ├── AddEditEnrollmentForm.css                            # 261 → 270
+│           ├── RecordsMainView.jsx                                  # 173 → 173
+│           ├── ReportCardGeneratorSheet.jsx                         # NEW — 156
+│           └── ReportCardGeneratorSheet.css                         # NEW — 115
+packages/shared/package.json                                         # v0.23.7
+packages/te-extractor/package.json                                   # v0.23.7
 ```
 
-Net: 2 new files (166 lines), 7 modified, 3 version bumps. No App.jsx changes. No planner files changed.
+Net: 3 new files (330 lines), 6 modified, 3 version bumps. No App.jsx changes.
