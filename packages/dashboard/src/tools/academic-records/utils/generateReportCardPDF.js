@@ -132,6 +132,25 @@ export async function generateReportCardPDF(config) {
     y -= lines.length * 14 + 24;
   }
 
+  // Activities
+  if (config.includeActivities && (config.activitiesForStudent ?? []).length > 0) {
+    page.drawText('ACTIVITIES', { x: M, y, font: fontB, size: 8, color: GRAY });
+    page.drawLine({ start: { x: M, y: y - 4 }, end: { x: W - M, y: y - 4 }, thickness: 0.5, color: LTGRAY });
+    y -= 18;
+    for (const a of config.activitiesForStudent) {
+      page.drawText(a.name, { x: M, y, font: fontB, size: 11, color: INK });
+      y -= 14;
+      const dates = `${a.startDate ?? '—'} – ${a.ongoing ? 'Ongoing' : (a.endDate ?? '—')}`;
+      page.drawText(dates, { x: M, y, font: fontR, size: 10, color: GRAY });
+      y -= 14;
+      if (a.notes) {
+        page.drawText(a.notes, { x: M, y, font: fontI, size: 9, color: GRAY });
+        y -= 14;
+      }
+      y -= 4;
+    }
+  }
+
   // Signature
   if (includeSignature) {
     const sigY = Math.min(y - 20, 80);

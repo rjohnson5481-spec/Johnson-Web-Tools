@@ -12,7 +12,7 @@ function todayFormatted() {
 
 export default function ReportCardGeneratorSheet({
   open, onClose, onSaveReport, student, activeSchoolYear, selectedQuarterId,
-  enrollments, courses, grades, attendanceDays, reportNotes, saveNote,
+  enrollments, courses, grades, attendanceDays, reportNotes, saveNote, activities,
 }) {
   const [localStudent, setLocalStudent]   = useState(student ?? STUDENTS[0]);
   const [localQuarter, setLocalQuarter]   = useState(selectedQuarterId);
@@ -20,6 +20,7 @@ export default function ReportCardGeneratorSheet({
   const [includeAttend, setIncludeAttend] = useState(true);
   const [includeNotes, setIncludeNotes]   = useState(true);
   const [includeSig, setIncludeSig]       = useState(true);
+  const [includeActs, setIncludeActs]     = useState(false);
   const [notes, setNotes]                 = useState('');
   const [saved, setSaved]                 = useState(false);
   const [generating, setGenerating]       = useState(false);
@@ -52,6 +53,7 @@ export default function ReportCardGeneratorSheet({
 
   const courseById = useMemo(() => new Map((courses ?? []).map(c => [c.id, c])), [courses]);
   const studentEnr = useMemo(() => (enrollments ?? []).filter(e => e.student === localStudent), [enrollments, localStudent]);
+  const studentActs = useMemo(() => (activities ?? []).filter(a => a.student === localStudent), [activities, localStudent]);
   const quarters = activeSchoolYear?.quarters ?? [];
   const isAnnual = localQuarter === 'annual';
   const quarterLabel = isAnnual ? 'Annual' : (quarters.find(q => q.id === localQuarter)?.label ?? 'Quarter');
@@ -76,7 +78,8 @@ export default function ReportCardGeneratorSheet({
         yearLabel: activeSchoolYear?.label ?? '—', isAnnual,
         selectedQuarterId: localQuarter, studentEnrollments: studentEnr,
         courseById, grades, quarters, attendanceDays,
-        includeGrades, includeAttendance: includeAttend, includeNotes, includeSignature: includeSig, notes,
+        includeGrades, includeAttendance: includeAttend, includeNotes, includeSignature: includeSig,
+        includeActivities: includeActs, activitiesForStudent: studentActs, notes,
       });
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -87,7 +90,7 @@ export default function ReportCardGeneratorSheet({
       URL.revokeObjectURL(url);
       if (onSaveReport) {
         await onSaveReport({ student: localStudent, periodLabel, yearLabel: activeSchoolYear?.label ?? '—', notes,
-          includeToggles: { includeGrades, includeAttendance: includeAttend, includeNotes, includeSignature: includeSig } }, pdfBytes);
+          includeToggles: { includeGrades, includeAttendance: includeAttend, includeNotes, includeSignature: includeSig, includeActivities: includeActs } }, pdfBytes);
       }
     } catch (err) { console.warn('PDF generation failed', err); }
     finally { setGenerating(false); }
@@ -122,7 +125,8 @@ export default function ReportCardGeneratorSheet({
           <div className="rcg-field">
             <span className="rcg-label">Include</span>
             {[['Grades', includeGrades, setIncludeGrades], ['Attendance', includeAttend, setIncludeAttend],
-              ['Teacher Notes', includeNotes, setIncludeNotes], ['Signature Line', includeSig, setIncludeSig]].map(([lbl, val, set]) => (
+              ['Teacher Notes', includeNotes, setIncludeNotes], ['Signature Line', includeSig, setIncludeSig],
+              ['Activities', includeActs, setIncludeActs]].map(([lbl, val, set]) => (
               <div key={lbl} className="rcg-toggle-row">
                 <span className="rcg-toggle-label">{lbl}</span>
                 <button type="button" className={`rcg-toggle${val ? ' rcg-toggle--on' : ''}`} onClick={() => set(v => !v)} />
@@ -178,6 +182,18 @@ export default function ReportCardGeneratorSheet({
               </div>
             )}
             {includeNotes && notes.trim() && <div className="rcg-preview-notes">{notes}</div>}
+            {includeActs && studentActs.length > 0 && (
+              <div className="rcg-preview-activities">
+                <div className="rcg-preview-act-label">Activities</div>
+                {studentActs.map(a => (
+                  <div key={a.id} className="rcg-preview-act-row">
+                    <span className="rcg-preview-act-name">{a.name}</span>
+                    <span className="rcg-preview-act-dates">{a.startDate ?? '—'} – {a.ongoing ? 'Ongoing' : (a.endDate ?? '—')}</span>
+                    {a.notes && <span className="rcg-preview-act-notes">{a.notes}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="rcg-preview-footer">
               <span>Iron & Light Johnson Academy</span>
               {includeSig && <span className="rcg-sig-line">Signature _______________</span>}
