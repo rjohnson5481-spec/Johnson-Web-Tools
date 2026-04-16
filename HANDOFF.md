@@ -1,72 +1,55 @@
-# HANDOFF — v0.23.5 Phase 2 Session 6: Grade Entry
+# HANDOFF — v0.23.5 Phase 2 Session 6: Grade Entry (percent input fix)
 
 ## What was completed this session
 
-4 commits on branch `claude/diagnostic-dashboard-review-lsVmG` (rebased onto main at v0.23.4):
+2 commits on `main` (1 code + this docs commit):
 
 ```
-d1bbd9a chore: bump version to v0.23.5
-0197756 feat: wire grade entry into Records tab (v0.23.5)
-fbf4c20 feat: add GradeEntrySheet with quarter grade picker
-8dc6c91 feat: add useGrades hook
+5221de7 fix: grade entry uses percent input with auto-assigned letter grade
 ```
 
-### Commit 1 — `useGrades` hook (`8dc6c91`) — 80 lines
+### Fix — Percentage input with auto-assigned letter grade (`5221de7`)
 
-- Data-only hook following the exact `useCourses` pattern.
-- `useGrades(uid)` → loads all grades on mount via `fbGetGrades(uid)`, reloads after every mutation.
-- Exposes: `{ grades, loading, error, saveGrade, addGrade, removeGrade }`.
-- All mutators throw `new Error('useGrades: uid is required')` if uid is falsy.
-- Reload-after-write pattern ensures the grade list stays in sync with Firestore.
+Reworked the grade entry sheet so Letter-scale courses use a percentage
+number input instead of tap-to-select letter buttons. ESNU courses are
+unchanged.
 
-### Commit 2 — `GradeEntrySheet` (`fbf4c20`) — 152 JSX + 124 CSS = 276 lines
+**GradeEntrySheet.jsx (152 → 193 lines):**
+- Split local state into two maps: `percents` for letter courses (keyed by
+  enrollmentId, value is the typed percentage string) and `esnuValues` for
+  ESNU courses (keyed by enrollmentId, value is selected grade letter).
+- Added `letterFromPercent(pct)` helper: clamps 0–100, rounds, finds the
+  first `LETTER_SCALE` entry where the value falls between `minPercent` and
+  `maxPercent` inclusive. Returns grade letter or null.
+- Letter course rows: render `.ge-grade-input-wrap` containing a
+  `.ge-percent-input` (type="number", min 0, max 100, font-size 16px for
+  iOS zoom guard) and a `.ge-computed-grade` span (22px gold letter or "—").
+- ESNU course rows: kept existing `.ge-pills` buttons exactly as before.
+- Pre-fill: reads `existing.percent` (number) from the grade object and
+  converts to string for the input value. If no existing percent, input
+  starts empty.
+- On save: letter courses emit `{ enrollmentId, quarterId, grade: computedLetter,
+  percent: clampedNumber, existingId }`. ESNU courses emit
+  `{ enrollmentId, quarterId, grade, percent: null, existingId }`.
+  Rows with empty/invalid input or no selection are skipped.
+- `hasChanges` checks both `percents` and `esnuValues` maps against
+  their initial state.
 
-- Bottom sheet (z-index 310/311) for entering grades for one student × one quarter.
-- Shows one row per enrollment with:
-  - Color dot + course name + scale badge (Letter / E·S·N·U)
-  - Pill-style grade picker — respects `course.gradingType` to show either `LETTER_SCALE` (A/B/C/D/F) or `ESNU_SCALE` (E/S/N/U) from `scales.js`.
-- Tap a pill to select; tap again to deselect. Active pill uses gold accent.
-- Local state built from existing grades: pre-selects any grade already saved for this enrollment+quarter.
-- Save button disabled until at least one change is made. "Saving…" state prevents double-submit.
-- `onSave` receives array of `{ enrollmentId, quarterId, grade, existingId }` — caller decides whether to `saveGrade` (update existing) or `addGrade` (create new).
-- CSS follows established sheet pattern: handle, ink header (#22252e), scrollable body, footer with Cancel/Save. Large-phone media query at 400–1023px.
+**GradeEntrySheet.css (124 → 135 lines):**
+- Added `.ge-grade-input-wrap` (flex, align center, gap 10px).
+- Added `.ge-percent-input` (80px width, centered text, 16px font, Lexend,
+  bg-base, border focus → gold).
+- Added `.ge-computed-grade` (22px, 700 weight, gold color, min-width 28px,
+  centered).
+- Renamed pills section comment to "Grade pills (ESNU)".
 
-### Commit 3 — Wiring into tab + main view (`0197756`) — 2 files, +35/−10 lines
+**academicRecords.js (183 → 185 lines):**
+- Updated `addGrade` and `saveGrade` JSDoc comments to document the new
+  `percent` field: number (0–100) for letter scale, null for ESNU.
+- No code change — the `...data` spread already writes whatever fields
+  are passed, so `percent` persists automatically.
 
-**AcademicRecordsTab.jsx (178 → 202 lines):**
-- Added `useGrades` import + `GradeEntrySheet` import.
-- Mounted `useGrades(uid)` — destructures `{ grades, saveGrade, addGrade }`.
-- Added `gradeEntrySheetOpen` state.
-- Added `handleSaveGrades(edits)` — iterates edits array, calls `saveGrade` for updates, `addGrade` for new entries, then closes the sheet.
-- Computed `activeQuarterLabel` from `summary.activeSchoolYear.quarters`.
-- Passed `grades` + `onEnterGrades` props to `RecordsMainView`.
-- Rendered `<GradeEntrySheet>` with `summary.studentEnrollments`, courses, grades, selectedQuarterId, quarterLabel.
-- Comment updated: "5 data hooks" + "4 sheet flows".
-
-**RecordsMainView.jsx (187 → 188 lines):**
-- Added `grades` and `onEnterGrades` to props destructure.
-- Switched grade lookup from `summary.grades` to the new `grades` prop (from `useGrades`, not the one-shot `useAcademicSummary` fetch).
-- Added null-safe `(grades ?? []).find(...)` for the grade lookup.
-- Enabled "Enter Grades" button: removed `disabled` + `.disabled` class, wired `onClick={onEnterGrades}`, changed "Soon" badge to "›" chevron.
-
-### Commit 4 — Version bump (`d1bbd9a`)
-
-- 0.23.4 → **0.23.5** across all 3 workspace package.json files.
-
-Build green at every commit.
-
----
-
-## Architecture note — dual grade sources
-
-There are now two places grades are loaded:
-1. **`useAcademicSummary`** — reads grades once on mount (one-shot `getGrades(uid)` in a `Promise.all` with sick days). Used for summary/attendance display.
-2. **`useGrades`** — manages mutable grade state with reload-after-write. Used as the source of truth for the grade list display and grade entry sheet.
-
-Both read from the same Firestore collection (`users/{uid}/grades`). After a grade save via `useGrades`, `useAcademicSummary`'s copy will be stale until the tab remounts. This is acceptable because:
-- The summary only uses grades for the grade list, which now reads from `useGrades` instead.
-- `useAcademicSummary.grades` is no longer consumed by any component (the destructure in RecordsMainView was switched to the prop).
-- A future cleanup could remove the grades fetch from `useAcademicSummary` entirely.
+Build green. No version bump (bug fix within v0.23.5).
 
 ---
 
@@ -76,27 +59,22 @@ All under 300:
 
 | File | Lines |
 |---|---|
-| `hooks/useGrades.js` | 80 |
-| `components/GradeEntrySheet.jsx` | 152 |
-| `components/GradeEntrySheet.css` | 124 |
-| `tabs/AcademicRecordsTab.jsx` | 202 |
-| `components/RecordsMainView.jsx` | 188 |
+| `components/GradeEntrySheet.jsx` | 193 |
+| `components/GradeEntrySheet.css` | 135 |
+| `firebase/academicRecords.js` | 185 |
 
 ---
 
 ## What is currently incomplete / pending
 
 - **Browser smoke test** — not run. Walk:
-  - Open Academic Records → tap "Enter Grades" → GradeEntrySheet opens showing enrolled courses for the selected student.
-  - Each course row shows the correct scale (Letter A-F or E/S/N/U) based on `course.gradingType`.
-  - Tap a grade pill → it highlights gold. Tap again → deselects.
-  - If a grade was previously saved for this enrollment+quarter, its pill should be pre-selected.
-  - Save button stays disabled until a change is made.
-  - Tap Save → grades persist to Firestore. Close sheet. Grade list in main view updates (no longer "— pending").
-  - Re-open Enter Grades → previously saved grades are pre-selected.
-  - Switch students → grade list filters correctly, Enter Grades shows that student's enrollments.
-  - Switch quarters → grade list shows grades for that quarter.
-  - Empty state: student with no enrollments → sheet shows "No courses enrolled for this student."
+  - Open Academic Records → tap "Enter Grades" → sheet opens.
+  - Letter-scale course: shows a number input + "—" placeholder. Type 92 → shows "A" in gold. Type 75 → shows "C". Clear input → shows "—".
+  - ESNU course: shows E/S/N/U pill buttons as before.
+  - Pre-fill: if a grade was previously saved with percent, the input shows the number and the computed letter.
+  - Save: persists both `grade` and `percent` to Firestore. Reload → values round-trip correctly.
+  - Empty inputs are skipped on save (no empty grade documents created).
+  - Grade list in main view still shows the letter grade (not the percent).
 
 - **Carry-overs (still open):**
   - `useAcademicSummary` still fetches grades redundantly (could be removed now that `useGrades` owns grade state).
@@ -110,7 +88,7 @@ All under 300:
 ## What the next session should start with
 
 1. Read CLAUDE.md + HANDOFF.md.
-2. Smoke test grade entry end-to-end.
+2. Smoke test grade entry with percentage input end-to-end.
 3. Probable next directions:
    - **CLAUDE.md sweep** — document academic-records (hooks, components, firebase, constants, data model) since it's been 6 sessions of undocumented work.
    - **Remove redundant grades fetch from useAcademicSummary** — now that useGrades owns grade state, the one-shot fetch in useAcademicSummary is dead code.
@@ -120,20 +98,12 @@ All under 300:
 ## Key file locations (touched this session)
 
 ```
-packages/dashboard/
-├── package.json                                                            # v0.23.5
-├── src/
-│   ├── tabs/
-│   │   └── AcademicRecordsTab.jsx                                          # 178 → 202 (useGrades + GradeEntrySheet wiring)
-│   └── tools/academic-records/
-│       ├── hooks/
-│       │   └── useGrades.js                                                # NEW — 80
-│       └── components/
-│           ├── RecordsMainView.jsx                                         # 187 → 188 (grades prop + Enter Grades button)
-│           ├── GradeEntrySheet.jsx                                         # NEW — 152
-│           └── GradeEntrySheet.css                                         # NEW — 124
-packages/shared/package.json                                                # v0.23.5
-packages/te-extractor/package.json                                          # v0.23.5
+packages/dashboard/src/tools/academic-records/
+├── firebase/
+│   └── academicRecords.js                        # 183 → 185 (percent field documented)
+└── components/
+    ├── GradeEntrySheet.jsx                       # 152 → 193 (percent input for letter, pills for ESNU)
+    └── GradeEntrySheet.css                       # 124 → 135 (3 new classes for percent input)
 ```
 
-Net: 3 new source files (356 lines), 2 modified (+25 lines net), 3 version bumps. No App.jsx changes. No planner files changed.
+Net: 3 files modified, +108/−54 lines. No new files. No App.jsx changes.
