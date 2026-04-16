@@ -144,6 +144,16 @@
 .aee-notes::placeholder { color: var(--text-muted); }
 .aee-notes:focus { outline: none; border-color: var(--gold); }
 
+/* ── Grade level pills ── */
+.aee-grade-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.aee-grade-pill {
+  padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--border); background: var(--bg-card);
+  color: var(--text-secondary); font-family: 'Lexend', sans-serif;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.aee-grade-pill.selected { background: var(--gold-pale); border-color: var(--gold); color: var(--gold); }
+
 /* ── Sync to Planner toggle ── */
 .aee-toggle-row {
   display: flex;

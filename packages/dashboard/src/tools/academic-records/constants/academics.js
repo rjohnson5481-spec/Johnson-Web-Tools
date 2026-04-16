@@ -53,3 +53,6 @@ export const gradeDoc = (uid, gradeId) =>
 // ── Grading type constants (mirror the keys in scales.js GRADING_TYPES) ───
 export const GRADING_TYPE_LETTER = 'letter';
 export const GRADING_TYPE_ESNU   = 'esnu';
+
+// ── Grade levels ──────────────────────────────────────────────────────────
+export const GRADE_LEVELS = ['K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];

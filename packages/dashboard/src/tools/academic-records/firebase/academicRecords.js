@@ -136,14 +136,14 @@ export async function getEnrollments(uid) {
 }
 
 // Updates an existing enrollment.
-// data shape: { courseId, student, yearId, notes, syncPlanner }
+// data shape: { courseId, student, yearId, notes, syncPlanner, gradeLevel }
 export function saveEnrollment(uid, enrollmentId, data) {
   const ref = doc(db, enrollmentDoc(uid, enrollmentId));
   return setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
 }
 
 // Adds a new enrollment. Returns the new document id.
-// data shape: { courseId, student, yearId, notes, syncPlanner }
+// data shape: { courseId, student, yearId, notes, syncPlanner, gradeLevel }
 export async function addEnrollment(uid, data) {
   const ref = await addDoc(collection(db, enrollmentsCol(uid)), {
     ...data,

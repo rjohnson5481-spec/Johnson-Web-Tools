@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { GRADING_TYPE_LETTER } from '../constants/academics.js';
+import { GRADING_TYPE_LETTER, GRADE_LEVELS } from '../constants/academics.js';
 import './AddEditEnrollmentSheet.css';
 import './AddEditEnrollmentForm.css';
 
@@ -32,14 +32,15 @@ export default function AddEditEnrollmentSheet({
 
   const [courseId, setCourseId]           = useState('');
   const [notes, setNotes]                 = useState('');
+  const [gradeLevel, setGradeLevel]       = useState(null);
   const [syncPlanner, setSyncPlanner]     = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Re-seed every time the sheet opens or its target enrollment changes.
   useEffect(() => {
     if (!open) return;
     setCourseId(enrollment?.courseId ?? '');
     setNotes(enrollment?.notes ?? '');
+    setGradeLevel(enrollment?.gradeLevel ?? null);
     setSyncPlanner(enrollment?.syncPlanner ?? false);
     setConfirmDelete(false);
   }, [open, enrollment]);
@@ -55,6 +56,7 @@ export default function AddEditEnrollmentSheet({
       courseId: isEdit ? enrollment.courseId : courseId,
       student,
       notes: notes.trim(),
+      gradeLevel,
       syncPlanner,
     });
   }
@@ -150,6 +152,19 @@ export default function AddEditEnrollmentSheet({
               placeholder="Optional notes about this enrollment"
             />
           </label>
+
+          {/* Grade level */}
+          <div className="aee-field">
+            <span className="aee-label">Grade level</span>
+            <div className="aee-grade-pills">
+              {GRADE_LEVELS.map(gl => (
+                <button key={gl} type="button"
+                  className={`aee-grade-pill${gradeLevel === gl ? ' selected' : ''}`}
+                  onClick={() => setGradeLevel(gradeLevel === gl ? null : gl)}
+                >{gl}</button>
+              ))}
+            </div>
+          </div>
 
           {/* Sync to Planner */}
           <div className="aee-field">
