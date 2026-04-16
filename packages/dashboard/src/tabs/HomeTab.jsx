@@ -16,7 +16,7 @@ function cashValue(pts) {
 
 export default function HomeTab({ onTabChange }) {
   const { user } = useAuth();
-  const { students, activeStudent, setActiveStudent, subjects, points } = useHomeSummary(user?.uid);
+  const { students, activeStudent, setActiveStudent, subjects, points, attendance } = useHomeSummary(user?.uid);
 
   const today      = new Date();
   const dateLabel  = `${DAY_NAMES[today.getDay()]}, ${MONTH_NAMES[today.getMonth()]} ${today.getDate()}`;
@@ -73,6 +73,21 @@ export default function HomeTab({ onTabChange }) {
               </div>
             </div>
           ))}
+          {['Orion', 'Malachi'].map(name => {
+            const a = attendance[name];
+            if (!a) return null;
+            const pct = Math.min(100, Math.round((a.attended / a.required) * 100));
+            return (
+              <div key={`att-${name}`} className="home-summary-card home-attendance-card">
+                <div className="home-summary-label">{name} Attend.</div>
+                <div className="home-summary-value home-attendance-value">{a.attended}</div>
+                <div className="home-summary-sub">of {a.required} days</div>
+                <div className="home-attendance-bar">
+                  <div className="home-attendance-fill" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {totalLessons > 0 && (

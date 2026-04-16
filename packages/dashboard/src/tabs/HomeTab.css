@@ -61,12 +61,16 @@
   font-weight: 600;
 }
 
-/* ── Summary cards row ── */
+/* ── Summary cards row — scrollable when many cards ── */
 .home-summary-row {
   display: flex;
   gap: 10px;
   margin-bottom: 24px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.home-summary-row::-webkit-scrollbar { display: none; }
 
 .home-summary-card {
   flex: 1;
@@ -75,7 +79,7 @@
   border-radius: 12px;
   padding: 14px 10px;
   text-align: center;
-  min-width: 0;
+  min-width: 80px;
   box-shadow: 0 1px 4px rgba(34, 37, 46, 0.06);
 }
 
@@ -103,6 +107,18 @@
   font-size: 11px;
   color: var(--text-muted);
   font-weight: 400;
+}
+
+/* ── Attendance cards ── */
+.home-attendance-value { color: var(--gold); }
+.home-attendance-bar {
+  height: 4px; background: var(--border); border-radius: 2px;
+  overflow: hidden; margin-top: 6px;
+}
+.home-attendance-fill {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  transition: width 0.6s ease;
 }
 
 /* ── Lesson list section ── */
