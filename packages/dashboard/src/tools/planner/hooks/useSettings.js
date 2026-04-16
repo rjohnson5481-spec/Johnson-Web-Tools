@@ -24,7 +24,6 @@ export function useSettings(uid, plannerStudent) {
   // Load subjects for activeStudent when it changes (lazy, cached).
   useEffect(() => {
     if (!uid || !activeStudent) return;
-    if (subjectsByStudent[activeStudent] !== undefined) return;
     readSettingsSubjects(uid, activeStudent).then(subjects => {
       setSubjectsByStudent(prev => ({ ...prev, [activeStudent]: subjects }));
     });
@@ -33,7 +32,6 @@ export function useSettings(uid, plannerStudent) {
   // Pre-load subjects for the planner's current student (may differ from activeStudent tab).
   useEffect(() => {
     if (!uid || !plannerStudent) return;
-    if (subjectsByStudent[plannerStudent] !== undefined) return;
     readSettingsSubjects(uid, plannerStudent).then(subjects => {
       setSubjectsByStudent(prev => ({ ...prev, [plannerStudent]: subjects }));
     });
