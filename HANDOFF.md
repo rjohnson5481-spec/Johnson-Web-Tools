@@ -1,77 +1,72 @@
-# HANDOFF — v0.23.4 Phase 2 Session 5: Records Main View
+# HANDOFF — v0.23.5 Phase 2 Session 6: Grade Entry
 
 ## What was completed this session
 
-7 commits on `main` (6 code + this docs commit):
+4 commits on branch `claude/diagnostic-dashboard-review-lsVmG` (rebased onto main at v0.23.4):
 
 ```
-4e3a1d9 chore: bump version to v0.23.4
-2c15e96 refactor: split RecordsMainView from AcademicRecordsTab to stay under 300 lines
-6e73105 feat: build main Records tab view (v0.23.4)
-b0da856 refactor: trim AcademicRecordsTab.css to under 300 lines
-bbf94db feat: add AcademicRecordsTab.css
-c48796f feat: add useAcademicSummary hook
+d1bbd9a chore: bump version to v0.23.5
+0197756 feat: wire grade entry into Records tab (v0.23.5)
+fbf4c20 feat: add GradeEntrySheet with quarter grade picker
+8dc6c91 feat: add useGrades hook
 ```
 
-### Commit 1 — `useAcademicSummary` hook (`c48796f`) — 131 lines
+### Commit 1 — `useGrades` hook (`8dc6c91`) — 80 lines
 
-- `(uid, student, schoolYears, enrollments, courses)` → all the derived view data:
-  - **activeSchoolYear** — `useMemo` picks the year spanning today, else the most recently created (last in array).
-  - **activeQuarterId** — quarter spanning today within the active year, else the first quarter.
-  - **studentEnrollments** — filter `enrollments` by selected student.
-  - **courseCount** — `studentEnrollments.length`.
-  - **attendanceDays** — `{ attended, sick, total, required: 175 }`. Counts Mon–Fri days from year start through `min(today, year.endDate)`, subtracts sick-day docs whose ID falls in that range. Returns zeros if no active year is set.
-  - **grades** — full array from `getGrades(uid)`.
-- Two Firestore reads (one-shot, not subscriptions): `getGrades(uid)` and `getDocs(collection(db, users/{uid}/sickDays))`. Fired once per `uid` change.
-- All YYYY-MM-DD parsing uses local-date constructor (`new Date(y, m-1, d)`) — avoids the UTC midnight gotcha called out in CLAUDE.md mondayWeekId note.
-- `loading`/`error` state surfaces both the grades and sick-days reads collectively.
+- Data-only hook following the exact `useCourses` pattern.
+- `useGrades(uid)` → loads all grades on mount via `fbGetGrades(uid)`, reloads after every mutation.
+- Exposes: `{ grades, loading, error, saveGrade, addGrade, removeGrade }`.
+- All mutators throw `new Error('useGrades: uid is required')` if uid is falsy.
+- Reload-after-write pattern ensures the grade list stays in sync with Firestore.
 
-### Commit 2 — `AcademicRecordsTab.css` full rewrite (`bbf94db`)
+### Commit 2 — `GradeEntrySheet` (`fbf4c20`) — 152 JSX + 124 CSS = 276 lines
 
-- Old file (132 lines, Session 2 vintage) used legacy `.ar-actions` / `.ar-action` class names that no longer match the new view. Full rewrite to the spec's `.ar-quick-actions` / `.ar-action-btn` taxonomy + new view-specific classes.
-- Initially landed at **333 lines — over the 300 hard limit** because of generous blank lines and one-property-per-line formatting on small rules.
+- Bottom sheet (z-index 310/311) for entering grades for one student × one quarter.
+- Shows one row per enrollment with:
+  - Color dot + course name + scale badge (Letter / E·S·N·U)
+  - Pill-style grade picker — respects `course.gradingType` to show either `LETTER_SCALE` (A/B/C/D/F) or `ESNU_SCALE` (E/S/N/U) from `scales.js`.
+- Tap a pill to select; tap again to deselect. Active pill uses gold accent.
+- Local state built from existing grades: pre-selects any grade already saved for this enrollment+quarter.
+- Save button disabled until at least one change is made. "Saving…" state prevents double-submit.
+- `onSave` receives array of `{ enrollmentId, quarterId, grade, existingId }` — caller decides whether to `saveGrade` (update existing) or `addGrade` (create new).
+- CSS follows established sheet pattern: handle, ink header (#22252e), scrollable body, footer with Cancel/Save. Large-phone media query at 400–1023px.
 
-### Commit 3 — `refactor: trim AcademicRecordsTab.css to under 300 lines` (`b0da856`)
+### Commit 3 — Wiring into tab + main view (`0197756`) — 2 files, +35/−10 lines
 
-- Compaction pass: stripped intra-section blank lines, collapsed single-property rules onto one line. **333 → 262 lines**, well under 300. No behavior change.
+**AcademicRecordsTab.jsx (178 → 202 lines):**
+- Added `useGrades` import + `GradeEntrySheet` import.
+- Mounted `useGrades(uid)` — destructures `{ grades, saveGrade, addGrade }`.
+- Added `gradeEntrySheetOpen` state.
+- Added `handleSaveGrades(edits)` — iterates edits array, calls `saveGrade` for updates, `addGrade` for new entries, then closes the sheet.
+- Computed `activeQuarterLabel` from `summary.activeSchoolYear.quarters`.
+- Passed `grades` + `onEnterGrades` props to `RecordsMainView`.
+- Rendered `<GradeEntrySheet>` with `summary.studentEnrollments`, courses, grades, selectedQuarterId, quarterLabel.
+- Comment updated: "5 data hooks" + "4 sheet flows".
 
-### Commit 4 — Main view JSX wired into the tab (`6e73105`)
+**RecordsMainView.jsx (187 → 188 lines):**
+- Added `grades` and `onEnterGrades` to props destructure.
+- Switched grade lookup from `summary.grades` to the new `grades` prop (from `useGrades`, not the one-shot `useAcademicSummary` fetch).
+- Added null-safe `(grades ?? []).find(...)` for the grade lookup.
+- Enabled "Enter Grades" button: removed `disabled` + `.disabled` class, wired `onClick={onEnterGrades}`, changed "Soon" badge to "›" chevron.
 
-- Added `useAcademicSummary` mount + 2 new state vars (`selectedStudent` default `'Orion'`, `selectedQuarterId` default `null`).
-- `useEffect` syncs `selectedQuarterId` from `summary.activeQuarterId` once it resolves.
-- Replaced the old "Quick Actions only" tab body with the full new view: header → student pills → quarter pills → 3-card stats row → "Grades — {student}" section → grade list → action row (Enter Grades / Generate Report — both disabled "Soon") → attendance card with progress bar → "Quick Actions" section with 5 buttons.
-- All 6 sheet renders + handlers preserved exactly as they were in v0.23.3.
-- **Landed at 338 lines — over the 300 hard limit.** Spec said stop if approaching 300; the new view added ~150 lines net and pushed it over.
+### Commit 4 — Version bump (`d1bbd9a`)
 
-### Commit 5 — `refactor: split RecordsMainView from AcademicRecordsTab to stay under 300 lines` (`2c15e96`)
+- 0.23.4 → **0.23.5** across all 3 workspace package.json files.
 
-- Extracted main-view JSX into new sibling component
-  `tools/academic-records/components/RecordsMainView.jsx` (**187 lines**).
-- Pure presentational: receives `selectedStudent` + setter, `selectedQuarterId` + setter, `summary`, `courses`, and 3 sheet-open callbacks. No Firestore I/O.
-- Module-level helpers (`STUDENTS`, `DOT_COLORS`, `gradeClass`, `todayStr`) moved to the new file with the JSX they support.
-- AcademicRecordsTab.jsx slimmed to **178 lines** — keeps all data hooks, sheet state, sheet handlers, sheet renders, and a single `<RecordsMainView />` invocation.
-
-### Commit 6 — Version bump (`4e3a1d9`)
-
-- 0.23.3 → **0.23.4** across all 3 workspace package.json files.
-
-Build green at every commit (`@homeschool/dashboard@0.23.4`, `@homeschool/te-extractor@0.23.4`).
+Build green at every commit.
 
 ---
 
-## Spec deviations flagged
+## Architecture note — dual grade sources
 
-1. **Missing CSS tokens.** Spec said `.ar-badge-esnu { background: var(--blue-lt); color: var(--blue); }`. Neither `--blue` nor `--blue-lt` exists in the design system (CLAUDE.md tokens list is gold/red-only). Used literal hex `#1565c0` + `rgba(21, 101, 192, 0.10)` to match the existing pattern from `cc-course-badge--esnu` in CourseCatalogSheet, plus a `[data-mode="dark"]` override (`#82b1ff` / `rgba(130,177,255,0.12)`) so the badge stays legible in dark mode. Pattern is consistent with the rest of the app.
+There are now two places grades are loaded:
+1. **`useAcademicSummary`** — reads grades once on mount (one-shot `getGrades(uid)` in a `Promise.all` with sick days). Used for summary/attendance display.
+2. **`useGrades`** — manages mutable grade state with reload-after-write. Used as the source of truth for the grade list display and grade entry sheet.
 
-2. **Linear gradient `#fff` → `var(--bg-card)`.** Spec said `.ar-stat-card.gold` background uses `linear-gradient(135deg, #fff 60%, rgba(201,168,76,0.06))`. Hardcoded `#fff` would look wrong in dark mode. Used `var(--bg-card)` instead so the gradient base re-tints with the theme. Visual effect identical in light mode.
-
-3. **File-size escalation handled mid-session.** Both AcademicRecordsTab.css (333) and AcademicRecordsTab.jsx (338) initially exceeded the 300-line hard limit. The CSS was compacted to 262 (commit `b0da856`); the JSX was split into a sibling component (commit `2c15e96`). Two extra commits beyond the original spec build order.
-
-4. **Section label "GRADES — [student]"** rendered as `<p>Grades — {selectedStudent}</p>` — the parent CSS has `text-transform: uppercase`, so JSX uses Title Case + the dash. Renders as "GRADES — ORION".
-
-5. **"Stat Card 3" Value vs. Sub** spec was slightly ambiguous (Value: `activeSchoolYear?.label`; Sub: same label "pulled from label"). Interpreted Value as the first segment of the year range (e.g. `"2025"`) so the Value reads as a single big number like the other two cards, and Sub as the full label range (`"2025–2026"` or `"not set"`). Matches the visual rhythm of the row.
-
-6. **Attendance "School days this quarter"** — spec text said "School days this quarter", but the hook returns school days for the entire active year (not per quarter). Used `attendanceDays.total` with the label "School days" to match what's actually computed. Per-quarter attendance would require additional date-range plumbing not in scope this session.
+Both read from the same Firestore collection (`users/{uid}/grades`). After a grade save via `useGrades`, `useAcademicSummary`'s copy will be stale until the tab remounts. This is acceptable because:
+- The summary only uses grades for the grade list, which now reads from `useGrades` instead.
+- `useAcademicSummary.grades` is no longer consumed by any component (the destructure in RecordsMainView was switched to the prop).
+- A future cleanup could remove the grades fetch from `useAcademicSummary` entirely.
 
 ---
 
@@ -81,62 +76,64 @@ All under 300:
 
 | File | Lines |
 |---|---|
-| `hooks/useAcademicSummary.js` | 131 |
-| `tabs/AcademicRecordsTab.jsx` | 178 |
-| `tabs/AcademicRecordsTab.css` | 262 |
-| `components/RecordsMainView.jsx` | 187 |
+| `hooks/useGrades.js` | 80 |
+| `components/GradeEntrySheet.jsx` | 152 |
+| `components/GradeEntrySheet.css` | 124 |
+| `tabs/AcademicRecordsTab.jsx` | 202 |
+| `components/RecordsMainView.jsx` | 188 |
 
 ---
 
 ## What is currently incomplete / pending
 
 - **Browser smoke test** — not run. Walk:
-  - Open Academic Records → main view renders with header, student pills, quarter pills (only if active year has quarters), 3-card stats row, grade list, action row, attendance card, quick actions.
-  - Toggle student pills → grade list re-filters; selectedQuarterId stays.
-  - Toggle quarter pills → grade values reload for that quarter (currently all "— pending" since grade entry isn't built).
-  - Future quarters should be visually dimmed (.future class) and disabled.
-  - Stats row: Attendance card (gold border + gradient), Courses count, School Year card.
-  - Grade list: dot color cycles per row, Letter/E·S·N·U badges color-correctly, missing course gracefully shows "(deleted course)".
-  - Attendance card: progress bar fills proportional to attendance/175. Detail row shows attended/sick/total. Italic note at bottom.
-  - Quick Actions: tap "Manage Course Catalog" → catalog opens. Tap "Manage Enrollments" → enrollment list opens. Tap "Manage School Year & Quarters" → school year sheet opens. Disabled buttons (Import, Generate Report Card) inert.
-  - All 3 existing sheet flows still work end-to-end.
-  - Sick-day count: add a sick day in the planner for a date inside the active school year's range, reload Records tab, attended decrements by 1 and sick increments by 1.
-  - Empty-state path: brand-new user with no school year → header reads "No school year set", stats show — / 0 / —, no quarter pills render, grade list shows "No courses enrolled".
+  - Open Academic Records → tap "Enter Grades" → GradeEntrySheet opens showing enrolled courses for the selected student.
+  - Each course row shows the correct scale (Letter A-F or E/S/N/U) based on `course.gradingType`.
+  - Tap a grade pill → it highlights gold. Tap again → deselects.
+  - If a grade was previously saved for this enrollment+quarter, its pill should be pre-selected.
+  - Save button stays disabled until a change is made.
+  - Tap Save → grades persist to Firestore. Close sheet. Grade list in main view updates (no longer "— pending").
+  - Re-open Enter Grades → previously saved grades are pre-selected.
+  - Switch students → grade list filters correctly, Enter Grades shows that student's enrollments.
+  - Switch quarters → grade list shows grades for that quarter.
+  - Empty state: student with no enrollments → sheet shows "No courses enrolled for this student."
 
 - **Carry-overs (still open):**
+  - `useAcademicSummary` still fetches grades redundantly (could be removed now that `useGrades` owns grade state).
   - Cascading-delete UX warnings (school year → quarters, course → enrollments, enrollment → grades). Data layer is correct but the UI doesn't warn.
   - iPad portrait breakpoint decision.
   - iPhone SE 300px grid overflow.
   - Planner Phase 2 features (auto-roll, week history, copy last week, export PDF).
   - Import merge bug (inherited v0.22.3).
-  - **CLAUDE.md drift** — academic-records is still not documented in CLAUDE.md after 5 sessions of work (v0.23.0 → v0.23.4). Worth a sweep before Session 6.
+  - **CLAUDE.md drift** — academic-records is still not documented in CLAUDE.md after 6 sessions of work (v0.23.0 → v0.23.5). Worth a sweep before Session 7.
 
 ## What the next session should start with
 
 1. Read CLAUDE.md + HANDOFF.md.
-2. Smoke test the main view + the 3 existing sheet flows.
-3. Probable next direction — **Phase 2 Session 6: Grade Entry**:
-   - `useGrades` hook (mirrors useEnrollments pattern; firebase already exposes addGrade/saveGrade/deleteGrade/getGradesByEnrollment).
-   - Grade-entry sheet: per-enrollment, one row per quarter, picker shows letter (A/B/C/D/F) or E/S/N/U based on `course.gradingType`.
-   - Wire "Enter Grades" button (currently disabled).
-   - Or: do CLAUDE.md sweep first since it's spanning 5 sessions of undocumented work.
+2. Smoke test grade entry end-to-end.
+3. Probable next directions:
+   - **CLAUDE.md sweep** — document academic-records (hooks, components, firebase, constants, data model) since it's been 6 sessions of undocumented work.
+   - **Remove redundant grades fetch from useAcademicSummary** — now that useGrades owns grade state, the one-shot fetch in useAcademicSummary is dead code.
+   - **Phase 2 Session 7: Report Card generation** — aggregate grades per student across all quarters, generate a printable/PDF view.
+   - Or: tackle cascading-delete UX warnings.
 
 ## Key file locations (touched this session)
 
 ```
 packages/dashboard/
-├── package.json                                                            # v0.23.4
+├── package.json                                                            # v0.23.5
 ├── src/
 │   ├── tabs/
-│   │   ├── AcademicRecordsTab.jsx                                          # 209 → 178 (sheet wiring only)
-│   │   └── AcademicRecordsTab.css                                          # 132 → 262 (full rewrite + compaction)
+│   │   └── AcademicRecordsTab.jsx                                          # 178 → 202 (useGrades + GradeEntrySheet wiring)
 │   └── tools/academic-records/
 │       ├── hooks/
-│       │   └── useAcademicSummary.js                                       # NEW — 131
+│       │   └── useGrades.js                                                # NEW — 80
 │       └── components/
-│           └── RecordsMainView.jsx                                         # NEW — 187
-packages/shared/package.json                                                # v0.23.4
-packages/te-extractor/package.json                                          # v0.23.4
+│           ├── RecordsMainView.jsx                                         # 187 → 188 (grades prop + Enter Grades button)
+│           ├── GradeEntrySheet.jsx                                         # NEW — 152
+│           └── GradeEntrySheet.css                                         # NEW — 124
+packages/shared/package.json                                                # v0.23.5
+packages/te-extractor/package.json                                          # v0.23.5
 ```
 
-Net: 2 new source files (~318 lines), 2 modified (1 fully rewritten, 1 slimmed via extraction), 3 version bumps. No App.jsx changes. No planner files changed (read-only ref to sickDays collection path for the attendance count).
+Net: 3 new source files (356 lines), 2 modified (+25 lines net), 3 version bumps. No App.jsx changes. No planner files changed.
