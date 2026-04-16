@@ -228,6 +228,30 @@
   color: var(--gold);
 }
 
+/* ── Breaks list (nested inside year block, below quarters) ── */
+.sy-breaks-list {
+  display: flex; flex-direction: column; gap: 4px; padding-left: 14px;
+}
+.sy-section-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-muted); margin: 8px 0 2px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sy-section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.sy-break-row {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px;
+}
+.sy-break-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.sy-break-label { font-size: 13px; font-weight: 500; color: var(--text-primary); line-height: 1.2; }
+.sy-break-dates { font-size: 11px; color: var(--text-muted); }
+.sy-add-break-btn {
+  width: 100%; background: transparent; border: 1px dashed var(--border); border-radius: 8px;
+  padding: 8px; color: var(--text-muted); font-size: 12px; font-weight: 500;
+  font-family: inherit; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+}
+.sy-add-break-btn:hover { border-color: var(--gold); color: var(--gold); }
+
 /* Divider between year blocks */
 .sy-divider {
   height: 1px;
@@ -267,4 +291,8 @@
   .sy-quarter-dates     { font-size: 12px; }
   .sy-add-quarter-btn   { padding: 10px; font-size: 13px; }
   .sy-add-btn           { padding: 16px; font-size: 15px; }
+  .sy-break-row         { padding: 10px 14px; }
+  .sy-break-label       { font-size: 14px; }
+  .sy-break-dates       { font-size: 12px; }
+  .sy-add-break-btn     { padding: 10px; font-size: 13px; }
 }

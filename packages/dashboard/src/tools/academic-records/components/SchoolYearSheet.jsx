@@ -19,6 +19,8 @@ import './SchoolYearSheet.css';
 //   onAddSchoolYear     — () => void
 //   onEditQuarter       — ({ quarter, yearId }) => void
 //   onAddQuarter        — (yearId) => void
+//   onEditBreak         — ({ break: breakObj, yearId }) => void
+//   onAddBreak          — (yearId) => void
 
 // Compact "Aug 18 – May 22" range string for display.
 function formatDateRange(start, end) {
@@ -34,6 +36,7 @@ function formatDateRange(start, end) {
 export default function SchoolYearSheet({
   open, onClose, schoolYears, loading, error,
   onEditSchoolYear, onAddSchoolYear, onEditQuarter, onAddQuarter,
+  onEditBreak, onAddBreak,
 }) {
   if (!open) return null;
 
@@ -103,6 +106,31 @@ export default function SchoolYearSheet({
                       onClick={() => onAddQuarter(year.id)}
                     >
                       + Add Quarter
+                    </button>
+                  </div>
+
+                  <div className="sy-breaks-list">
+                    <p className="sy-section-label">Breaks</p>
+                    {(year.breaks ?? []).map(b => (
+                      <div key={b.id} className="sy-break-row">
+                        <div className="sy-break-info">
+                          <span className="sy-break-label">{b.label}</span>
+                          <span className="sy-break-dates">{formatDateRange(b.startDate, b.endDate)}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="sy-edit-btn"
+                          onClick={() => onEditBreak({ break: b, yearId: year.id })}
+                          aria-label={`Edit ${b.label}`}
+                        >✏️</button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="sy-add-break-btn"
+                      onClick={() => onAddBreak(year.id)}
+                    >
+                      + Add Break
                     </button>
                   </div>
 

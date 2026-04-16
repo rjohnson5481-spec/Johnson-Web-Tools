@@ -32,6 +32,7 @@ export default function AcademicRecordsTab() {
     schoolYears, loading: schoolYearsLoading, error: schoolYearsError,
     addSchoolYear, updateSchoolYear, removeSchoolYear,
     addQuarter, updateQuarter, removeQuarter,
+    addBreak, updateBreak, removeBreak,
   } = useSchoolYears(uid);
 
   const [selectedStudent, setSelectedStudent]     = useState('Orion');
@@ -61,6 +62,7 @@ export default function AcademicRecordsTab() {
   const [schoolYearSheetMode, setSchoolYearSheetMode]               = useState('schoolYear');
   const [editingSchoolYear, setEditingSchoolYear]                   = useState(null);
   const [editingQuarter, setEditingQuarter]                         = useState(null);
+  const [editingBreak, setEditingBreak]                             = useState(null);
   const [activeYearId, setActiveYearId]                             = useState(null);
 
   // Sheet state — grade entry
@@ -99,11 +101,11 @@ export default function AcademicRecordsTab() {
   // ─── School Year + Quarter handlers ───
   function closeSchoolYearSheets() {
     setSchoolYearSheetOpen(false); setAddEditSchoolYearSheetOpen(false);
-    setEditingSchoolYear(null); setEditingQuarter(null); setActiveYearId(null);
+    setEditingSchoolYear(null); setEditingQuarter(null); setEditingBreak(null); setActiveYearId(null);
   }
   function closeAddEditSchoolYear() {
     setAddEditSchoolYearSheetOpen(false);
-    setEditingSchoolYear(null); setEditingQuarter(null); setActiveYearId(null);
+    setEditingSchoolYear(null); setEditingQuarter(null); setEditingBreak(null); setActiveYearId(null);
   }
   function handleAddSchoolYear()   { setEditingSchoolYear(null); setSchoolYearSheetMode('schoolYear'); setAddEditSchoolYearSheetOpen(true); }
   function handleEditSchoolYear(y) { setEditingSchoolYear(y);    setSchoolYearSheetMode('schoolYear'); setAddEditSchoolYearSheetOpen(true); }
@@ -115,23 +117,36 @@ export default function AcademicRecordsTab() {
     setActiveYearId(yearId); setEditingQuarter({ quarter, yearId });
     setSchoolYearSheetMode('quarter'); setAddEditSchoolYearSheetOpen(true);
   }
+  function handleAddBreak(yearId) {
+    setActiveYearId(yearId); setEditingBreak(null);
+    setSchoolYearSheetMode('break'); setAddEditSchoolYearSheetOpen(true);
+  }
+  function handleEditBreak({ break: b, yearId }) {
+    setActiveYearId(yearId); setEditingBreak({ break: b, yearId });
+    setSchoolYearSheetMode('break'); setAddEditSchoolYearSheetOpen(true);
+  }
   async function handleSaveSchoolYearOrQuarter(data) {
     if (!uid) { console.warn('AcademicRecordsTab: uid missing on save — entry will not persist'); return; }
     if (schoolYearSheetMode === 'schoolYear') {
       if (editingSchoolYear) await updateSchoolYear(editingSchoolYear.id, data); else await addSchoolYear(data);
-    } else {
+    } else if (schoolYearSheetMode === 'quarter') {
       if (editingQuarter) await updateQuarter(activeYearId, editingQuarter.quarter.id, data); else await addQuarter(activeYearId, data);
+    } else if (schoolYearSheetMode === 'break') {
+      if (editingBreak) await updateBreak(activeYearId, editingBreak.break.id, data); else await addBreak(activeYearId, data);
     }
     closeAddEditSchoolYear();
   }
   async function handleDeleteSchoolYearOrQuarter() {
     if (schoolYearSheetMode === 'schoolYear' && editingSchoolYear) await removeSchoolYear(editingSchoolYear.id);
     else if (schoolYearSheetMode === 'quarter' && editingQuarter)  await removeQuarter(activeYearId, editingQuarter.quarter.id);
+    else if (schoolYearSheetMode === 'break' && editingBreak)      await removeBreak(activeYearId, editingBreak.break.id);
     closeAddEditSchoolYear();
   }
   const editingItem = schoolYearSheetMode === 'schoolYear'
     ? editingSchoolYear
-    : (editingQuarter ? editingQuarter.quarter : null);
+    : schoolYearSheetMode === 'quarter'
+      ? (editingQuarter ? editingQuarter.quarter : null)
+      : (editingBreak ? editingBreak.break : null);
 
   // ─── Grade entry handler ───
   async function handleSaveGrades(edits) {
@@ -184,6 +199,7 @@ export default function AcademicRecordsTab() {
         loading={schoolYearsLoading} error={schoolYearsError}
         onEditSchoolYear={handleEditSchoolYear} onAddSchoolYear={handleAddSchoolYear}
         onEditQuarter={handleEditQuarter} onAddQuarter={handleAddQuarter}
+        onEditBreak={handleEditBreak} onAddBreak={handleAddBreak}
       />
       <AddEditSchoolYearSheet
         open={addEditSchoolYearSheetOpen} onClose={closeAddEditSchoolYear}

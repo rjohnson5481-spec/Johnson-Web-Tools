@@ -13,7 +13,7 @@ import './AddEditSchoolYearSheet.css';
 //   onClose     — () => void
 //   onSave      — (data) => void with { label, startDate, endDate }
 //   onDelete    — () => void, called after inline confirm in Edit mode
-//   mode        — 'schoolYear' | 'quarter'
+//   mode        — 'schoolYear' | 'quarter' | 'break'
 //   yearId      — string | null (required when mode is 'quarter', purely
 //                 informational here — caller uses it to route the save)
 //   item        — null in Add mode; { label, startDate, endDate } in Edit
@@ -21,11 +21,13 @@ import './AddEditSchoolYearSheet.css';
 const TITLES = {
   schoolYear: { add: 'Add School Year', edit: 'Edit School Year' },
   quarter:    { add: 'Add Quarter',     edit: 'Edit Quarter'     },
+  break:      { add: 'Add Break',       edit: 'Edit Break'       },
 };
 
 const LABELS = {
-  schoolYear: { field: 'School year', placeholder: 'e.g. 2025–2026' },
-  quarter:    { field: 'Quarter',     placeholder: 'e.g. Q1'        },
+  schoolYear: { field: 'School year', placeholder: 'e.g. 2025–2026'    },
+  quarter:    { field: 'Quarter',     placeholder: 'e.g. Q1'           },
+  break:      { field: 'Break name',  placeholder: 'e.g. Christmas Break' },
 };
 
 export default function AddEditSchoolYearSheet({
@@ -53,7 +55,7 @@ export default function AddEditSchoolYearSheet({
   const canSave      = trimmedLabel.length > 0;
   const titles       = TITLES[mode] ?? TITLES.schoolYear;
   const labels       = LABELS[mode] ?? LABELS.schoolYear;
-  const removeNoun   = mode === 'quarter' ? 'quarter' : 'school year';
+  const removeNoun   = mode === 'quarter' ? 'quarter' : mode === 'break' ? 'break' : 'school year';
 
   function handleSave() {
     if (!canSave) return;
@@ -107,7 +109,7 @@ export default function AddEditSchoolYearSheet({
 
           {isEdit && !confirmDelete && (
             <button className="asy-delete-btn" onClick={() => setConfirmDelete(true)}>
-              Remove {removeNoun === 'quarter' ? 'Quarter' : 'School Year'}
+              Remove {removeNoun === 'quarter' ? 'Quarter' : removeNoun === 'break' ? 'Break' : 'School Year'}
             </button>
           )}
           {isEdit && confirmDelete && (
