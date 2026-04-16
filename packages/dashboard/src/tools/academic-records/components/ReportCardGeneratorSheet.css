@@ -35,6 +35,8 @@
   font-family: inherit; transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .rcg-pill.active { background: var(--ink); color: #e8c97a; border-color: var(--ink); }
+.rcg-annual-pill { border-color: var(--gold); color: var(--gold); }
+.rcg-annual-pill.active { background: var(--gold); color: #fff; border-color: var(--gold); }
 .rcg-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
 .rcg-toggle-label { font-size: 13px; color: var(--text-primary); }
 .rcg-toggle {

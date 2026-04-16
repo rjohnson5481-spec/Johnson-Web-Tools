@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { GRADING_TYPE_LETTER } from '../constants/academics.js';
+import { generateReportCardPDF } from '../utils/generateReportCardPDF.js';
 import './ReportCardGeneratorSheet.css';
 
 const STUDENTS = ['Orion', 'Malachi'];
@@ -10,7 +11,7 @@ function todayFormatted() {
 }
 
 export default function ReportCardGeneratorSheet({
-  open, onClose, student, activeSchoolYear, selectedQuarterId,
+  open, onClose, onSaveReport, student, activeSchoolYear, selectedQuarterId,
   enrollments, courses, grades, attendanceDays, reportNotes, saveNote,
 }) {
   const [localStudent, setLocalStudent]   = useState(student ?? STUDENTS[0]);
@@ -21,6 +22,7 @@ export default function ReportCardGeneratorSheet({
   const [includeSig, setIncludeSig]       = useState(true);
   const [notes, setNotes]                 = useState('');
   const [saved, setSaved]                 = useState(false);
+  const [generating, setGenerating]       = useState(false);
   const savedTimer = useRef(null);
 
   useEffect(() => {
@@ -29,10 +31,11 @@ export default function ReportCardGeneratorSheet({
     setLocalQuarter(selectedQuarterId);
     const existing = (reportNotes ?? []).find(n => n.student === (student ?? STUDENTS[0]) && n.quarterId === selectedQuarterId);
     setNotes(existing?.notes ?? '');
-    setSaved(false);
+    setSaved(false); setGenerating(false);
   }, [open, student, selectedQuarterId, reportNotes]);
 
   useEffect(() => {
+    if (localQuarter === 'annual') return;
     const existing = (reportNotes ?? []).find(n => n.student === localStudent && n.quarterId === localQuarter);
     setNotes(existing?.notes ?? '');
   }, [localStudent, localQuarter, reportNotes]);
@@ -42,18 +45,47 @@ export default function ReportCardGeneratorSheet({
   const courseById = useMemo(() => new Map((courses ?? []).map(c => [c.id, c])), [courses]);
   const studentEnr = useMemo(() => (enrollments ?? []).filter(e => e.student === localStudent), [enrollments, localStudent]);
   const quarters = activeSchoolYear?.quarters ?? [];
-  const quarterLabel = quarters.find(q => q.id === localQuarter)?.label ?? 'Quarter';
+  const isAnnual = localQuarter === 'annual';
+  const quarterLabel = isAnnual ? 'Annual' : (quarters.find(q => q.id === localQuarter)?.label ?? 'Quarter');
+  const periodLabel = isAnnual ? `Annual — ${activeSchoolYear?.label ?? ''}` : quarterLabel;
   const studentGradeLevel = studentEnr[0]?.gradeLevel ?? null;
   const attendPct = attendanceDays.required > 0 ? Math.min(100, Math.round((attendanceDays.attended / attendanceDays.required) * 100)) : 0;
 
   async function handleNotesBlur() {
-    if (!saveNote) return;
+    if (!saveNote || isAnnual) return;
     try {
       await saveNote(localStudent, localQuarter, notes);
-      setSaved(true);
-      clearTimeout(savedTimer.current);
+      setSaved(true); clearTimeout(savedTimer.current);
       savedTimer.current = setTimeout(() => setSaved(false), 2000);
     } catch { /* error surfaces via hook */ }
+  }
+
+  async function handleGenerate() {
+    setGenerating(true);
+    try {
+      await generateReportCardPDF({
+        student: localStudent, gradeLevel: studentGradeLevel, periodLabel,
+        yearLabel: activeSchoolYear?.label ?? '—', isAnnual,
+        selectedQuarterId: localQuarter, studentEnrollments: studentEnr,
+        courseById, grades, quarters, attendanceDays,
+        includeGrades, includeAttendance: includeAttend, includeNotes, includeSignature: includeSig, notes,
+      });
+      if (onSaveReport) {
+        const snap = studentEnr.map(enr => {
+          const c = courseById.get(enr.courseId);
+          if (isAnnual) {
+            return { courseName: c?.name, curriculum: c?.curriculum, gradingType: c?.gradingType,
+              quarters: quarters.map(q => { const g = (grades ?? []).find(gr => gr.enrollmentId === enr.id && gr.quarterId === q.id); return { quarterId: q.id, quarterLabel: q.label, grade: g?.grade ?? null, percent: g?.percent ?? null }; }) };
+          }
+          const g = (grades ?? []).find(gr => gr.enrollmentId === enr.id && gr.quarterId === localQuarter);
+          return { courseName: c?.name, curriculum: c?.curriculum, gradingType: c?.gradingType, grade: g?.grade ?? null, percent: g?.percent ?? null, quarterId: localQuarter, quarterLabel };
+        });
+        await onSaveReport({ student: localStudent, periodLabel, yearLabel: activeSchoolYear?.label ?? '—',
+          gradesSnapshot: snap, attendanceSnapshot: { ...attendanceDays }, notes,
+          includeToggles: { includeGrades, includeAttendance: includeAttend, includeNotes, includeSignature: includeSig } });
+      }
+    } catch (err) { console.warn('PDF generation failed', err); }
+    finally { setGenerating(false); }
   }
 
   if (!open) return null;
@@ -67,21 +99,21 @@ export default function ReportCardGeneratorSheet({
           <button className="rcg-sheet-close" onClick={onClose} aria-label="Close">✕</button>
         </header>
         <div className="rcg-sheet-body">
-
           <div className="rcg-field">
             <span className="rcg-label">Student</span>
             <div className="rcg-pills">{STUDENTS.map(s => (
               <button key={s} className={`rcg-pill${s === localStudent ? ' active' : ''}`} onClick={() => setLocalStudent(s)}>{s}</button>
             ))}</div>
           </div>
-
           <div className="rcg-field">
             <span className="rcg-label">Report period</span>
-            <div className="rcg-pills">{quarters.map(q => (
-              <button key={q.id} className={`rcg-pill${q.id === localQuarter ? ' active' : ''}`} onClick={() => setLocalQuarter(q.id)}>{q.label}</button>
-            ))}</div>
+            <div className="rcg-pills">
+              {quarters.map(q => (
+                <button key={q.id} className={`rcg-pill${q.id === localQuarter ? ' active' : ''}`} onClick={() => setLocalQuarter(q.id)}>{q.label}</button>
+              ))}
+              <button className={`rcg-pill rcg-annual-pill${isAnnual ? ' active' : ''}`} onClick={() => setLocalQuarter('annual')}>Annual</button>
+            </div>
           </div>
-
           <div className="rcg-field">
             <span className="rcg-label">Include</span>
             {[['Grades', includeGrades, setIncludeGrades], ['Attendance', includeAttend, setIncludeAttend],
@@ -92,39 +124,43 @@ export default function ReportCardGeneratorSheet({
               </div>
             ))}
           </div>
-
           <div className="rcg-field">
             <span className="rcg-label">Teacher notes {saved && <span className="rcg-saved">Saved</span>}</span>
             <textarea className="rcg-notes" rows={3} value={notes} onChange={e => setNotes(e.target.value)}
-              onBlur={handleNotesBlur} placeholder="Add notes about this student's performance this quarter..." />
+              onBlur={handleNotesBlur} placeholder="Add notes about this student's performance..." />
           </div>
-
           <p className="rcg-section-label">Preview</p>
-
           <div className="rcg-preview-card">
             <div className="rcg-preview-header">
               <div className="rcg-preview-school">IRON & LIGHT<br />JOHNSON ACADEMY</div>
               <div className="rcg-preview-tagline">Faith · Knowledge · Strength</div>
-              <div className="rcg-preview-type">Report Card — {quarterLabel}</div>
+              <div className="rcg-preview-type">Report Card — {periodLabel}</div>
             </div>
             <div className="rcg-preview-student">
               <span><strong>{localStudent}</strong>{studentGradeLevel ? ` · Grade ${studentGradeLevel}` : ''}</span>
               <span>{activeSchoolYear?.label ?? '—'} · {todayFormatted()}</span>
             </div>
-            {includeGrades && (
+            {includeGrades && !isAnnual && (
               <table className="rcg-preview-grades">
                 <thead><tr><th>Course</th><th>Curriculum</th><th>Scale</th><th>Grade</th></tr></thead>
                 <tbody>{studentEnr.map(enr => {
                   const c = courseById.get(enr.courseId);
                   const g = (grades ?? []).find(gr => gr.enrollmentId === enr.id && gr.quarterId === localQuarter);
                   const isLetter = (c?.gradingType ?? GRADING_TYPE_LETTER) === GRADING_TYPE_LETTER;
-                  return (
-                    <tr key={enr.id}>
-                      <td>{c?.name ?? '—'}</td><td>{c?.curriculum ?? '—'}</td>
-                      <td>{isLetter ? 'Letter' : 'E/S/N/U'}</td>
-                      <td className="rcg-grade-cell">{g ? `${g.grade}${g.percent != null ? ` (${g.percent}%)` : ''}` : '—'}</td>
-                    </tr>
-                  );
+                  return (<tr key={enr.id}><td>{c?.name ?? '—'}</td><td>{c?.curriculum ?? '—'}</td>
+                    <td>{isLetter ? 'Letter' : 'E/S/N/U'}</td>
+                    <td className="rcg-grade-cell">{g ? `${g.grade}${g.percent != null ? ` (${g.percent}%)` : ''}` : '—'}</td></tr>);
+                })}</tbody>
+              </table>
+            )}
+            {includeGrades && isAnnual && (
+              <table className="rcg-preview-grades">
+                <thead><tr><th>Course</th><th>Curriculum</th>{quarters.map(q => <th key={q.id}>{q.label}</th>)}</tr></thead>
+                <tbody>{studentEnr.map(enr => {
+                  const c = courseById.get(enr.courseId);
+                  return (<tr key={enr.id}><td>{c?.name ?? '—'}</td><td>{c?.curriculum ?? '—'}</td>
+                    {quarters.map(q => { const g = (grades ?? []).find(gr => gr.enrollmentId === enr.id && gr.quarterId === q.id); return <td key={q.id} className="rcg-grade-cell">{g?.grade ?? '—'}</td>; })}
+                  </tr>);
                 })}</tbody>
               </table>
             )}
@@ -136,19 +172,15 @@ export default function ReportCardGeneratorSheet({
                 <div className="rcg-att-box"><div className="rcg-att-num">{attendPct}%</div><div className="rcg-att-lbl">Rate</div></div>
               </div>
             )}
-            {includeNotes && notes.trim() && (
-              <div className="rcg-preview-notes">{notes}</div>
-            )}
+            {includeNotes && notes.trim() && <div className="rcg-preview-notes">{notes}</div>}
             <div className="rcg-preview-footer">
               <span>Iron & Light Johnson Academy</span>
               {includeSig && <span className="rcg-sig-line">Signature _______________</span>}
             </div>
           </div>
-
-          <button className="rcg-generate-btn" disabled title="Coming in 9B">
-            Generate PDF (coming soon)
+          <button className="rcg-generate-btn" onClick={handleGenerate} disabled={generating}>
+            {generating ? 'Generating...' : 'Generate PDF'}
           </button>
-
         </div>
       </div>
     </div>
