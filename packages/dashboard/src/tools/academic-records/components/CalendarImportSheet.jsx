@@ -182,7 +182,10 @@ export default function CalendarImportSheet({ open, onClose, onImport, yearLabel
                   </div>
                 );
               })}
-              {debugLog && <button className="ci-log-btn" onClick={() => setShowLog(v => !v)}>{showLog ? 'Hide Log' : 'View Log'}</button>}
+              {debugLog && (() => {
+                const logCount = debugLog.split('\n').filter(l => l.trim()).length;
+                return <button className="ci-log-btn" onClick={() => setShowLog(v => !v)}>{showLog ? `Hide Log (${logCount})` : `View Log (${logCount})`}</button>;
+              })()}
               {showLog && <div className="ci-log-panel">{debugLog}</div>}
             </div>
           )}
