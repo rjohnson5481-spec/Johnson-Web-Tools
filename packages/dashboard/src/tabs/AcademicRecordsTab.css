@@ -1,50 +1,130 @@
+/* Records main view styles. Class prefix `ar-`. Companion to
+   AcademicRecordsTab.jsx; sheet styles live in their own component CSS
+   files (cc-, en-, sy-, asy-, aec-, aee-). */
+
 /* ── Outer wrapper ── */
 .ar-tab {
-  padding: 20px 16px 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  min-height: 100vh;
+  padding: 16px;
+  background: var(--bg-base);
 }
 
-/* ── Header ── */
-.ar-header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
+/* ── Tab header ── */
+.ar-header { margin-bottom: 20px; }
 .ar-title {
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
   line-height: 1.1;
 }
-
 .ar-subtitle {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
-  margin: 0;
-  letter-spacing: 0.04em;
+  margin: 2px 0 0;
 }
 
-/* ── Section + label with trailing rule ── */
-.ar-section {
+/* ── Student selector pills ── */
+.ar-student-row {
   display: flex;
-  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.ar-student-pill {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.ar-student-pill.active {
+  background: var(--ink);
+  color: #e8c97a;
+  border-color: var(--ink);
+}
+
+/* ── Quarter pills ── */
+.ar-quarter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.ar-quarter-pill {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.ar-quarter-pill.active {
+  background: var(--gold-pale);
+  color: var(--gold);
+  border-color: rgba(201, 168, 76, 0.3);
+}
+.ar-quarter-pill.future { opacity: 0.4; cursor: default; }
+
+/* ── Stats row ── */
+.ar-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
+  margin-bottom: 24px;
 }
+.ar-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.ar-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.ar-stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.ar-stat-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.ar-stat-card.gold {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, var(--bg-card) 60%, rgba(201, 168, 76, 0.06));
+}
+.ar-stat-card.gold .ar-stat-value { color: var(--gold); }
 
+/* ── Section label with trailing rule ── */
 .ar-section-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--text-secondary);
-  margin: 0;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 .ar-section-label::after {
   content: '';
@@ -53,80 +133,201 @@
   background: var(--border);
 }
 
-/* ── Quick Actions list ── */
-.ar-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ar-action {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
+/* ── Grade list ── */
+.ar-grade-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 14px 16px;
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  overflow: hidden;
+  margin-bottom: 16px;
 }
-
-.ar-action:hover:not(:disabled) {
-  background: var(--bg-card-hover);
-  border-color: var(--gold-light);
+.ar-grade-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  gap: 12px;
 }
-
-.ar-action--disabled {
-  opacity: 0.55;
-  cursor: default;
+.ar-grade-row:last-child { border-bottom: none; }
+.ar-grade-empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
 }
-
-.ar-action-icon {
-  font-size: 20px;
-  line-height: 1;
+.ar-course-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
   flex-shrink: 0;
-  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+}
+.ar-course-info { flex: 1; min-width: 0; }
+.ar-course-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.ar-course-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.ar-grade-value {
+  font-size: 18px;
+  font-weight: 700;
+  min-width: 40px;
+  text-align: right;
+}
+.ar-grade-value.pending {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.ar-grade-value.letter-a { color: #1565c0; }
+.ar-grade-value.letter-b { color: #2e7d32; }
+.ar-grade-value.letter-c { color: #e65100; }
+.ar-grade-value.letter-d { color: #7b1fa2; }
+.ar-grade-value.letter-f { color: var(--red); }
+.ar-grade-value.esnu-e   { color: #1565c0; }
+.ar-grade-value.esnu-s   { color: #2e7d32; }
+.ar-grade-value.esnu-n   { color: #e65100; }
+.ar-grade-value.esnu-u   { color: var(--red); }
+
+/* ── Action row (Enter Grades / Generate Report) ── */
+.ar-action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
 }
 
-.ar-action-label {
-  flex: 1;
+/* ── Attendance card ── */
+.ar-attendance-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.ar-attendance-num {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 12px;
+  line-height: 1;
+}
+.ar-attendance-sub { font-size: 12px; color: var(--text-muted); margin: 4px 0 0; }
+.ar-attendance-bar-track {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 12px 0 6px;
+}
+.ar-attendance-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+.ar-attendance-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.ar-attendance-detail {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.ar-attendance-detail strong { color: var(--text-primary); font-weight: 700; }
+.ar-attendance-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 8px 0 0;
+}
+
+/* ── Badges (ESNU literal hex; design system has no --blue token) ── */
+.ar-badge-letter {
+  background: var(--gold-pale);
+  color: var(--gold);
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.ar-badge-esnu {
+  background: rgba(21, 101, 192, 0.10);
+  color: #1565c0;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+}
+[data-mode="dark"] .ar-badge-esnu {
+  color: #82b1ff;
+  background: rgba(130, 177, 255, 0.12);
+}
+
+/* ── Quick actions list ── */
+.ar-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.ar-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
-  line-height: 1.2;
+  cursor: pointer;
+  font-family: 'Lexend', sans-serif;
+  width: 100%;
+  text-align: left;
+  transition: background 0.15s;
 }
-
-.ar-action-chevron {
-  font-size: 20px;
-  color: var(--text-muted);
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.ar-action-soon {
-  font-size: 10px;
+.ar-action-btn:hover:not(.disabled) { background: var(--bg-card-hover); }
+.ar-action-btn.disabled { opacity: 0.45; cursor: default; }
+.ar-action-btn .soon {
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--gold);
-  background: var(--gold-pale);
-  border-radius: 10px;
-  padding: 3px 8px;
-  flex-shrink: 0;
+  letter-spacing: 0.06em;
 }
 
 /* ── Large phone (400–1023px) — scaled up for wide phones ── */
 @media (min-width: 400px) and (max-width: 1023px) {
-  .ar-tab           { padding: 24px 20px 32px; gap: 28px; }
-  .ar-title         { font-size: 26px; }
-  .ar-subtitle      { font-size: 14px; }
-  .ar-section-label { font-size: 11px; }
-  .ar-action        { padding: 16px 18px; gap: 14px; }
-  .ar-action-icon   { font-size: 22px; }
-  .ar-action-label  { font-size: 15px; }
-  .ar-action-soon   { font-size: 11px; padding: 4px 10px; }
+  .ar-tab               { padding: 24px 20px; }
+  .ar-title             { font-size: 24px; }
+  .ar-subtitle          { font-size: 13px; }
+  .ar-stat-card         { padding: 18px; }
+  .ar-stat-value        { font-size: 30px; }
+  .ar-grade-row         { padding: 14px 18px; }
+  .ar-course-name       { font-size: 15px; }
+  .ar-course-meta       { font-size: 12px; }
+  .ar-grade-value       { font-size: 20px; }
+  .ar-action-btn        { padding: 16px 18px; font-size: 15px; }
+  .ar-attendance-card   { padding: 18px; }
+  .ar-attendance-num    { font-size: 36px; }
+}
+
+/* ── Desktop (≥1024px) ── */
+@media (min-width: 1024px) {
+  .ar-tab        { padding: 28px; }
+  .ar-stats-row  { grid-template-columns: repeat(3, 1fr); }
 }
