@@ -11,7 +11,8 @@ import {
   collection, doc, getDocs, getDoc, addDoc, setDoc, deleteDoc,
   query, where, serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '@homeschool/shared';
+import { db, storage } from '@homeschool/shared';
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import {
   schoolYearDoc,
   quartersCol, quarterDoc,
@@ -261,7 +262,23 @@ export async function saveSavedReport(uid, data) {
   return ref.id;
 }
 
-// Deletes a saved report card.
+// Deletes a saved report card (Firestore doc only — Storage handled separately).
 export function deleteSavedReport(uid, reportId) {
   return deleteDoc(doc(db, savedReportDoc(uid, reportId)));
+}
+
+// ─── Report PDF Storage ──────────────────────────────────────────────────
+
+// Uploads PDF bytes to Firebase Storage. Returns the download URL.
+export async function uploadReportPDF(uid, reportId, pdfBytes) {
+  const fileRef = storageRef(storage, `users/${uid}/reports/${reportId}.pdf`);
+  await uploadBytes(fileRef, pdfBytes, { contentType: 'application/pdf' });
+  return getDownloadURL(fileRef);
+}
+
+// Deletes a report PDF from Firebase Storage.
+export async function deleteReportPDF(uid, reportId) {
+  const fileRef = storageRef(storage, `users/${uid}/reports/${reportId}.pdf`);
+  try { await deleteObject(fileRef); }
+  catch (err) { if (err?.code !== 'storage/object-not-found') throw err; }
 }
