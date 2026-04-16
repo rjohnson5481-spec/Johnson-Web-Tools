@@ -13,11 +13,12 @@ import EnrollmentSheet        from '../tools/academic-records/components/Enrollm
 import AddEditEnrollmentSheet from '../tools/academic-records/components/AddEditEnrollmentSheet.jsx';
 import SchoolYearSheet        from '../tools/academic-records/components/SchoolYearSheet.jsx';
 import AddEditSchoolYearSheet from '../tools/academic-records/components/AddEditSchoolYearSheet.jsx';
+import CalendarImportSheet    from '../tools/academic-records/components/CalendarImportSheet.jsx';
 import './AcademicRecordsTab.css';
 
 // Phase 2 entry point. Tab-level wiring lives here:
 //   - 5 data hooks (catalog, enrollments, school years, summary, grades)
-//   - 4 sheet flows (catalog, enrollments, school years, grade entry) with stacked editors
+//   - 5 sheet flows (catalog, enrollments, school years, grade entry, calendar import)
 //   - main view JSX is in RecordsMainView.jsx (kept under the 300-line limit)
 export default function AcademicRecordsTab() {
   const { user } = useAuth();
@@ -67,6 +68,9 @@ export default function AcademicRecordsTab() {
 
   // Sheet state — grade entry
   const [gradeEntrySheetOpen, setGradeEntrySheetOpen] = useState(false);
+
+  // Sheet state — calendar import
+  const [calendarImportOpen, setCalendarImportOpen] = useState(false);
 
   // ─── Course handlers ───
   function closeCatalog()       { setCatalogSheetOpen(false); setAddEditSheetOpen(false); setEditingCourse(null); }
@@ -159,6 +163,15 @@ export default function AcademicRecordsTab() {
   }
   const activeQuarterLabel = (summary.activeSchoolYear?.quarters ?? []).find(q => q.id === selectedQuarterId)?.label ?? 'Quarter';
 
+  // ─── Calendar import handler ───
+  async function handleCalendarImport(breaks) {
+    if (!uid || !summary.activeSchoolYear) return;
+    const yearId = summary.activeSchoolYear.id;
+    for (const b of breaks) {
+      await addBreak(yearId, { label: b.label, startDate: b.startDate, endDate: b.endDate });
+    }
+  }
+
   return (
     <div className="ar-tab">
 
@@ -170,6 +183,7 @@ export default function AcademicRecordsTab() {
         onEnrollmentsOpen={() => setEnrollmentSheetOpen(true)}
         onSchoolYearOpen={() => setSchoolYearSheetOpen(true)}
         onEnterGrades={() => setGradeEntrySheetOpen(true)}
+        onCalendarImport={summary.activeSchoolYear ? () => setCalendarImportOpen(true) : null}
       />
 
       <CourseCatalogSheet
@@ -211,6 +225,11 @@ export default function AcademicRecordsTab() {
         onSave={handleSaveGrades}
         enrollments={summary.studentEnrollments} courses={courses} grades={grades}
         selectedQuarterId={selectedQuarterId} quarterLabel={activeQuarterLabel}
+      />
+      <CalendarImportSheet
+        open={calendarImportOpen} onClose={() => setCalendarImportOpen(false)}
+        onImport={handleCalendarImport}
+        yearLabel={summary.activeSchoolYear?.label}
       />
 
     </div>

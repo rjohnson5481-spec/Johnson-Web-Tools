@@ -36,7 +36,7 @@ export default function RecordsMainView({
   selectedStudent, setSelectedStudent,
   selectedQuarterId, setSelectedQuarterId,
   summary, courses, grades,
-  onCatalogOpen, onEnrollmentsOpen, onSchoolYearOpen, onEnterGrades,
+  onCatalogOpen, onEnrollmentsOpen, onSchoolYearOpen, onEnterGrades, onCalendarImport,
 }) {
   const { activeSchoolYear, studentEnrollments, courseCount, attendanceDays } = summary;
   const today      = todayStr();
@@ -176,9 +176,15 @@ export default function RecordsMainView({
         <button className="ar-action-btn" onClick={onEnrollmentsOpen}>
           <span>👤 Manage Enrollments</span><span>›</span>
         </button>
-        <button className="ar-action-btn disabled" disabled>
-          <span>📥 Import Curriculum Data</span><span className="soon">Soon</span>
-        </button>
+        {onCalendarImport ? (
+          <button className="ar-action-btn" onClick={onCalendarImport}>
+            <span>📅 Import Calendar Breaks</span><span>›</span>
+          </button>
+        ) : (
+          <button className="ar-action-btn disabled" disabled>
+            <span>📅 Import Calendar Breaks</span><span className="soon">Soon</span>
+          </button>
+        )}
         <button className="ar-action-btn" onClick={onSchoolYearOpen}>
           <span>🗓️ Manage School Year &amp; Quarters</span><span>›</span>
         </button>
