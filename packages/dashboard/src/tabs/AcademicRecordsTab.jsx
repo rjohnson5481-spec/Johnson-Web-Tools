@@ -271,7 +271,6 @@ export default function AcademicRecordsTab() {
         open={savedReportsOpen} onClose={() => setSavedReportsOpen(false)}
         savedReports={savedReports} loading={reportsLoading}
         onDelete={removeReport}
-        onRegenerate={() => { setSavedReportsOpen(false); setReportCardOpen(true); }}
       />
 
     </div>

@@ -9,7 +9,7 @@ function formatDate(ts) {
 }
 
 export default function SavedReportCardsSheet({
-  open, onClose, savedReports, loading, onDelete, onRegenerate,
+  open, onClose, savedReports, loading, onDelete,
 }) {
   const [confirmId, setConfirmId] = useState(null);
 
@@ -55,8 +55,9 @@ export default function SavedReportCardsSheet({
                       </div>
                     ) : (
                       <div className="src-actions">
-                        {r.storageUrl && <a className="src-icon-btn" href={r.storageUrl} target="_blank" rel="noopener noreferrer" title="Download PDF">⬇</a>}
-                        <button className="src-icon-btn" onClick={() => onRegenerate(r)} title="Regenerate">↻</button>
+                        <button className="src-icon-btn" disabled={!r.storageUrl} title="Download PDF"
+                          onClick={() => r.storageUrl && window.open(r.storageUrl, '_blank')}
+                          style={!r.storageUrl ? { opacity: 0.35, cursor: 'default' } : undefined}>⬇</button>
                         <button className="src-icon-btn src-icon-btn--danger" onClick={() => setConfirmId(r.id)} title="Delete">🗑</button>
                       </div>
                     )}
