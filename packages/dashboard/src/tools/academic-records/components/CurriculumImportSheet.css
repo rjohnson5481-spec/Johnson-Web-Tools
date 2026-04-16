@@ -1,0 +1,108 @@
+/* CurriculumImportSheet — z-index 300. Class prefix: cui- */
+
+.cui-sheet-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  z-index: 300; display: flex; align-items: flex-end; justify-content: center;
+}
+.cui-sheet {
+  width: 100%; max-width: 100%; max-height: 85vh;
+  background: var(--bg-base); border-radius: 20px 20px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+  animation: cui-up 0.3s ease; overflow: hidden; display: flex; flex-direction: column;
+}
+@keyframes cui-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.cui-sheet-handle { width: 40px; height: 5px; background: #d4cfc8; border-radius: 3px; margin: 10px auto 0; flex-shrink: 0; }
+.cui-sheet-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px 14px; background: #22252e; flex-shrink: 0;
+}
+.cui-sheet-title { font-size: 15px; font-weight: 600; color: #fff; margin: 0; }
+.cui-sheet-close {
+  width: 28px; height: 28px; background: rgba(255,255,255,.12); border: none; border-radius: 50%;
+  color: rgba(255,255,255,.8); font-size: 13px; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; padding: 0; transition: background 0.15s;
+}
+.cui-sheet-close:hover { background: rgba(255,255,255,.22); color: #fff; }
+.cui-sheet-body { padding: 16px 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+.cui-help { font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+
+.cui-file-zone {
+  border: 2px dashed var(--border); border-radius: 12px; padding: 28px 16px;
+  text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+}
+.cui-file-zone:hover { border-color: var(--gold); }
+.cui-file-zone--has-file { border-color: var(--gold); background: var(--gold-pale); }
+.cui-file-prompt { font-size: 14px; color: var(--text-muted); }
+.cui-file-name { font-size: 14px; font-weight: 600; color: var(--gold); }
+
+.cui-spinner-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px 0; }
+.cui-spinner { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: cui-spin 0.8s linear infinite; }
+@keyframes cui-spin { to { transform: rotate(360deg); } }
+.cui-spinner-label { font-size: 13px; color: var(--text-muted); }
+.cui-error { font-size: 13px; color: var(--red); background: var(--red-lt); border: 1px solid #f5cfc6; border-radius: 8px; padding: 12px; }
+
+.cui-results { display: flex; flex-direction: column; gap: 8px; }
+.cui-results-count { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin: 0; }
+.cui-course-row {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+}
+.cui-course-row--duplicate { opacity: 0.5; }
+.cui-course-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cui-course-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.cui-course-meta { font-size: 12px; color: var(--text-muted); }
+.cui-course-badge {
+  font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 8px;
+  background: var(--gold-pale); color: var(--gold); border: 1px solid rgba(201,168,76,0.2); flex-shrink: 0;
+}
+.cui-duplicate-badge {
+  font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 8px;
+  background: var(--bg-surface); color: var(--text-muted); flex-shrink: 0;
+}
+.cui-remove-btn {
+  width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border);
+  background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s;
+}
+.cui-remove-btn:hover { border-color: var(--red); color: var(--red); }
+.cui-log-btn {
+  background: none; border: none; font-size: 12px; color: var(--text-muted);
+  cursor: pointer; font-family: inherit; text-align: left; padding: 0;
+  text-decoration: underline; text-underline-offset: 2px; margin-top: 12px;
+}
+.cui-log-btn:hover { color: var(--text-secondary); }
+.cui-log-panel {
+  background: #22252e; border-radius: 8px; padding: 12px; margin-top: 8px;
+  max-height: 200px; overflow-y: auto; font-size: 11px; font-family: monospace;
+  color: rgba(255,255,255,0.75); white-space: pre-wrap; word-break: break-all;
+}
+
+.cui-sheet-footer {
+  display: flex; gap: 10px; padding: 12px 20px 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: var(--bg-card); border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.cui-cancel-btn {
+  flex: 1; background: transparent; border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 12px; font-size: 14px; font-weight: 500; color: var(--text-secondary);
+  cursor: pointer; font-family: inherit; transition: border-color 0.15s, color 0.15s;
+}
+.cui-cancel-btn:hover { border-color: var(--gold); color: var(--gold); }
+.cui-parse-btn, .cui-import-btn {
+  flex: 2; background: var(--gold); border: none; border-radius: 10px;
+  padding: 12px; font-size: 14px; font-weight: 600; color: #fff;
+  cursor: pointer; font-family: inherit; transition: background 0.15s, opacity 0.15s;
+}
+.cui-parse-btn:hover:not(:disabled), .cui-import-btn:hover:not(:disabled) { background: var(--gold-light); }
+.cui-parse-btn:disabled, .cui-import-btn:disabled { opacity: 0.4; cursor: default; }
+
+@media (min-width: 400px) and (max-width: 1023px) {
+  .cui-sheet-title { font-size: 17px; }
+  .cui-sheet-body { padding: 20px; gap: 18px; }
+  .cui-help { font-size: 14px; }
+  .cui-file-zone { padding: 32px 20px; }
+  .cui-course-row { padding: 12px 16px; }
+  .cui-course-name { font-size: 15px; }
+  .cui-cancel-btn, .cui-parse-btn, .cui-import-btn { padding: 14px; font-size: 15px; }
+}
