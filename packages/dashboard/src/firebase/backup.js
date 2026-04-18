@@ -39,11 +39,10 @@ export async function exportAllData(uid) {
 
   const weeksSnap = await getDocs(collection(db, `${base}/weeks`));
   const weeks = [];
+  const studentNames = students?.names ?? [];
   for (const wDoc of weeksSnap.docs) {
     const wId = wDoc.id;
-    const studentsSnap = await getDocs(collection(db, `${base}/weeks/${wId}/students`));
-    for (const sDoc of studentsSnap.docs) {
-      const sName = sDoc.id;
+    for (const sName of studentNames) {
       for (let di = 0; di < 5; di++) {
         const subjects = await readCol(`${base}/weeks/${wId}/students/${sName}/days/${di}/subjects`);
         subjects.forEach(sub => weeks.push({ weekId: wId, student: sName, dayIndex: di, subject: sub._id, ...sub }));
