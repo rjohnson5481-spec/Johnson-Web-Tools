@@ -1,34 +1,43 @@
-# HANDOFF — v0.25.0 Desktop Calendar Week View
+# HANDOFF — v0.25.1 Desktop Calendar: Selection + Drag-and-Drop
 
 ## What was completed this session
 
-4 code commits + this docs commit on `main`:
+2 code commits + this docs commit on `main`:
 
 ```
-845d3a2 chore: bump to v0.25.0
-5d1f7f4 feat: wire CalendarWeekView into PlannerLayout desktop
-912306a feat: add CalendarWeekView component
-ae20e2d feat: add CalendarWeekView CSS shell (v0.25.0)
+99781f6 chore: bump to v0.25.1
+374407b feat: add card selection and drag-and-drop between day columns (v0.25.1)
 ```
 
-### Commit 1 — CSS (`ae20e2d`, 89 lines)
-Desktop-only calendar grid styles: 5-column Mon-Fri layout with column headers (today gold circle), lesson cards (subject dot + status circle + lesson/note), all-day event banner, column add button, top bar with nav. Hides existing desktop week nav/DayStrip/planner-main when `.cwv-active` class is present.
+### Commit 1 — Selection + DnD (`374407b`)
 
-### Commit 2 — Component (`912306a`, 92 lines)
-`CalendarWeekView.jsx`: renders 5-column grid. Top bar with Today/prev/next/week label and "+ Add Lesson" button. Uses `loadWeekDataFrom(0)` to fetch all 5 days' data. Subject color assigned via hash from fixed 8-color palette. All-day events render as dark banners at top of column. Cards clickable to open EditSheet.
+**@dnd-kit/core 6.3.1** installed as exact version dependency.
 
-### Commit 3 — Wiring (`5d1f7f4`)
-- Added `useIsDesktop()` hook (matchMedia listener, 2 lines).
-- CalendarWeekView renders conditionally when `isDesktop` is true.
-- `.cwv-active` class on `.planner` hides DayStrip, planner-main, desktop week nav, and sick banner via CSS.
-- Mobile layout completely untouched — no base styles modified.
-- `onEditCell` sets day + editTarget to reuse existing EditSheet.
-- `onAddSubject` sets day + opens existing AddSubjectSheet.
+**CalendarWeekView.jsx (92→159 lines):**
+- Click a lesson card to toggle selection (gold border + tint). Done cards excluded.
+- Selection pill in top bar: "{N} selected · drag to move ✕ clear".
+- Click grid background clears selection. Double-click opens EditSheet.
+- `DndContext` with `PointerSensor` (8px activation distance).
+- `DraggableCard` wrapper: entire card is drag handle. Dragged cards go opacity 0.4.
+- `DroppableColumn` wrapper: each day column body is a drop target.
+- Multi-select drag: if dragged card is in selection, ALL selected cards move.
+- Drop on same column = no-op. After successful move, selection clears.
+- `onMoveCell(fromDay, subject, toDay)` prop called for each card to move.
 
-### Commit 4 — Version bump (`845d3a2`)
-0.24.1 → **0.25.0** across all 3 workspace package.json files.
+**CalendarWeekView.css (92→110 lines):**
+- `.cwv-card.selected` — 1.5px solid #c9a84c border + rgba gold tint.
+- `.cwv-sel-check` — gold checkmark replacing subject dot when selected.
+- `.cwv-sel-pill` / `.cwv-sel-clear` — selection count pill in top bar.
 
-Build green at every commit.
+**PlannerLayout.jsx (336→347 lines):**
+- Import `readCell`, `updateCell`, `deleteCell` from `firebase/planner.js`.
+- `handleMoveCell(fromDay, subject, toDay)`: reads cell data, writes to target day, deletes from source.
+- Passes `onMoveCell={handleMoveCell}` to CalendarWeekView.
+
+### Commit 2 — Version bump (`99781f6`)
+0.25.0 → **0.25.1** across all 3 packages.
+
+Build green at every commit. Mobile completely untouched.
 
 ---
 
@@ -36,49 +45,49 @@ Build green at every commit.
 
 | File | Lines |
 |---|---|
-| `CalendarWeekView.jsx` | 92 |
-| `CalendarWeekView.css` | 92 |
-| `PlannerLayout.jsx` | 336 |
+| `CalendarWeekView.jsx` | 159 |
+| `CalendarWeekView.css` | 110 |
+| `PlannerLayout.jsx` | 347 |
 
-**Warning**: PlannerLayout.jsx at 336 lines (was 317 pre-session). Needs future split — suggested: extract sheet renders into PlannerSheets.jsx.
+**Warning**: PlannerLayout.jsx at 347 lines. Needs split before any further additions.
 
 ---
 
 ## What is currently incomplete / pending
 
 - **Browser smoke test** — not run. Walk:
-  - Desktop (≥1024px): planner shows 5-column calendar grid instead of DayStrip + card grid.
-  - Today's date has gold circle. Lesson cards show subject dot, name, status, lesson text.
-  - Click a card → EditSheet opens for that subject+day.
-  - Click "+ add" at column bottom → AddSubjectSheet opens pre-set to that day.
-  - "Today" button jumps to current week. Prev/next navigate weeks.
-  - All-day events show as dark banners at top of column.
-  - Done cards have opacity 0.55 + strikethrough.
-  - Mobile (<1024px): completely unchanged — DayStrip + card grid as before.
-  - Resize browser between mobile and desktop → layout switches correctly.
+  - Desktop: click a lesson card → gold border + selection pill appears.
+  - Click another card → both selected. Click selected card → deselects.
+  - Done cards: click does nothing (no selection).
+  - Click empty grid area → clears selection.
+  - Double-click card → EditSheet opens.
+  - Drag a card to another day column → lesson moves to that day.
+  - Drag a selected card when multiple selected → all selected cards move.
+  - Drop on same column → nothing happens.
+  - Mobile: completely unchanged — no DnD, no selection.
 
-- **Not built yet (future sessions):**
-  - Drag-and-drop between days (needs @dnd-kit/core)
-  - PlannerLayout.jsx split (336 lines, over 300 limit)
-  - Card right-click context menu
-  - Week total/progress indicators
+- **Not built yet:**
+  - Within-day reordering (Session 3)
+  - Drag overlay (ghost card while dragging)
+  - PlannerLayout.jsx split (347 lines)
+  - After move, CalendarWeekView data doesn't auto-refresh (needs `loadWeekDataFrom` re-trigger)
 
 ## What the next session should start with
 
 1. Read CLAUDE.md + HANDOFF.md.
-2. Smoke test desktop calendar view on various screen sizes.
-3. Confirm mobile is completely unchanged.
-4. Next: drag-and-drop, or PlannerLayout split.
+2. Smoke test selection + drag-and-drop on desktop.
+3. Fix: after a move, the calendar grid may need a data refresh trigger.
+4. Next: within-day reordering, or PlannerLayout split.
 
-## Key file locations (touched this session)
+## Key file locations
 
 ```
 packages/dashboard/
-├── package.json                                                     # v0.25.0
+├── package.json                                          # v0.25.1 + @dnd-kit/core
 ├── src/tools/planner/components/
-│   ├── CalendarWeekView.jsx                                         # NEW — 92
-│   ├── CalendarWeekView.css                                         # NEW — 92
-│   └── PlannerLayout.jsx                                            # 317 → 336
-packages/shared/package.json                                         # v0.25.0
-packages/te-extractor/package.json                                   # v0.25.0
+│   ├── CalendarWeekView.jsx                              # 92 → 159
+│   ├── CalendarWeekView.css                              # 92 → 110
+│   └── PlannerLayout.jsx                                 # 336 → 347
+packages/shared/package.json                              # v0.25.1
+packages/te-extractor/package.json                        # v0.25.1
 ```
