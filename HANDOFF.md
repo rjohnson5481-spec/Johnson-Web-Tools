@@ -1,26 +1,37 @@
-# HANDOFF — v0.25.5 Fix Card-Level Drop Targets for Reorder
+# HANDOFF — v0.26.0 Data & Backup in Settings
 
 ## What was completed this session
 
-2 code commits + this docs commit on `main`:
+3 code commits + this docs commit on `main`:
 
 ```
-9bea662 chore: bump to v0.25.5
-502adcf fix: cards are droppable targets for accurate up/down reorder (v0.25.5)
+73e41d4 chore: bump to v0.26.0
+51679e1 feat: Data & Backup section in Settings
+0b0b1e1 feat: backup export/import/restore logic (v0.26.0)
 ```
 
-### Commit 1 — Cards as droppable targets (`502adcf`)
+### Commit 1 — backup.js (`0b0b1e1`, 166 lines)
 
-**CalendarWeekView.jsx (190→196 lines):**
-- `DraggableCard` now uses both `useDraggable` AND `useDroppable` on the same node with the same ID. A merged ref callback sets both refs.
-- Cards show a gold outline (`1px solid rgba(201,168,76,0.3)`) when hovered during a drag.
-- Switched `collisionDetection` from `closestCenter` to `pointerWithin` — uses pointer position directly to find the element under the cursor, which works correctly with the combined draggable+droppable pattern.
-- `over.id` now resolves to the card being hovered (not the column), so `parseDragId(over.id)` correctly identifies the target subject for within-day reordering in both directions.
+**firebase/backup.js** — pure Firestore logic, no UI:
+- `exportAllData(uid)`: reads all 13 collections (settings, presets, weeks with nested days/subjects, sickDays, rewardTracker with nested log, schoolYears with nested quarters/breaks, courses, enrollments, grades, reportNotes, activities, savedReports). Returns JSON-serializable object with version + timestamp.
+- `downloadBackup(uid)`: calls export, triggers browser download as `ironlight-backup-{date}.json`.
+- `importMerge(uid, backup)`: writes only documents that don't already exist (non-destructive). Returns `{ imported, skipped }`.
+- `importFullRestore(uid, backup)`: deletes ALL existing user data across all collections (including nested subcollections), then writes every document from backup. Returns `{ restored }`.
 
-### Commit 2 — Version bump (`9bea662`)
-0.25.4 → **0.25.5** across all 3 packages.
+### Commit 2 — DataBackupSection (`51679e1`)
 
-Build green. Mobile completely untouched.
+**DataBackupSection.jsx** (119 lines) + **DataBackupSection.css** (36 lines):
+- Export Backup: gold button, "Exporting..." → "Done ✓" for 2 seconds.
+- Import & Merge: file picker, parses JSON, shows "Imported N, skipped N" result.
+- Full Restore: two-step confirmation — first modal warns about permanent deletion, second modal requires typing "RESTORE". Only then opens file picker. Shows result + Reload button.
+- Modal: fixed overlay, centered card, Ink & Gold styling.
+
+**SettingsTab.jsx** (232→234 lines): imports and renders `<DataBackupSection uid={uid} />` below App section.
+
+### Commit 3 — Version bump (`73e41d4`)
+0.25.5 → **0.26.0** across all 3 packages.
+
+Build green at every commit.
 
 ---
 
@@ -28,22 +39,40 @@ Build green. Mobile completely untouched.
 
 | File | Lines |
 |---|---|
-| `CalendarWeekView.jsx` | 196 |
+| `firebase/backup.js` | 166 |
+| `tabs/DataBackupSection.jsx` | 119 |
+| `tabs/DataBackupSection.css` | 36 |
+| `tabs/SettingsTab.jsx` | 234 |
 
 ---
 
 ## What is currently incomplete / pending
 
 - **Browser smoke test** — not run. Walk:
-  - Drag a card upward within a column → card inserts above the target card.
-  - Drag a card downward within a column → card inserts at the target position.
-  - Target card shows gold outline during hover.
-  - Cross-day drag still works (optimistic move).
-  - Mobile: completely unchanged.
+  - Settings → Data & Backup section visible below App.
+  - Export: downloads JSON file with all data.
+  - Import & Merge: select backup JSON → imports missing items, reports count.
+  - Full Restore: two confirmations → select JSON → replaces all data → reload.
+  - Backup file includes all planner weeks, grades, reports, activities, etc.
+
+- **Carry-overs:**
+  - PlannerLayout.jsx at 347 lines (needs split).
+  - Saved report PDFs are NOT included in backup (Storage binaries excluded, only Firestore metadata).
+
+## What the next session should start with
+
+1. Read CLAUDE.md + HANDOFF.md.
+2. Smoke test backup export/import/restore.
+3. Test: export → full restore → verify all data round-trips.
 
 ## Key file locations
 
 ```
-packages/dashboard/src/tools/planner/components/
-└── CalendarWeekView.jsx                # 190 → 196
+packages/dashboard/src/
+├── firebase/
+│   └── backup.js                          # NEW — 166
+└── tabs/
+    ├── SettingsTab.jsx                     # 232 → 234
+    ├── DataBackupSection.jsx              # NEW — 119
+    └── DataBackupSection.css              # NEW — 36
 ```
