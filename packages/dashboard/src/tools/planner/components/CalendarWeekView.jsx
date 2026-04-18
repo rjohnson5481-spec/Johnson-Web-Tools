@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
 import { formatWeekLabel } from '../constants/days.js';
 import './CalendarWeekView.css';
@@ -16,22 +16,33 @@ function todayDateStr() {
   const t = new Date();
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
 }
+function dateStr(d) { return d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : ''; }
 
-function dateStr(d) {
-  if (!d) return '';
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function cardKey(di, subject) { return `${di}:${subject}`; }
+function dragId(di, subject) { return `card-${di}-${subject}`; }
+function dropId(di) { return `col-${di}`; }
+function parseDragId(id) { const m = id.match(/^card-(\d)-(.+)$/); return m ? { day: Number(m[1]), subject: m[2] } : null; }
+function parseDropId(id) { const m = id.match(/^col-(\d)$/); return m ? Number(m[1]) : null; }
 
 function DraggableCard({ id, children, disabled }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id, disabled });
   return <div ref={setNodeRef} {...listeners} {...attributes} style={isDragging ? { opacity: 0.4 } : undefined}>{children}</div>;
 }
-
-function DroppableColumn({ id, children, isOver }) {
-  const { setNodeRef } = useDroppable({ id });
+function DroppableCol({ id, children }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
   return <div ref={setNodeRef} className="cwv-col-body" style={isOver ? { outline: '1px solid rgba(201,168,76,0.4)', outlineOffset: -1 } : undefined}>{children}</div>;
+}
+
+function mergeOptimistic(weekData, moves) {
+  if (!Object.keys(moves).length) return weekData;
+  const out = {};
+  for (let di = 0; di < 5; di++) out[di] = { ...(weekData[di] ?? {}) };
+  for (const [key, toDi] of Object.entries(moves)) {
+    const { day: fromDi, subject } = parseDragId(key) ?? {};
+    if (subject == null) continue;
+    const cell = out[fromDi]?.[subject];
+    if (cell) { delete out[fromDi][subject]; out[toDi] = { ...out[toDi], [subject]: cell }; }
+  }
+  return out;
 }
 
 export default function CalendarWeekView({
@@ -42,6 +53,9 @@ export default function CalendarWeekView({
   const [weekData, setWeekData] = useState({});
   const [selected, setSelected] = useState(new Set());
   const [activeId, setActiveId] = useState(null);
+  const [optimistic, setOptimistic] = useState({});
+  const [errorKeys, setErrorKeys] = useState(new Set());
+  const errorTimers = useRef({});
   const today = todayDateStr();
 
   const reload = useCallback(() => {
@@ -51,37 +65,47 @@ export default function CalendarWeekView({
   }, [loadWeekDataFrom]);
 
   useEffect(() => reload(), [reload, weekId, student]);
+  useEffect(() => { setSelected(new Set()); setOptimistic({}); }, [weekId, student]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const rendered = mergeOptimistic(weekData, optimistic);
 
   function toggleSelect(di, subject, isDone) {
     if (isDone) return;
-    const key = cardKey(di, subject);
+    const key = dragId(di, subject);
     setSelected(prev => { const s = new Set(prev); if (s.has(key)) s.delete(key); else s.add(key); return s; });
   }
-
   function clearSelection() { setSelected(new Set()); }
 
-  function handleDragStart(event) { setActiveId(event.active.id); }
-
   async function handleDragEnd(event) {
-    setActiveId(null);
     const { active, over } = event;
-    if (!over || !active) return;
-    const [fromDayStr, subject] = active.id.split(':');
-    const fromDay = Number(fromDayStr);
-    const toDay = Number(over.id);
-    if (fromDay === toDay) return;
-    const dragged = cardKey(fromDay, subject);
-    const isSelected = selected.has(dragged);
-    const toMove = isSelected && selected.size > 1 ? [...selected] : [dragged];
-    if (onMoveCell) {
-      await Promise.all(toMove.map(key => {
-        const [d, s] = [Number(key.split(':')[0]), key.split(':').slice(1).join(':')];
-        return onMoveCell(d, s, toDay);
-      }));
+    try {
+      if (!over || !active) return;
+      const src = parseDragId(active.id);
+      const toDi = parseDropId(over.id);
+      if (!src || toDi == null || src.day === toDi) return;
+      const isSel = selected.has(active.id);
+      const toMove = isSel && selected.size > 1
+        ? [...selected].map(k => parseDragId(k)).filter(Boolean)
+        : [src];
+      const moveKeys = toMove.map(m => dragId(m.day, m.subject));
+      setOptimistic(prev => { const n = { ...prev }; moveKeys.forEach(k => { n[k] = toDi; }); return n; });
+      clearSelection();
+      const results = await Promise.allSettled(toMove.map(m => onMoveCell(m.day, m.subject, toDi)));
+      const failedKeys = [];
+      results.forEach((r, i) => { if (r.status === 'rejected') failedKeys.push(moveKeys[i]); });
+      setOptimistic(prev => { const n = { ...prev }; moveKeys.forEach(k => delete n[k]); return n; });
+      if (failedKeys.length) {
+        setErrorKeys(prev => { const s = new Set(prev); failedKeys.forEach(k => s.add(k)); return s; });
+        failedKeys.forEach(k => {
+          clearTimeout(errorTimers.current[k]);
+          errorTimers.current[k] = setTimeout(() => setErrorKeys(prev => { const s = new Set(prev); s.delete(k); return s; }), 2000);
+        });
+      }
+      reload();
+    } finally {
+      setActiveId(null);
     }
-    clearSelection();
   }
 
   const selCount = selected.size;
@@ -100,22 +124,21 @@ export default function CalendarWeekView({
         </div>
         <button className="cwv-add-btn" onClick={() => onAddSubject(0)}>+ Add Lesson</button>
       </div>
-      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <DndContext key={weekId} sensors={sensors} onDragStart={e => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
         <div className="cwv-grid" onClick={e => { if (e.target === e.currentTarget || e.target.classList.contains('cwv-col-body')) clearSelection(); }}>
           {[0, 1, 2, 3, 4].map(di => {
             const date = weekDates[di];
-            const daySubjects = weekData[di] ?? {};
+            const daySubjects = rendered[di] ?? {};
             const subjectNames = Object.keys(daySubjects).filter(s => s !== 'allday');
             const allday = daySubjects['allday'] ?? null;
             const isToday = date && dateStr(date) === today;
-            const isOver = activeId && activeId.split(':')[0] !== String(di);
             return (
               <div key={di} className="cwv-col">
                 <div className="cwv-col-header">
                   <div className="cwv-day-name">{DAY_SHORT[di]}</div>
                   <div className={`cwv-day-num${isToday ? ' today' : ''}`}>{date?.getDate() ?? ''}</div>
                 </div>
-                <DroppableColumn id={String(di)} isOver={false}>
+                <DroppableCol id={dropId(di)}>
                   {allday && (
                     <div className="cwv-allday" onClick={() => onEditCell('allday', di)}>
                       <div className="cwv-allday-tag">All Day</div>
@@ -125,13 +148,14 @@ export default function CalendarWeekView({
                   {subjectNames.map(subject => {
                     const cell = daySubjects[subject] ?? {};
                     const isDone = !!cell.done;
-                    const key = cardKey(di, subject);
+                    const key = dragId(di, subject);
                     const isSel = selected.has(key);
+                    const isErr = errorKeys.has(key);
                     const isDragging = activeId && (activeId === key || (selected.has(activeId) && isSel));
                     return (
-                      <DraggableCard key={subject} id={key} disabled={isDone}>
+                      <DraggableCard key={key} id={key} disabled={isDone}>
                         <div
-                          className={`cwv-card${isDone ? ' done' : ''}${isSel ? ' selected' : ''}`}
+                          className={`cwv-card${isDone ? ' done' : ''}${isSel ? ' selected' : ''}${isErr ? ' error' : ''}`}
                           style={isDragging && activeId !== key ? { opacity: 0.4 } : undefined}
                           onClick={e => { e.stopPropagation(); if (!isDone) toggleSelect(di, subject, isDone); }}
                           onDoubleClick={e => { e.stopPropagation(); onEditCell(subject, di); }}
@@ -148,7 +172,7 @@ export default function CalendarWeekView({
                     );
                   })}
                   <button className="cwv-col-add" onClick={() => onAddSubject(di)}>+ add</button>
-                </DroppableColumn>
+                </DroppableCol>
               </div>
             );
           })}

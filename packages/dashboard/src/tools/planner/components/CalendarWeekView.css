@@ -65,6 +65,7 @@
 .cwv-card:hover { border-color: var(--gold-light); box-shadow: 0 2px 8px rgba(201,168,76,0.10); }
 .cwv-card.done { opacity: 0.55; cursor: default; }
 .cwv-card.selected { border: 1.5px solid #c9a84c; background: rgba(201,168,76,0.05); }
+.cwv-card.error { border: 1.5px solid var(--red); transition: border-color 0.3s; }
 .cwv-sel-check {
   width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
   background: #c9a84c; color: #fff; font-size: 7px; font-weight: 700;
