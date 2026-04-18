@@ -1,39 +1,40 @@
-# HANDOFF — v0.27.0 PDF Import Diff Preview
+# HANDOFF — v0.27.1 Streamlined Parse→Review→Publish Flow
 
 ## What was completed this session
 
-4 code commits + this docs commit on `main`:
+2 code commits + this docs commit on `main`:
 
 ```
-1efe46e chore: bump to v0.27.0
-55fc7fa feat: wire diff preview confirm into PlannerLayout
-e7a04c8 feat: import diff preview with New/Changed/Unchanged badges
-430db79 feat: add compareWithExisting diff logic to usePdfImport (v0.27.0)
+09b683b chore: bump to v0.27.1
+e9428ae feat: streamline import to Parse→Review→Publish flow (v0.27.1)
 ```
 
-### Commit 1 — Diff logic (`430db79`)
-**usePdfImport.js** (96→111 lines): Added `compareWithExisting(parsedData, existingData)` — compares each parsed cell against Firestore data, returns `{ dayIndex, subject, lesson, status }` array where status is `'new'`, `'changed'`, or `'unchanged'`.
+### Commit 1 — Streamlined flow (`e9428ae`)
 
-### Commit 2 — Diff preview UI (`e7a04c8`)
-- **UploadSheet.jsx** (177→149 lines): Removed wipe toggle + all wipe state. "Apply to Week" → "Review Changes". Added `diff` state + `onConfirmImport` prop. Shows ImportDiffPreview when diff is set.
-- **ImportDiffPreview.jsx** (49 lines, NEW): Review Changes screen with per-cell badges (NEW green, CHANGED gold, UNCHANGED muted). Days with only unchanged cells hidden. Footer: "N new · N changed · N unchanged". Cancel returns to parse preview, Confirm Import writes.
-- **ImportDiffPreview.css** (33 lines, NEW): Badge colors, row layout, actions.
+**UploadSheet.jsx (149→109 lines):**
+- Auto-trigger diff when parse completes: `useEffect` fires `onApply(result, setDiff)` when `result` arrives, with `triggered` ref to prevent double-fire.
+- Removed intermediate "Review Changes" button — diff appears automatically after parse.
+- Removed the parsed result preview block (day-grouped lesson list) — no longer shown since diff replaces it.
+- Renamed: "Import" → **Parse**, "Confirm Import" → **Publish**, "Applied" → **Published**.
+- Shows "Comparing with existing…" spinner during diff comparison.
+- `reviewing` state tracks the diff comparison phase.
 
-### Commit 3 — PlannerLayout wiring (`55fc7fa`)
-**PlannerLayout.jsx** (347→353 lines): `handleApplySchedule` now reads existing cells via `readCell` for each parsed subject+day, calls `compareWithExisting`, passes diff to UploadSheet via callback. `handleConfirmImport` writes only new/changed cells. Removed all wipe logic.
+**ImportDiffPreview.jsx (49→45 lines):**
+- Removed `onCancel`/`onConfirm` props and the inline action buttons — UploadSheet footer handles Cancel/Publish.
 
-### Commit 4 — Version bump (`1efe46e`)
-0.26.3 → **0.27.0** across all 3 packages.
+### Commit 2 — Version bump (`09b683b`)
+0.27.0 → **0.27.1** across all 3 packages.
 
-Build green.
+Build green. PlannerLayout.jsx not touched (still 353 lines).
 
 ---
 
-## New import flow
+## Import flow (v0.27.1)
 
-Parse PDF → **Review Changes** (diff preview with badges) → **Confirm Import** (writes only new + changed cells)
-
-No more "Replace existing schedule" wipe toggle. The diff preview makes it clear what will be written.
+1. Pick file → **Parse** button
+2. Parse → spinner → "Comparing with existing…" spinner
+3. Diff preview with NEW/CHANGED/UNCHANGED badges
+4. **Publish** → writes only new + changed cells → success
 
 ---
 
@@ -41,30 +42,21 @@ No more "Replace existing schedule" wipe toggle. The diff preview makes it clear
 
 | File | Lines |
 |---|---|
-| `usePdfImport.js` | 111 |
-| `UploadSheet.jsx` | 149 |
-| `ImportDiffPreview.jsx` | 49 |
-| `ImportDiffPreview.css` | 33 |
-| `PlannerLayout.jsx` | 353 |
-
-**Warning**: PlannerLayout.jsx at 353 lines — needs split next session.
+| `UploadSheet.jsx` | 109 |
+| `ImportDiffPreview.jsx` | 45 |
 
 ---
 
 ## What the next session should start with
 
 1. Read CLAUDE.md + HANDOFF.md.
-2. Smoke test: import PDF → see Review Changes with badges → Confirm → verify only new/changed cells written.
-3. Priority: split PlannerLayout.jsx (353 lines, over 300 limit).
+2. Smoke test: pick PDF → Parse → auto-diff → Publish.
+3. Priority: split PlannerLayout.jsx (353 lines).
 
 ## Key file locations
 
 ```
-packages/dashboard/src/tools/planner/
-├── hooks/usePdfImport.js                    # 96 → 111
-└── components/
-    ├── UploadSheet.jsx                      # 177 → 149
-    ├── ImportDiffPreview.jsx                # NEW — 49
-    ├── ImportDiffPreview.css                # NEW — 33
-    └── PlannerLayout.jsx                    # 347 → 353
+packages/dashboard/src/tools/planner/components/
+├── UploadSheet.jsx                          # 149 → 109
+└── ImportDiffPreview.jsx                    # 49 → 45
 ```
