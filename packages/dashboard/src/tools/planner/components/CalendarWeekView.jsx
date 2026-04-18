@@ -37,12 +37,20 @@ function mergeOptimistic(weekData, moves) {
   const out = {};
   for (let di = 0; di < 5; di++) out[di] = { ...(weekData[di] ?? {}) };
   for (const [key, toDi] of Object.entries(moves)) {
-    const { day: fromDi, subject } = parseDragId(key) ?? {};
-    if (subject == null) continue;
-    const cell = out[fromDi]?.[subject];
-    if (cell) { delete out[fromDi][subject]; out[toDi] = { ...out[toDi], [subject]: cell }; }
+    const parsed = parseDragId(key);
+    if (!parsed) continue;
+    const cell = out[parsed.day]?.[parsed.subject];
+    if (cell) { delete out[parsed.day][parsed.subject]; out[toDi] = { ...out[toDi], [parsed.subject]: cell }; }
   }
   return out;
+}
+
+function getOrderedSubjects(daySubjects, dayOrder) {
+  const subjects = Object.keys(daySubjects).filter(s => s !== 'allday');
+  if (!dayOrder) return subjects;
+  const ordered = dayOrder.filter(s => subjects.includes(s));
+  const remaining = subjects.filter(s => !dayOrder.includes(s));
+  return [...ordered, ...remaining];
 }
 
 export default function CalendarWeekView({
@@ -51,9 +59,9 @@ export default function CalendarWeekView({
   onEditCell, onAddSubject, onMoveCell,
 }) {
   const [weekData, setWeekData] = useState({});
-  const [selected, setSelected] = useState(new Set());
   const [activeId, setActiveId] = useState(null);
   const [optimistic, setOptimistic] = useState({});
+  const [dayOrder, setDayOrder] = useState({});
   const [errorKeys, setErrorKeys] = useState(new Set());
   const errorTimers = useRef({});
   const today = todayDateStr();
@@ -65,17 +73,10 @@ export default function CalendarWeekView({
   }, [loadWeekDataFrom]);
 
   useEffect(() => reload(), [reload, weekId, student]);
-  useEffect(() => { setSelected(new Set()); setOptimistic({}); }, [weekId, student]);
+  useEffect(() => { setOptimistic({}); setDayOrder({}); }, [weekId, student]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const rendered = mergeOptimistic(weekData, optimistic);
-
-  function toggleSelect(di, subject, isDone) {
-    if (isDone) return;
-    const key = dragId(di, subject);
-    setSelected(prev => { const s = new Set(prev); if (s.has(key)) s.delete(key); else s.add(key); return s; });
-  }
-  function clearSelection() { setSelected(new Set()); }
 
   async function handleDragEnd(event) {
     const { active, over } = event;
@@ -83,32 +84,41 @@ export default function CalendarWeekView({
       if (!over || !active) return;
       const src = parseDragId(active.id);
       const toDi = parseDropId(over.id);
-      if (!src || toDi == null || src.day === toDi) return;
-      const isSel = selected.has(active.id);
-      const toMove = isSel && selected.size > 1
-        ? [...selected].map(k => parseDragId(k)).filter(Boolean)
-        : [src];
-      const moveKeys = toMove.map(m => dragId(m.day, m.subject));
-      setOptimistic(prev => { const n = { ...prev }; moveKeys.forEach(k => { n[k] = toDi; }); return n; });
-      clearSelection();
-      const results = await Promise.allSettled(toMove.map(m => onMoveCell(m.day, m.subject, toDi)));
-      const failedKeys = [];
-      results.forEach((r, i) => { if (r.status === 'rejected') failedKeys.push(moveKeys[i]); });
-      setOptimistic(prev => { const n = { ...prev }; moveKeys.forEach(k => delete n[k]); return n; });
-      if (failedKeys.length) {
-        setErrorKeys(prev => { const s = new Set(prev); failedKeys.forEach(k => s.add(k)); return s; });
-        failedKeys.forEach(k => {
-          clearTimeout(errorTimers.current[k]);
-          errorTimers.current[k] = setTimeout(() => setErrorKeys(prev => { const s = new Set(prev); s.delete(k); return s; }), 2000);
+      if (!src || toDi == null) return;
+
+      if (src.day === toDi) {
+        setDayOrder(prev => {
+          const subjects = getOrderedSubjects(rendered[toDi] ?? {}, prev[toDi]);
+          const fromIdx = subjects.indexOf(src.subject);
+          if (fromIdx < 0) return prev;
+          const reordered = [...subjects];
+          reordered.splice(fromIdx, 1);
+          reordered.push(src.subject);
+          return { ...prev, [toDi]: reordered };
         });
+        return;
       }
+
+      const moveKey = dragId(src.day, src.subject);
+      setOptimistic(prev => ({ ...prev, [moveKey]: toDi }));
+      setDayOrder(prev => {
+        const n = { ...prev };
+        if (n[src.day]) n[src.day] = n[src.day].filter(s => s !== src.subject);
+        return n;
+      });
+      try {
+        await onMoveCell(src.day, src.subject, toDi);
+      } catch {
+        setErrorKeys(prev => { const s = new Set(prev); s.add(moveKey); return s; });
+        clearTimeout(errorTimers.current[moveKey]);
+        errorTimers.current[moveKey] = setTimeout(() => setErrorKeys(prev => { const s = new Set(prev); s.delete(moveKey); return s; }), 2000);
+      }
+      setOptimistic(prev => { const n = { ...prev }; delete n[moveKey]; return n; });
       reload();
     } finally {
       setActiveId(null);
     }
   }
-
-  const selCount = selected.size;
 
   return (
     <div className="cwv-wrap">
@@ -118,18 +128,15 @@ export default function CalendarWeekView({
           <button className="cwv-chevron" onClick={prevWeek} aria-label="Previous week">‹</button>
           <button className="cwv-chevron" onClick={nextWeek} aria-label="Next week">›</button>
           <span className="cwv-week-label">{formatWeekLabel(weekDates)}</span>
-          {selCount > 0 && (
-            <span className="cwv-sel-pill">{selCount} selected · drag to move <button className="cwv-sel-clear" onClick={clearSelection}>✕</button></span>
-          )}
         </div>
         <button className="cwv-add-btn" onClick={() => onAddSubject(0)}>+ Add Lesson</button>
       </div>
       <DndContext key={weekId} sensors={sensors} onDragStart={e => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
-        <div className="cwv-grid" onClick={e => { if (e.target === e.currentTarget || e.target.classList.contains('cwv-col-body')) clearSelection(); }}>
+        <div className="cwv-grid">
           {[0, 1, 2, 3, 4].map(di => {
             const date = weekDates[di];
             const daySubjects = rendered[di] ?? {};
-            const subjectNames = Object.keys(daySubjects).filter(s => s !== 'allday');
+            const orderedSubjects = getOrderedSubjects(daySubjects, dayOrder[di]);
             const allday = daySubjects['allday'] ?? null;
             const isToday = date && dateStr(date) === today;
             return (
@@ -145,23 +152,19 @@ export default function CalendarWeekView({
                       <div className="cwv-allday-name">{allday.lesson || 'All Day Event'}</div>
                     </div>
                   )}
-                  {subjectNames.map(subject => {
+                  {orderedSubjects.map(subject => {
                     const cell = daySubjects[subject] ?? {};
                     const isDone = !!cell.done;
                     const key = dragId(di, subject);
-                    const isSel = selected.has(key);
                     const isErr = errorKeys.has(key);
-                    const isDragging = activeId && (activeId === key || (selected.has(activeId) && isSel));
                     return (
                       <DraggableCard key={key} id={key} disabled={isDone}>
                         <div
-                          className={`cwv-card${isDone ? ' done' : ''}${isSel ? ' selected' : ''}${isErr ? ' error' : ''}`}
-                          style={isDragging && activeId !== key ? { opacity: 0.4 } : undefined}
-                          onClick={e => { e.stopPropagation(); if (!isDone) toggleSelect(di, subject, isDone); }}
-                          onDoubleClick={e => { e.stopPropagation(); onEditCell(subject, di); }}
+                          className={`cwv-card${isDone ? ' done' : ''}${isErr ? ' error' : ''}`}
+                          onClick={() => onEditCell(subject, di)}
                         >
                           <div className="cwv-card-top">
-                            {isSel ? <span className="cwv-sel-check">✓</span> : <span className="cwv-dot" style={{ background: subjectColor(subject) }} />}
+                            <span className="cwv-dot" style={{ background: subjectColor(subject) }} />
                             <span className="cwv-subject">{subject}</span>
                             <span className={`cwv-status${isDone ? ' done' : ' undone'}`}>{isDone ? '✓' : ''}</span>
                           </div>
