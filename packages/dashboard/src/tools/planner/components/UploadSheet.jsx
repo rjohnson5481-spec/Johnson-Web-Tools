@@ -1,34 +1,30 @@
 import { useState } from 'react';
 import DebugSheet from './DebugSheet.jsx';
+import ImportDiffPreview from './ImportDiffPreview.jsx';
 import { DAY_SHORT, mondayWeekId } from '../constants/days.js';
 import './UploadSheet.css';
 import './UploadResult.css';
 
-// Extracts the day number from a lesson string like "Day 32 — Title" → "32".
 function extractDayNum(lesson) {
   const m = String(lesson ?? '').match(/Day\s+(\d+)/i);
   return m ? m[1] : null;
 }
 
-// Formats weekId "YYYY-MM-DD" as "Apr 14" (the Monday).
 function formatWeekOf(weekId) {
   const [y, mo, d] = weekId.split('-').map(Number);
   return new Date(y, mo - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-// Formats a specific day of the week: weekId + dayIndex offset → "Aug 17".
 function formatDayDate(weekId, dayIndex) {
   const [y, mo, d] = weekId.split('-').map(Number);
   return new Date(y, mo - 1, d + dayIndex).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-// Props: pdfImport ({ file, importing, result, error, log, selectFile, importSchedule, addLog }),
-//        onApply(parsedData, wipe), onClose
-export default function UploadSheet({ pdfImport, onApply, onClose }) {
+export default function UploadSheet({ pdfImport, onApply, onConfirmImport, onClose }) {
   const { file, importing, result, error, log, selectFile, importSchedule } = pdfImport;
 
-  const [wipe, setWipe]       = useState(false);
   const [applied, setApplied] = useState(false);
+  const [diff, setDiff]       = useState(null);
   const [showLog, setShowLog] = useState(false);
 
   const totalLessons = result
@@ -38,9 +34,14 @@ export default function UploadSheet({ pdfImport, onApply, onClose }) {
     ? (result.days ?? []).filter(d => (d.lessons?.length ?? 0) > 0).length
     : 0;
 
-  function handleApply() {
-    setApplied(true);
-    onApply(result, wipe);
+  function handleReview() {
+    onApply(result, (diffResult) => setDiff(diffResult));
+  }
+
+  function handleConfirm() {
+    if (!diff) return;
+    setDiff(null); setApplied(true);
+    onConfirmImport(diff);
   }
 
   return (
@@ -57,37 +58,16 @@ export default function UploadSheet({ pdfImport, onApply, onClose }) {
 
           <div className="upload-sheet-body">
 
-            {/* File picker — hidden once result is ready or applying */}
             {!result && !applied && (
-              <>
-                <label className={`upload-sheet-file-zone${importing ? ' upload-sheet-file-zone--disabled' : ''}`}>
-                  <input
-                    type="file"
-                    accept="application/pdf,image/*"
-                    className="upload-sheet-file-input"
-                    onChange={e => { if (e.target.files?.[0]) { selectFile(e.target.files[0]); setApplied(false); } }}
-                    disabled={importing}
-                  />
-                  {file
-                    ? <span className="upload-sheet-filename">📄 {file.name}</span>
-                    : <span className="upload-sheet-file-hint">Tap to choose a PDF or image</span>
-                  }
-                </label>
-                {file && !importing && (
-                  <label className="upload-sheet-wipe-row">
-                    <input
-                      type="checkbox"
-                      checked={wipe}
-                      onChange={e => setWipe(e.target.checked)}
-                      className="upload-sheet-wipe-check"
-                    />
-                    <span>Replace existing schedule</span>
-                  </label>
-                )}
-              </>
+              <label className={`upload-sheet-file-zone${importing ? ' upload-sheet-file-zone--disabled' : ''}`}>
+                <input type="file" accept="application/pdf,image/*" className="upload-sheet-file-input"
+                  onChange={e => { if (e.target.files?.[0]) { selectFile(e.target.files[0]); setApplied(false); setDiff(null); } }}
+                  disabled={importing} />
+                {file ? <span className="upload-sheet-filename">📄 {file.name}</span>
+                  : <span className="upload-sheet-file-hint">Tap to choose a PDF or image</span>}
+              </label>
             )}
 
-            {/* Spinner */}
             {importing && (
               <div className="upload-sheet-spinner-row">
                 <div className="upload-sheet-spinner" aria-hidden="true" />
@@ -95,20 +75,20 @@ export default function UploadSheet({ pdfImport, onApply, onClose }) {
               </div>
             )}
 
-            {/* Error */}
-            {error && !importing && (
-              <p className="upload-sheet-error">{error}</p>
-            )}
+            {error && !importing && <p className="upload-sheet-error">{error}</p>}
 
-            {/* Success state */}
             {applied && result && (
               <div className="upload-sheet-success">
                 ✓ Applied — jumped to week of {formatWeekOf(mondayWeekId(result.weekId))}
               </div>
             )}
 
-            {/* Parsed result preview — grouped by day */}
-            {result && !importing && !applied && (
+            {diff && (
+              <ImportDiffPreview diff={diff} student={result?.student} weekId={result?.weekId}
+                onCancel={() => setDiff(null)} onConfirm={handleConfirm} />
+            )}
+
+            {result && !importing && !applied && !diff && (
               <div className="upload-sheet-result">
                 <p className="upload-sheet-result-meta">
                   {result.student} · Week of {formatWeekOf(mondayWeekId(result.weekId))}
@@ -139,7 +119,6 @@ export default function UploadSheet({ pdfImport, onApply, onClose }) {
               </div>
             )}
 
-            {/* View Log button — visible after any import attempt */}
             {log.length > 0 && (
               <button className="upload-sheet-log-btn" onClick={() => setShowLog(true)}>
                 View Log ({log.length})
@@ -152,16 +131,10 @@ export default function UploadSheet({ pdfImport, onApply, onClose }) {
             <button className="upload-sheet-cancel" onClick={onClose}>
               {applied ? 'Close' : 'Cancel'}
             </button>
-            {!applied && (result ? (
-              <button className="upload-sheet-apply-btn" onClick={handleApply}>
-                {wipe ? 'Replace & Apply' : 'Apply to Week'}
-              </button>
+            {!applied && !diff && (result ? (
+              <button className="upload-sheet-apply-btn" onClick={handleReview}>Review Changes</button>
             ) : (
-              <button
-                className="upload-sheet-import-btn"
-                onClick={importSchedule}
-                disabled={!file || importing}
-              >
+              <button className="upload-sheet-import-btn" onClick={importSchedule} disabled={!file || importing}>
                 {importing ? 'Importing…' : 'Import'}
               </button>
             ))}
