@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
+import { DndContext, PointerSensor, pointerWithin, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
 import { formatWeekLabel } from '../constants/days.js';
 import './CalendarWeekView.css';
 
@@ -24,8 +24,14 @@ function parseDragId(id) { const m = id.match(/^card-(\d)-(.+)$/); return m ? { 
 function parseDropId(id) { const m = id.match(/^col-(\d)$/); return m ? Number(m[1]) : null; }
 
 function DraggableCard({ id, children, disabled }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id, disabled });
-  return <div ref={setNodeRef} {...listeners} {...attributes} style={isDragging ? { opacity: 0.4 } : undefined}>{children}</div>;
+  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({ id, disabled });
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id, disabled });
+  const setRef = node => { setDragRef(node); setDropRef(node); };
+  return (
+    <div ref={setRef} {...listeners} {...attributes}
+      style={isDragging ? { opacity: 0.4 } : isOver && !isDragging ? { outline: '1px solid rgba(201,168,76,0.3)', outlineOffset: -1, borderRadius: 8 } : undefined}
+    >{children}</div>
+  );
 }
 function DroppableCol({ id, children }) {
   const { setNodeRef, isOver } = useDroppable({ id });
@@ -135,7 +141,7 @@ export default function CalendarWeekView({
         </div>
         <button className="cwv-add-btn" onClick={() => onAddSubject(0)}>+ Add Lesson</button>
       </div>
-      <DndContext key={weekId} sensors={sensors} collisionDetection={closestCenter} onDragStart={e => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
+      <DndContext key={weekId} sensors={sensors} collisionDetection={pointerWithin} onDragStart={e => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
         <div className="cwv-grid">
           {[0, 1, 2, 3, 4].map(di => {
             const date = weekDates[di];
