@@ -40,6 +40,7 @@ export async function exportAllData(uid) {
   const weeksSnap = await getDocs(collection(db, `${base}/weeks`));
   const weeks = [];
   const studentNames = students?.names ?? [];
+  console.log('DEBUG weeks export — studentNames:', studentNames, 'weeksSnap size:', weeksSnap.size);
   for (const wDoc of weeksSnap.docs) {
     const wId = wDoc.id;
     for (const sName of studentNames) {
