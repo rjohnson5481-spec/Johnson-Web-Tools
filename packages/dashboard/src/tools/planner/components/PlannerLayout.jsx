@@ -9,11 +9,12 @@ import AddSubjectSheet from './AddSubjectSheet.jsx';
 import MonthSheet      from './MonthSheet.jsx';
 import SickDaySheet    from './SickDaySheet.jsx';
 import CalendarWeekView from './CalendarWeekView.jsx';
+import PlannerActionBar from './PlannerActionBar.jsx';
+import UndoSickSheet   from './UndoSickSheet.jsx';
 import { readCell, updateCell as fbWriteCell, deleteCell } from '../firebase/planner.js';
 import { compareWithExisting } from '../hooks/usePdfImport.js';
 import { getMondayOf, toWeekId, mondayWeekId, formatWeekLabel, DAY_SHORT, DAY_NAMES } from '../constants/days.js';
 import './PlannerLayout.css';
-import './UndoSickSheet.css';
 
 function useIsDesktop() {
   const [d, setD] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
@@ -232,121 +233,42 @@ export default function PlannerLayout({
         </main>
       </div>
 
-      {/* Fixed bottom action bar */}
-      <div className="planner-action-bar">
-        {isSickDay && !subjectsLoading && (
-          <button
-            className="planner-action-btn planner-action-btn--undo"
-            onClick={() => setShowUndoSickDay(true)}
-          >
-            ↩ Undo Sick Day
-          </button>
-        )}
-        {!isSickDay && hasSubjects && !subjectsLoading && (
-          <>
-            <button
-              className="planner-action-btn planner-action-btn--sick"
-              onClick={() => setShowSickDay(true)}
-            >
-              Sick Day
-            </button>
-            <button
-              className="planner-action-btn planner-action-btn--clear"
-              onClick={handleDeleteWeek}
-            >
-              Clear Week
-            </button>
-          </>
-        )}
-        <button
-          className="planner-action-btn planner-action-btn--import"
-          onClick={() => setShowUpload(true)}
-        >
-          Import
-        </button>
-      </div>
+      <PlannerActionBar
+        isSickDay={isSickDay} hasSubjects={hasSubjects} subjectsLoading={subjectsLoading}
+        onUndoSickDay={() => setShowUndoSickDay(true)} onSickDay={() => setShowSickDay(true)}
+        onClearWeek={handleDeleteWeek} onImport={() => setShowUpload(true)}
+      />
 
       {editTarget && (
-        <EditSheet
-          subject={editTarget.subject}
-          data={dayData[editTarget.subject]}
+        <EditSheet subject={editTarget.subject} data={dayData[editTarget.subject]}
           onSave={data => { updateCell(editTarget.subject, editTarget.day, data); setEditTarget(null); }}
           onDelete={() => { removeSubject(editTarget.subject); setEditTarget(null); }}
-          onClose={() => setEditTarget(null)}
-        />
+          onClose={() => setEditTarget(null)} />
       )}
-
       {showUpload && (
-        <UploadSheet
-          pdfImport={pdfImport}
-          onApply={handleApplySchedule}
+        <UploadSheet pdfImport={pdfImport} onApply={handleApplySchedule}
           onConfirmImport={handleConfirmImport}
-          onClose={() => { setShowUpload(false); pdfImport.reset(); }}
-        />
+          onClose={() => { setShowUpload(false); pdfImport.reset(); }} />
       )}
-
       {showAddSubject && (
-        <AddSubjectSheet
-          existingSubjects={subjects}
-          presets={plannerSubjects}
-          weekDates={weekDates}
-          currentDayIndex={day}
-          currentStudent={student}
-          students={students}
+        <AddSubjectSheet existingSubjects={subjects} presets={plannerSubjects}
+          weekDates={weekDates} currentDayIndex={day} currentStudent={student} students={students}
           onAdd={handleBatchAddSubject}
           onAddAllDay={(name, note) => { updateCell('allday', day, { lesson: name, note, done: false, flag: false }); setShowAddSubject(false); }}
           onEditAllDay={() => { setShowAddSubject(false); setEditTarget({ subject: 'allday', day }); }}
-          onClose={() => setShowAddSubject(false)}
-        />
+          onClose={() => setShowAddSubject(false)} />
       )}
-
       {showMonthPicker && (
-        <MonthSheet
-          weekId={weekId}
-          onSelectDay={handleMonthDaySelect}
-          onClose={() => setShowMonthPicker(false)}
-        />
+        <MonthSheet weekId={weekId} onSelectDay={handleMonthDaySelect} onClose={() => setShowMonthPicker(false)} />
       )}
-
       {showSickDay && (
-        <SickDaySheet
-          subjects={subjects}
-          dayData={dayData}
-          dayName={DAY_NAMES[day]}
-          day={day}
-          weekDates={weekDates}
-          loadWeekDataFrom={loadWeekDataFrom}
-          onConfirm={handleSickDayConfirm}
-          onClose={() => setShowSickDay(false)}
-        />
+        <SickDaySheet subjects={subjects} dayData={dayData} dayName={DAY_NAMES[day]} day={day}
+          weekDates={weekDates} loadWeekDataFrom={loadWeekDataFrom}
+          onConfirm={handleSickDayConfirm} onClose={() => setShowSickDay(false)} />
       )}
 
       {showUndoSickDay && (
-        <div className="undo-sick-overlay" onClick={() => setShowUndoSickDay(false)}>
-          <div className="undo-sick-sheet" onClick={e => e.stopPropagation()}>
-            <div className="undo-sick-handle" />
-            <div className="undo-sick-header">
-              <span className="undo-sick-title">Undo Sick Day</span>
-              <button className="undo-sick-close" onClick={() => setShowUndoSickDay(false)}>✕</button>
-            </div>
-            <div className="undo-sick-body">
-              {day === 4 ? (
-                <p className="undo-sick-msg">
-                  Sick day marker removed. Friday lessons were permanently deleted
-                  and cannot be restored.
-                </p>
-              ) : (
-                <p className="undo-sick-msg">
-                  This will shift lessons back one day for the days they were shifted.
-                </p>
-              )}
-            </div>
-            <div className="undo-sick-footer">
-              <button className="undo-sick-cancel" onClick={() => setShowUndoSickDay(false)}>Cancel</button>
-              <button className="undo-sick-confirm" onClick={handleUndoSickDay}>Undo Sick Day</button>
-            </div>
-          </div>
-        </div>
+        <UndoSickSheet day={day} onConfirm={handleUndoSickDay} onClose={() => setShowUndoSickDay(false)} />
       )}
     </div>
   );
