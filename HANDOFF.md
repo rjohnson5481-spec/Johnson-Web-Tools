@@ -1,43 +1,41 @@
-# HANDOFF — v0.25.1 Desktop Calendar: Selection + Drag-and-Drop
+# HANDOFF — v0.25.2 Desktop Calendar: Stable DnD + Optimistic UI
 
 ## What was completed this session
 
 2 code commits + this docs commit on `main`:
 
 ```
-99781f6 chore: bump to v0.25.1
-374407b feat: add card selection and drag-and-drop between day columns (v0.25.1)
+1c19fae chore: bump to v0.25.2
+a42b7d2 fix: stable dnd-kit IDs, optimistic UI, finally cleanup (v0.25.2)
 ```
 
-### Commit 1 — Selection + DnD (`374407b`)
+### Commit 1 — Stable IDs + Optimistic UI (`a42b7d2`)
 
-**@dnd-kit/core 6.3.1** installed as exact version dependency.
+**CalendarWeekView.jsx (159→183 lines):**
 
-**CalendarWeekView.jsx (92→159 lines):**
-- Click a lesson card to toggle selection (gold border + tint). Done cards excluded.
-- Selection pill in top bar: "{N} selected · drag to move ✕ clear".
-- Click grid background clears selection. Double-click opens EditSheet.
-- `DndContext` with `PointerSensor` (8px activation distance).
-- `DraggableCard` wrapper: entire card is drag handle. Dragged cards go opacity 0.4.
-- `DroppableColumn` wrapper: each day column body is a drop target.
-- Multi-select drag: if dragged card is in selection, ALL selected cards move.
-- Drop on same column = no-op. After successful move, selection clears.
-- `onMoveCell(fromDay, subject, toDay)` prop called for each card to move.
+Fix 1 — Stable draggable IDs:
+- Draggable IDs: `card-{dayIndex}-{subject}` — subject key is stable across moves.
+- Droppable IDs: `col-{dayIndex}` — prefixed to avoid collision with draggable IDs.
+- `parseDragId` / `parseDropId` helpers extract day + subject from ID strings.
+- `DndContext key={weekId}` fully resets dnd-kit internal state on week change.
+- `handleDragEnd` wrapped in `try/finally` — `setActiveId(null)` always runs even on error.
+- Selection + optimistic state cleared on week/student change via useEffect.
 
-**CalendarWeekView.css (92→110 lines):**
-- `.cwv-card.selected` — 1.5px solid #c9a84c border + rgba gold tint.
-- `.cwv-sel-check` — gold checkmark replacing subject dot when selected.
-- `.cwv-sel-pill` / `.cwv-sel-clear` — selection count pill in top bar.
+Fix 2 — Optimistic UI:
+- `optimistic` state: `{ [cardDragId]: targetDayIndex }` — tracks pending moves.
+- `mergeOptimistic(weekData, moves)` builds a derived grid that renders cards in their target columns before Firestore confirms.
+- On drag drop: optimistic state updated immediately → card moves visually. Firestore writes fire in background via `Promise.allSettled`.
+- On success: optimistic entry removed, `reload()` called to fetch fresh data.
+- On failure: optimistic entry removed, `errorKeys` set triggers red border on failed card for 2 seconds via `setTimeout`, then auto-clears.
+- `rendered` variable used for grid rendering = `mergeOptimistic(weekData, optimistic)`.
 
-**PlannerLayout.jsx (336→347 lines):**
-- Import `readCell`, `updateCell`, `deleteCell` from `firebase/planner.js`.
-- `handleMoveCell(fromDay, subject, toDay)`: reads cell data, writes to target day, deletes from source.
-- Passes `onMoveCell={handleMoveCell}` to CalendarWeekView.
+**CalendarWeekView.css (110→111 lines):**
+- Added `.cwv-card.error` — 1.5px solid var(--red) border with transition.
 
-### Commit 2 — Version bump (`99781f6`)
-0.25.0 → **0.25.1** across all 3 packages.
+### Commit 2 — Version bump (`1c19fae`)
+0.25.1 → **0.25.2** across all 3 packages.
 
-Build green at every commit. Mobile completely untouched.
+Build green. Mobile completely untouched.
 
 ---
 
@@ -45,49 +43,35 @@ Build green at every commit. Mobile completely untouched.
 
 | File | Lines |
 |---|---|
-| `CalendarWeekView.jsx` | 159 |
-| `CalendarWeekView.css` | 110 |
-| `PlannerLayout.jsx` | 347 |
-
-**Warning**: PlannerLayout.jsx at 347 lines. Needs split before any further additions.
+| `CalendarWeekView.jsx` | 183 |
+| `CalendarWeekView.css` | 111 |
 
 ---
 
 ## What is currently incomplete / pending
 
 - **Browser smoke test** — not run. Walk:
-  - Desktop: click a lesson card → gold border + selection pill appears.
-  - Click another card → both selected. Click selected card → deselects.
-  - Done cards: click does nothing (no selection).
-  - Click empty grid area → clears selection.
-  - Double-click card → EditSheet opens.
-  - Drag a card to another day column → lesson moves to that day.
-  - Drag a selected card when multiple selected → all selected cards move.
-  - Drop on same column → nothing happens.
-  - Mobile: completely unchanged — no DnD, no selection.
+  - Drag a card to another day → card moves instantly (optimistic), Firestore writes in background.
+  - Drag 2-3 times rapidly → no stuck state, IDs remain stable.
+  - Navigate to different week → DndContext resets, no stale drag state.
+  - Failed Firestore write → card shows red border for 2 seconds then reverts.
+  - Multi-select drag → all selected cards move optimistically.
+  - Mobile: completely unchanged.
 
 - **Not built yet:**
-  - Within-day reordering (Session 3)
-  - Drag overlay (ghost card while dragging)
+  - Within-day reordering
+  - Drag overlay (ghost card)
   - PlannerLayout.jsx split (347 lines)
-  - After move, CalendarWeekView data doesn't auto-refresh (needs `loadWeekDataFrom` re-trigger)
 
 ## What the next session should start with
 
 1. Read CLAUDE.md + HANDOFF.md.
-2. Smoke test selection + drag-and-drop on desktop.
-3. Fix: after a move, the calendar grid may need a data refresh trigger.
-4. Next: within-day reordering, or PlannerLayout split.
+2. Smoke test rapid drag-and-drop on desktop.
 
 ## Key file locations
 
 ```
-packages/dashboard/
-├── package.json                                          # v0.25.1 + @dnd-kit/core
-├── src/tools/planner/components/
-│   ├── CalendarWeekView.jsx                              # 92 → 159
-│   ├── CalendarWeekView.css                              # 92 → 110
-│   └── PlannerLayout.jsx                                 # 336 → 347
-packages/shared/package.json                              # v0.25.1
-packages/te-extractor/package.json                        # v0.25.1
+packages/dashboard/src/tools/planner/components/
+├── CalendarWeekView.jsx                # 159 → 183
+└── CalendarWeekView.css                # 110 → 111
 ```
