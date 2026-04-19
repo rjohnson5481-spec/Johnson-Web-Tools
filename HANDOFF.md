@@ -1,49 +1,55 @@
-# HANDOFF — v0.27.7 Sick Day Pill Wired to Cascade
+# HANDOFF — v0.27.8 Full Restore Cleans Live Firestore
 
 ## What was completed this session
 
 2 code commits + this docs commit on `main`:
 
 ```
-da204bf chore: bump version to v0.27.7
-610afd8 fix: wire sick day desktop pill to cascade target (v0.27.7)
+39921b3 chore: bump version to v0.27.8
+6b91c6f fix: full restore deletes live Firestore data before write (v0.27.8)
 ```
 
-### Commit 1 — Wire SickDaySheet pill to actual cascade target (`610afd8`)
-Files: `PlannerLayout.jsx`, `useSubjects.js`
+### Commit 1 — Full Restore weeks delete uses `collectionGroup` (`6b91c6f`)
+File: `packages/dashboard/src/firebase/backup.js` (`importFullRestore`)
 
-Closes the v0.27.6 gap. The desktop SickDaySheet was already passing the picked day as `onConfirm(selected, activeDay)`, but the parent dropped the second arg and the cascade ran from `day` (the parent state). Now both layers honor the explicit pick.
+**Bug:** A Friday with 3 subjects in the backup was ending up with 6 subjects after Full Restore. The 3 extras were leftover subject docs from a sick-day cascade that the delete phase never touched.
 
-`PlannerLayout.jsx` (line 81–84):
-- `handleSickDayConfirm` now accepts `(selectedSubjects, sickDayIndex)` and forwards `sickDayIndex` to `performSickDay`.
+**Root cause:** The old delete walk did
+```js
+getDocs(collection(db, `${base}/weeks`))
+  → for each week: getDocs(collection(db, `${base}/weeks/${w.id}/students`))
+    → for each student / dayIndex: deleteCol(.../subjects)
+```
+But `weeks/{weekId}`, `weeks/{weekId}/students/{name}`, and `.../days/{di}` are all **ghost path segments** in this app — there are no real docs at those paths, only the leaf `subjects/{subject}` docs. A plain `collection()` walk over the parent paths returns an empty snapshot, so the inner loop never ran for any week and no subject docs were deleted. The write phase then `setDoc`'d the backup's subjects on top of whatever was already there.
 
-`useSubjects.js` (`performSickDay`, lines 92–126):
-- Signature is now `performSickDay(selectedSubjects, sickDayIndex = day)` — defaulting to `day` keeps mobile (no 2nd arg passed) byte-for-byte equivalent to before.
-- `startData` lookup: when `sickDayIndex === day`, still reads from in-memory `dayData[subject]` (fast path). When the picked day differs, falls back to `dbReadCell(uid, weekId, student, sickDayIndex, subject)` so the chain seed is correct for any day.
-- All five `day` references inside the function (chain seed, `for` loop, `dbDeleteCell` for the source cell, `getWeekDates(...)[day]` for the marker date) replaced with `sickDayIndex`.
+**Fix:** Replace the nested-collection walk with a `collectionGroup('subjects')` query (already imported, already used in `exportAllData` for the same reason). Filter the returned docs by the `users/{uid}/weeks/` prefix and `deleteDoc` each one in parallel via `Promise.all`. This deletes *every* live subject doc under the user — including ones not in the backup file — before the write phase begins.
 
-Mobile path: SickDaySheet's `onConfirm` is unchanged — it always sends `(selected, activeDay)`. On mobile `activeDay === day` (the prop) because there are no pills, so the result is identical to the old code.
+Diff is +13 / −7 lines, contained to the weeks delete block. Everything else in `importFullRestore` (sickDays / courses / enrollments / grades / reportNotes / activities / savedReports / subjectPresets / schoolYears+quarters+breaks / rewardTracker+log delete passes, and the entire write phase) is unchanged.
 
-### Commit 2 — Version bump (`da204bf`)
-0.27.6 → **0.27.7** across all 3 packages (dashboard, shared, te-extractor).
+### Commit 2 — Version bump (`39921b3`)
+0.27.7 → **0.27.8** across all 3 packages (dashboard, shared, te-extractor).
 
 ---
+
+## Known surviving gaps in Full Restore (carried over from v0.27.7 diagnostic, unchanged this session)
+
+These are NOT addressed by this fix — flagging for future sessions:
+
+- **`settings/students`** — never explicitly deleted; only overwritten when the backup contains it. If a backup file is missing `students`, the pre-restore students doc survives.
+- **Anything in `settings/` other than the `students` doc** — never touched at all.
+- **Collections not listed in the delete phase** — e.g. TE Extractor's `teExtractor/` tree, the legacy `subjectLists/` orphans called out in CLAUDE.md, and any future collection added without updating this file. Not cleared, not restored.
 
 ## What the next session should start with
 
 1. Read CLAUDE.md + HANDOFF.md.
-2. Smoke test the desktop sick day flow end-to-end:
-   - Open Sick Day from any day, switch pills, check subjects on the picked day, Confirm.
-   - Verify the sick-day red dot appears on the picked day's DayStrip date and that the cascade actually shifts that day's lessons forward.
-   - Verify the marker is written for the picked day's date string (not Monday).
-3. Smoke test mobile to confirm no regression — DayStrip → Sick Day → check subjects → Confirm should behave exactly as in v0.27.5.
+2. Smoke test: open Settings → Data Backup, run Full Restore from a known-good backup file. Verify the post-restore subject counts match the backup file exactly (no leftover sick-day cascade docs surviving on Fridays or any other day).
+3. Decide whether to also harden `settings/students` deletion and other listed gaps above.
 
 ## Key file locations
 
 ```
-packages/dashboard/src/tools/planner/components/PlannerLayout.jsx     # handleSickDayConfirm forwards sickDayIndex
-packages/dashboard/src/tools/planner/hooks/useSubjects.js             # performSickDay accepts sickDayIndex = day
-packages/dashboard/package.json                                        # 0.27.7
-packages/shared/package.json                                           # 0.27.7
-packages/te-extractor/package.json                                     # 0.27.7
+packages/dashboard/src/firebase/backup.js      # importFullRestore weeks-delete now uses collectionGroup
+packages/dashboard/package.json                # 0.27.8
+packages/shared/package.json                   # 0.27.8
+packages/te-extractor/package.json             # 0.27.8
 ```
