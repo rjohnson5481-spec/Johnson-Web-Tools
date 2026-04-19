@@ -132,13 +132,19 @@ export async function importFullRestore(uid, backup) {
   const rtSnap = await getDocs(collection(db, `${base}/rewardTracker`));
   for (const r of rtSnap.docs) await deleteCol(`${base}/rewardTracker/${r.id}/log`);
   await deleteCol(`${base}/rewardTracker`);
-  const wSnap = await getDocs(collection(db, `${base}/weeks`));
-  for (const w of wSnap.docs) {
-    const stSnap = await getDocs(collection(db, `${base}/weeks/${w.id}/students`));
-    for (const st of stSnap.docs) {
-      for (let di = 0; di < 5; di++) await deleteCol(`${base}/weeks/${w.id}/students/${st.id}/days/${di}/subjects`);
-    }
-  }
+  // Enumerate every existing subject doc under this uid via collectionGroup.
+  // weeks/{weekId}, students/{name}, and days/{di} are ghost path segments
+  // (no real docs) so a plain collection() walk returns empty and misses leaf
+  // subject docs — including any created by a sick day cascade that aren't in
+  // the backup. collectionGroup picks up every subjects-collection doc anywhere
+  // in Firestore; the prefix filter keeps it scoped to this uid.
+  const subjectsSnap = await getDocs(collectionGroup(db, 'subjects'));
+  const weeksPrefix = `${base}/weeks/`;
+  await Promise.all(
+    subjectsSnap.docs
+      .filter(d => d.ref.path.startsWith(weeksPrefix))
+      .map(d => deleteDoc(d.ref))
+  );
 
   const d = backup.data; let restored = 0;
   if (d.students) { await setDoc(doc(db, `${base}/settings/students`), d.students); restored++; }
