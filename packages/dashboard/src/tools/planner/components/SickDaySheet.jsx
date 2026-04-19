@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DAY_SHORT } from '../constants/days.js';
+import { DAY_NAMES, DAY_SHORT } from '../constants/days.js';
 import './SickDaySheet.css';
 
 function extractDayNum(lesson) {
@@ -11,28 +11,42 @@ function formatDate(date) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function useIsDesktop() {
+  const [d, setD] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const h = e => setD(e.matches);
+    mq.addEventListener('change', h);
+    return () => mq.removeEventListener('change', h);
+  }, []);
+  return d;
+}
+
 // Props:
 //   subjects   — string[] — subjects present on the sick day
 //   dayData    — { [subject]: { lesson, note, done, flag } } — sick day data
 //   dayName    — string — e.g. "Tuesday"
-//   day        — 0–4 — sick day index
+//   day        — 0–4 — sick day index from parent
 //   weekDates  — Date[] — Mon–Fri dates for this week
 //   loadWeekDataFrom(fromDay) — async fn returning { [dayIndex]: { [subject]: cellData } }
-//   onConfirm(selectedSubjects) — called with array of subjects to cascade
+//   onConfirm(selectedSubjects, activeDay) — called with subjects + the day picked in the sheet
 //   onClose
 export default function SickDaySheet({
   subjects, dayData, dayName, day,
   weekDates, loadWeekDataFrom,
   onConfirm, onClose,
 }) {
+  const isDesktop = useIsDesktop();
+  const [activeDay, setActiveDay]     = useState(day);
+  const [allDaysData, setAllDaysData] = useState({ [day]: dayData });
   const [selected, setSelected]       = useState(new Set(subjects));
-  const [remainingData, setRemaining] = useState({});
-  const [loading, setLoading]         = useState(day < 4);
+  const [loading, setLoading]         = useState(isDesktop || day < 4);
 
   useEffect(() => {
-    if (day >= 4) return;
-    loadWeekDataFrom(day + 1).then(data => {
-      setRemaining(data);
+    // Mobile-Friday case: cascade preview is empty, no extra fetch needed.
+    if (!isDesktop && day >= 4) return;
+    loadWeekDataFrom(0).then(data => {
+      setAllDaysData({ ...data, [day]: dayData });
       setLoading(false);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -45,19 +59,27 @@ export default function SickDaySheet({
     });
   }
 
-  // Build list of days to display: sick day (D) + remaining (D+1..4)
-  // For Friday, only show the sick day itself (no remaining days).
-  const displayDays = day === 4
-    ? [{ dayIndex: day, dayData: dayData }]
-    : [
-        { dayIndex: day, dayData: dayData },
-        ...Array.from({ length: 4 - day }, (_, i) => ({
-          dayIndex: day + 1 + i,
-          dayData: remainingData[day + 1 + i] ?? {},
-        })),
-      ];
+  function pickDay(d) {
+    setActiveDay(d);
+    const subjs = Object.keys(allDaysData[d] ?? {}).filter(s => s !== 'allday');
+    setSelected(new Set(subjs));
+  }
 
-  const showFridayWarning = day < 4 && selected.size > 0;
+  // Desktop: show only the picked day. Mobile: keep cascade preview (sick day + D+1..4).
+  const displayDays = isDesktop
+    ? [{ dayIndex: activeDay, dayData: allDaysData[activeDay] ?? {} }]
+    : (day === 4
+        ? [{ dayIndex: day, dayData: dayData }]
+        : [
+            { dayIndex: day, dayData: dayData },
+            ...Array.from({ length: 4 - day }, (_, i) => ({
+              dayIndex: day + 1 + i,
+              dayData: allDaysData[day + 1 + i] ?? {},
+            })),
+          ]);
+
+  const titleDayName      = isDesktop ? DAY_NAMES[activeDay] : dayName;
+  const showFridayWarning = !isDesktop && day < 4 && selected.size > 0;
 
   return (
     <div className="sick-day-overlay" onClick={onClose}>
@@ -65,8 +87,20 @@ export default function SickDaySheet({
         <div className="sick-day-handle" />
 
         <div className="sick-day-header">
-          <span className="sick-day-title">Sick Day — {dayName}</span>
+          <span className="sick-day-title">Sick Day — {titleDayName}</span>
           <button className="sick-day-close" onClick={onClose} aria-label="Close">✕</button>
+        </div>
+
+        <div className="sick-day-pills">
+          {[0, 1, 2, 3, 4].map(d => (
+            <button
+              key={d}
+              className={`sick-day-pill${d === activeDay ? ' sick-day-pill--active' : ''}`}
+              onClick={() => pickDay(d)}
+            >
+              {DAY_SHORT[d]}
+            </button>
+          ))}
         </div>
 
         <div className="sick-day-list">
@@ -74,7 +108,10 @@ export default function SickDaySheet({
             <div className="sick-day-loading">Loading week…</div>
           ) : (
             displayDays.map(({ dayIndex, dayData: dData }) => {
-              const daySubjects = subjects.filter(s => dData[s]);
+              const subjectPool = isDesktop
+                ? Object.keys(dData).filter(s => s !== 'allday')
+                : subjects;
+              const daySubjects = subjectPool.filter(s => dData[s]);
               if (daySubjects.length === 0) return null;
               return (
                 <div key={dayIndex} className="sick-day-group">
@@ -117,7 +154,7 @@ export default function SickDaySheet({
           <button className="sick-day-cancel" onClick={onClose}>Cancel</button>
           <button
             className="sick-day-confirm"
-            onClick={() => onConfirm([...selected])}
+            onClick={() => onConfirm([...selected], activeDay)}
             disabled={selected.size === 0}
           >
             Shift selected lessons
