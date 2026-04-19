@@ -77,6 +77,9 @@ function RestoreDiffSheetMobile({ uid, filename, diff, onClose }) {
   const [busy, setBusy] = useState(false);
 
   // Flatten diff into chronologically-sorted day entries; also count totals.
+  // All days are shown (including MATCH-only days) so the user can verify
+  // the restore covers what they expect — days with no conflicts collapse
+  // by default and surface an "All matched" badge instead of a count.
   const { visibleDays, weekCount, totalConflicts, daysUnchanged } = useMemo(() => {
     const all = [];
     const weeks = new Set();
@@ -90,12 +93,11 @@ function RestoreDiffSheetMobile({ uid, filename, diff, onClose }) {
         all.push({ weekId, dayIndex, items, conflicts });
       }
     }
-    const visible = all.filter(d => d.conflicts > 0);
     return {
-      visibleDays: visible,
+      visibleDays: all,
       weekCount: weeks.size,
-      totalConflicts: visible.reduce((n, d) => n + d.conflicts, 0),
-      daysUnchanged: all.length - visible.length,
+      totalConflicts: all.reduce((n, d) => n + d.conflicts, 0),
+      daysUnchanged: all.filter(d => d.conflicts === 0).length,
     };
   }, [diff]);
 
@@ -170,7 +172,7 @@ function RestoreDiffSheetMobile({ uid, filename, diff, onClose }) {
                     <span className="rds-day-count">{items.length} subject{items.length === 1 ? '' : 's'}</span>
                     {conflicts > 0
                       ? <span className="rds-badge rds-badge--gold">{conflicts} conflict{conflicts === 1 ? '' : 's'}</span>
-                      : <span className="rds-badge rds-badge--green">No conflicts</span>}
+                      : <span className="rds-badge rds-badge--green">All matched</span>}
                     <span className="rds-chev">{isOpen ? '▾' : '▸'}</span>
                   </div>
                 </button>
