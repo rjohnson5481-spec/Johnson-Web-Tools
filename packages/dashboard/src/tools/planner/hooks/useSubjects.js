@@ -129,18 +129,34 @@ export function useSubjects(uid, weekId, student, day) {
     await dbWriteSickDay(uid, dateString, student, selectedSubjects);
   }
 
-  // Reverses a sick day cascade for the current day.
-  // Reads subjectsShifted from the sick day marker, builds each subject's chain
-  // from D+1 forward, writes each cell one day back, deletes last source cell,
-  // then deletes the sick day marker so the red dot is removed.
+  // Reverses a sick day cascade for the current week.
+  // The cascade source is the day that actually has a sick day marker in
+  // Firestore for this student — NOT the parent's currently-selected UI
+  // day. The user may have navigated to a different day before hitting
+  // Undo; we still need to shift the correct day's column back.
+  // Reads subjectsShifted from the marker, builds each subject's chain
+  // from D+1 forward, writes each cell one day back, deletes last source
+  // cell, then deletes the sick day marker so the red dot is removed.
   async function performUndoSickDay() {
-    const dateString = toWeekId(getWeekDates(weekId)[day]);
-    const sickDayData = await dbReadSickDay(uid, dateString);
+    const dates = getWeekDates(weekId);
+    let sickDayIndex = -1;
+    let sickDayData = null;
+    let dateString = null;
+    for (let d = 0; d < 5; d++) {
+      const ds = toWeekId(dates[d]);
+      const data = await dbReadSickDay(uid, ds);
+      if (data?.student === student) {
+        sickDayIndex = d;
+        sickDayData = data;
+        dateString = ds;
+        break;
+      }
+    }
     if (!sickDayData) return;
 
     await Promise.all((sickDayData.subjectsShifted ?? []).map(async subject => {
       const chain = [];
-      for (let d = day + 1; d <= 4; d++) {
+      for (let d = sickDayIndex + 1; d <= 4; d++) {
         const data = await dbReadCell(uid, weekId, student, d, subject);
         if (!data) break;
         chain.push({ dayIndex: d, data });
