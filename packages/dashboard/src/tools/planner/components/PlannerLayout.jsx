@@ -13,6 +13,7 @@ import PlannerActionBar from './PlannerActionBar.jsx';
 import UndoSickSheet   from './UndoSickSheet.jsx';
 import { readCell, updateCell as fbWriteCell, deleteCell } from '../firebase/planner.js';
 import { compareWithExisting } from '../hooks/usePdfImport.js';
+import { useSickDay } from '../hooks/useSickDay.js';
 import { getMondayOf, toWeekId, mondayWeekId, formatWeekLabel, DAY_SHORT, DAY_NAMES } from '../constants/days.js';
 import './PlannerLayout.css';
 
@@ -78,23 +79,6 @@ export default function PlannerLayout({
     setShowAddSubject(false);
   }
 
-  async function handleSickDayConfirm(selectedSubjects, sickDayIndex) {
-    await performSickDay(selectedSubjects, sickDayIndex);
-    setShowSickDay(false);
-    // On desktop the SickDaySheet day pills can pick a sickDayIndex that
-    // differs from the parent's `day` (mobile's DayStrip keeps them in
-    // sync, desktop does not). isSickDay is derived from
-    // sickDayIndices.has(day), so without this sync the Undo Sick Day
-    // button wouldn't render after a desktop sick day until the user
-    // manually selected the sick column.
-    setDay(sickDayIndex);
-  }
-
-  async function handleUndoSickDay() {
-    await performUndoSickDay();
-    setShowUndoSickDay(false);
-  }
-
   async function handleApplySchedule(parsedData, onDiffReady) {
     const safeData = { ...parsedData, weekId: mondayWeekId(parsedData.weekId) };
     const uid = user?.uid; if (!uid) return;
@@ -129,29 +113,16 @@ export default function PlannerLayout({
 
   const allDayData = dayData['allday'] ?? null, hasAllDay = Boolean(allDayData);
   const [showSubjects, setShowSubjects] = useState(false);
-  const isSickDay = sickDayIndices?.has(day);
+  const { isSickDay, handleSickDayConfirm, handleUndoSickDay } = useSickDay({
+    sickDayIndices, day, weekId, student,
+    performSickDay, performUndoSickDay,
+    setDay, setShowSickDay, setShowUndoSickDay,
+  });
   const regularSubjects = subjects.filter(s => s !== 'allday');
   const hasSubjects = subjects.length > 0;
   const doneCount = regularSubjects.filter(s => dayData[s]?.done).length;
 
   const isDesktop = useIsDesktop();
-
-  // After a Full Restore / Restore Selected completes, the sick-day UI
-  // can persist stale state from before the restore — the action bar
-  // may still show Undo Sick Day for a week whose marker was just
-  // removed in Firestore, or hide it for a week where one was restored.
-  // Navigating to a different week and back fixes it because the
-  // sickDays subscription in useSubjects re-establishes on weekId
-  // change. This effect mirrors that reset: every weekId or student
-  // switch closes the sick-day sheets and drops any carried-over
-  // visibility state so the action bar re-evaluates against the
-  // freshly-subscribed sickDayIndices. Mount triggers it too.
-  useEffect(() => {
-    setShowSickDay(false);
-    setShowUndoSickDay(false);
-  // setShow* are stable useState setters; excluding them is intentional.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weekId, student]);
 
   async function handleMoveCell(fromDay, subject, toDay) {
     const uid = user?.uid;
