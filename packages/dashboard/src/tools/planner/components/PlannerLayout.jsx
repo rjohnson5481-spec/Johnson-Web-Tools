@@ -81,6 +81,13 @@ export default function PlannerLayout({
   async function handleSickDayConfirm(selectedSubjects, sickDayIndex) {
     await performSickDay(selectedSubjects, sickDayIndex);
     setShowSickDay(false);
+    // On desktop the SickDaySheet day pills can pick a sickDayIndex that
+    // differs from the parent's `day` (mobile's DayStrip keeps them in
+    // sync, desktop does not). isSickDay is derived from
+    // sickDayIndices.has(day), so without this sync the Undo Sick Day
+    // button wouldn't render after a desktop sick day until the user
+    // manually selected the sick column.
+    setDay(sickDayIndex);
   }
 
   async function handleUndoSickDay() {
