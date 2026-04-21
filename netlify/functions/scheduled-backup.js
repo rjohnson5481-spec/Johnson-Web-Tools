@@ -99,7 +99,11 @@ exports.handler = schedule('0 */6 * * *', async () => {
     }
 
     const backup = { backupAt: new Date().toISOString(), version: '1', users };
-    const store = getStore('backups');
+    const store = getStore({
+      name: 'backups',
+      siteID: process.env.NETLIFY_SITE_ID,
+      token: process.env.NETLIFY_TOKEN,
+    });
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const key = `backup-${timestamp}.json`;
     await store.set(key, JSON.stringify(backup, null, 2));
