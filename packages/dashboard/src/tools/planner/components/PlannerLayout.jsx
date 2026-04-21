@@ -11,6 +11,7 @@ import SickDaySheet    from './SickDaySheet.jsx';
 import CalendarWeekView from './CalendarWeekView.jsx';
 import PlannerActionBar from './PlannerActionBar.jsx';
 import UndoSickSheet   from './UndoSickSheet.jsx';
+import { readCell, updateCell as fbWriteCell } from '../firebase/planner.js';
 import { useSickDay } from '../hooks/useSickDay.js';
 import { usePlannerHelpers } from '../hooks/usePlannerHelpers.js';
 import { getMondayOf, toWeekId, formatWeekLabel, DAY_NAMES } from '../constants/days.js';
@@ -84,6 +85,13 @@ export default function PlannerLayout({
     jumpToWeek, setStudent,
   });
 
+  async function onToggleDone(dayIndex, subject) {
+    const uid = user?.uid;
+    if (!uid) return;
+    const cell = await readCell(uid, weekId, student, dayIndex, subject);
+    await fbWriteCell(uid, weekId, student, subject, dayIndex, { done: !cell?.done });
+  }
+
   const allDayData = dayData['allday'] ?? null, hasAllDay = Boolean(allDayData);
   const [showSubjects, setShowSubjects] = useState(false);
   const {
@@ -130,6 +138,7 @@ export default function PlannerLayout({
             onEditCell={(subject, di) => { setDay(di); setEditTarget({ subject, day: di }); }}
             onAddSubject={(di) => { setDay(di); setShowAddSubject(true); }}
             onMoveCell={handleMoveCell}
+            onToggleDone={onToggleDone}
           />
         )}
 

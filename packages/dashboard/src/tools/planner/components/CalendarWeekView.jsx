@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { DndContext, PointerSensor, pointerWithin, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
-import { useAuth } from '@homeschool/shared';
-import { updateCell as fbUpdateCell } from '../firebase/planner.js';
 import { formatWeekLabel } from '../constants/days.js';
 import './CalendarWeekView.css';
 
@@ -64,9 +62,8 @@ function getOrderedSubjects(daySubjects, dayOrder) {
 export default function CalendarWeekView({
   weekDates, prevWeek, nextWeek, jumpToToday,
   loadWeekDataFrom, student, weekId,
-  onEditCell, onAddSubject, onMoveCell,
+  onEditCell, onAddSubject, onMoveCell, onToggleDone,
 }) {
-  const { user } = useAuth();
   const [weekData, setWeekData] = useState({});
   const [activeId, setActiveId] = useState(null);
   const [optimistic, setOptimistic] = useState({});
@@ -84,10 +81,8 @@ export default function CalendarWeekView({
   useEffect(() => reload(), [reload, weekId, student]);
   useEffect(() => { setOptimistic({}); setDayOrder({}); }, [weekId, student]);
 
-  async function handleToggleDone(dayIndex, subject, cell) {
-    const uid = user?.uid;
-    if (!uid) return;
-    await fbUpdateCell(uid, weekId, student, subject, dayIndex, { ...cell, done: !cell.done });
+  async function handleToggleDone(dayIndex, subject) {
+    await onToggleDone(dayIndex, subject);
     reload();
   }
 
@@ -188,7 +183,7 @@ export default function CalendarWeekView({
                             <span className="cwv-subject">{subject}</span>
                             <span
                               className={`cwv-status${isDone ? ' done' : ' undone'}`}
-                              onClick={e => { e.stopPropagation(); handleToggleDone(di, subject, cell); }}
+                              onClick={e => { e.stopPropagation(); handleToggleDone(di, subject); }}
                               role="button"
                               aria-label={isDone ? 'Mark not done' : 'Mark done'}
                             >{isDone ? '✓' : ''}</span>
