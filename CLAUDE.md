@@ -1,5 +1,5 @@
 # CLAUDE.md — Iron & Light Johnson Academy Homeschool Tools
-Current version: v0.28.5
+Current version: v0.28.8
 
 ## What this repo is
 A monorepo housing all digital tools for Iron & Light Johnson Academy.
@@ -189,7 +189,7 @@ packages/dashboard/src/
 └── tools/
     ├── planner/
     │   ├── components/
-    │   │   ├── PlannerLayout.jsx        ← 270 lines — split before adding more
+    │   │   ├── PlannerLayout.jsx        ← under 250 lines
     │   │   ├── PlannerActionBar.jsx
     │   │   ├── UndoSickSheet.jsx
     │   │   ├── CalendarWeekView.jsx     ← desktop calendar grid
@@ -199,9 +199,10 @@ packages/dashboard/src/
     │   │   └── [other sheets]
     │   ├── hooks/
     │   │   ├── useWeek.js
-    │   │   ├── useSubjects.js
-    │   │   ├── useSickDay.js            ← sick day handlers + Firestore listener
+    │   │   ├── useSubjects.js           ← cell data only — no sick-day listener
+    │   │   ├── useSickDay.js            ← sole owner of sick-day Firestore listener
     │   │   ├── usePdfImport.js
+    │   │   ├── usePlannerHelpers.js     ← PDF helpers + handleMoveCell
     │   │   ├── usePlannerUI.js
     │   │   └── useSettings.js
     │   └── constants/
@@ -227,7 +228,7 @@ Desktop changes are always additive via @media (min-width: 1024px) — never mod
 
 ---
 
-## Tools status (v0.28.5)
+## Tools status (v0.28.8)
 - shared            → ✅ Complete
 - dashboard shell   → ✅ Complete — 6-tab nav, dynamic students, dark mode
 - Home Tab          → ✅ Complete — per-student cards, tappable/expanded, attendance
