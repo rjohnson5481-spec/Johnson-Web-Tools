@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   subscribeSickDays,
   readDaySubjectsOnce,
+  readCell,
   updateCell as fbWriteCell,
   deleteCell,
 } from '../firebase/planner.js';
@@ -65,6 +66,17 @@ export function useSickDay({
 
   async function completeSickDay(selectedSubjects, sickDayIndex) {
     await performSickDay(selectedSubjects, sickDayIndex);
+
+    // Drop a "Sick Day" All Day Event on the sick column so the day is
+    // labeled in the planner + home summary. Only written if the user
+    // hasn't already placed an all-day event there.
+    const existingAllDay = await readCell(uid, weekId, student, sickDayIndex, ALL_DAY_KEY);
+    if (!existingAllDay) {
+      await fbWriteCell(uid, weekId, student, ALL_DAY_KEY, sickDayIndex, {
+        lesson: 'Sick Day', note: '', done: false, flag: false,
+      });
+    }
+
     // Jump to the sick column so the per-day banner + shifted lessons are
     // visible immediately. The Undo button no longer depends on this — it
     // reads hasSickDayThisWeek, not sickDayIndices.has(day).
