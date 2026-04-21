@@ -1,5 +1,5 @@
 # CLAUDE.md — Iron & Light Johnson Academy Homeschool Tools
-Current version: v0.28.9
+Current version: v0.29.0
 
 ## What this repo is
 A monorepo housing all digital tools for Iron & Light Johnson Academy.
@@ -194,7 +194,6 @@ packages/dashboard/src/
     │   │   ├── UndoSickSheet.jsx
     │   │   ├── CalendarWeekView.jsx     ← desktop calendar grid
     │   │   ├── SickDaySheet.jsx
-    │   │   ├── FridayOverflowSheet.jsx  ← Move/Delete/Cancel interstitial
     │   │   ├── UploadSheet.jsx
     │   │   ├── ImportDiffPreview.jsx
     │   │   └── [other sheets]
@@ -229,7 +228,7 @@ Desktop changes are always additive via @media (min-width: 1024px) — never mod
 
 ---
 
-## Tools status (v0.28.9)
+## Tools status (v0.29.0)
 - shared            → ✅ Complete
 - dashboard shell   → ✅ Complete — 6-tab nav, dynamic students, dark mode
 - Home Tab          → ✅ Complete — per-student cards, tappable/expanded, attendance
@@ -238,6 +237,7 @@ Desktop changes are always additive via @media (min-width: 1024px) — never mod
 - Academic Records  → ✅ Complete — full Phase 2 feature
 - TE Extractor      → ✅ Complete — vanilla JS at /te-extractor/
 - Backup            → ✅ Complete — Export / Restore from Backup (diff) / Factory Reset / Auto 6hr
+- Month view        → 🔒 Queued — also unlocks improved Friday sick-day cascading
 - School Days       → 🔒 Phase 3
 - Multi-select      → 🔒 Queued
 
@@ -333,5 +333,5 @@ Do not open pull requests. Do not create branches named claude/* or feature/*.
 - Full Restore (Factory Reset) wipes all data then restores — two-step confirmation
 - Backup export filename uses email username + date
 - useSickDay hook owns sick day Firestore listener — Undo button driven by Firestore not local state
-- Sick day confirm gates on Friday overflow — if current student has any non-allday lesson on Friday, FridayOverflowSheet opens (Move to Monday / Delete & Start Fresh / Cancel) before the cascade runs. Cancel aborts; the other two clear Friday, then proceed.
+- Sick day Friday overflow handling is deferred until the month view ships — for now the cascade runs normally (Friday content that would shift past Friday is dropped) and a "A month view and improved sick day cascading is coming soon." toast is shown when Friday had lessons at confirm time.
 - Sick day confirm auto-writes a "Sick Day" All Day Event — { lesson: 'Sick Day', note: '', done: false, flag: false } at the 'allday' key for the sick column, only if no allday cell already exists there.
