@@ -63,8 +63,27 @@
   border-top: 1px solid var(--border);
 }
 
-.fcs-confirm {
+.fcs-cancel {
   flex: 1;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.fcs-cancel:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.fcs-confirm {
+  flex: 2;
   background: var(--ink);
   border: none;
   border-radius: 10px;

@@ -98,7 +98,8 @@ export default function PlannerLayout({
   const {
     sickDayIndices, hasSickDayThisWeek, isSickDay,
     handleSickDayConfirm, handleUndoSickDay,
-    showFridayComingSoon, handleFridayComingSoonDismiss,
+    showFridayComingSoon,
+    handleFridayComingSoonConfirm, handleFridayComingSoonDismiss,
   } = useSickDay({
     uid: user?.uid, weekId, student, day,
     performSickDay, performUndoSickDay,
@@ -245,7 +246,9 @@ export default function PlannerLayout({
       )}
 
       {showFridayComingSoon && (
-        <FridayComingSoonSheet onDismiss={handleFridayComingSoonDismiss} />
+        <FridayComingSoonSheet
+          onConfirm={handleFridayComingSoonConfirm}
+          onDismiss={handleFridayComingSoonDismiss} />
       )}
     </div>
   );
