@@ -1,6 +1,6 @@
 {
-  "name": "@homeschool/shared",
-  "version": "0.29.6",
+  "name": "@johnson-web-tools/shared",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "main": "src/index.js"
