@@ -1,5 +1,5 @@
 # CLAUDE.md — Johnson Web Tools
-Current version: v1.0.2
+Current version: v1.0.4
 
 ## What this repo is
 A monorepo housing all digital tools for Iron & Light Johnson Academy.
@@ -28,7 +28,14 @@ single Firebase project.
     │       ├── components/SettingsScreen.jsx  ← student add/remove + sign-out
     │       ├── firebase/settings.js           ← writes /users/{uid}/settings/students
     │       └── tools/reward-tracker/          ← do not touch without Rob's approval
-    └── tools/                 ← TE Extractor PWA — "Tools App" — tools.grasphislove.com
+    └── tools/                 ← "Tools App" — tools.grasphislove.com
+        ├── index.html                  ← React shell entry (at /)
+        ├── src/
+        │   ├── App.jsx                 ← auth gate (SignIn / Dashboard)
+        │   ├── Dashboard.jsx           ← tool cards + sign-out
+        │   └── components/SignIn.jsx
+        └── te-extractor/               ← Vanilla HTML/CSS/JS TE Extractor
+                                           served at /te-extractor/
 
 Root `package.json` workspaces: ["packages/shared", "packages/rewards", "packages/tools"].
 
@@ -39,11 +46,23 @@ Root `package.json` workspaces: ["packages/shared", "packages/rewards", "package
   Tapping it opens the Settings screen; the back arrow there returns
   to the dashboard. No tab bar, no bottom nav.
 
+### Tools navigation
+- `/` renders the React Dashboard after sign-in (SignIn screen when
+  signed out — no redirect loop).
+- The Dashboard has a gear icon ⚙️ (placeholder for future settings)
+  and one tool card per tool. "Launch →" on a card navigates to the
+  tool's subpath.
+- `/te-extractor/` loads the vanilla TE Extractor HTML/JS unchanged.
+  Its sign-out handler calls `window.location.replace('/')` so the
+  user lands on the React shell's SignIn screen.
+- Vite multi-page build: React entry at root, TE Extractor entry at
+  `te-extractor/`. Both get `VITE_*` env var substitution at build.
+
 ---
 
 ## Stack
-- React 18 + Vite 5 (rewards package)
-- Vanilla HTML/CSS/JS (tools package — TE Extractor)
+- React 18 + Vite 5 (rewards package, and tools package's dashboard shell)
+- Vanilla HTML/CSS/JS (tools package's TE Extractor — served at /te-extractor/)
 - Firebase Auth — Google sign-in, single family account, shared across packages
 - Firebase Firestore
 - vite-plugin-pwa — both PWAs are installable
