@@ -1,24 +1,8 @@
 [build]
-  command = "npm install && npm run build"
-  publish = "dist"
-
-[functions]
-  node_bundler = "esbuild"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/te-extractor/*"
-  to = "/te-extractor/index.html"
-  status = 200
+  command = "npm install && npm run build --workspace=packages/rewards"
+  publish = "packages/rewards/dist"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-
-# Visual Polish Session 1 - force rebuild

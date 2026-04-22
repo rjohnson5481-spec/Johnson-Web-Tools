@@ -1,57 +1,55 @@
-# HANDOFF — v0.29.6 Desktop breakpoint lowered to 810px
+# HANDOFF — v1.0.0 Initial split from Home-School-Planner
 
 ## What was completed this session
-- Global breakpoint change from 1024px → 810px and its paired
-  max `1023px` → `809px` across the entire codebase.
-- 3 JS/JSX files updated (matchMedia query + window.innerWidth
-  comparison): PlannerLayout.jsx, SickDaySheet.jsx,
-  RestoreDiffSheet.jsx.
-- 40 CSS files updated — every `min-width: 1024px`,
-  `max-width: 1023px`, and matching 400–1023 / ≥1024 comment
-  now reads 810 / 809. 86 breakpoint values replaced
-  one-for-one, no property values or colors touched.
-- CLAUDE.md canonical breakpoints block + key-decisions block
-  + multi-select decision line all updated to 810 / 809 /
-  400–809.
-- Four file-size math divisors (`/ 1024`) intentionally left
-  alone:
-  - packages/dashboard/src/tools/academic-records/components/CalendarImportSheet.jsx:49
-  - packages/dashboard/src/tools/academic-records/components/CurriculumImportSheet.jsx:35
-  - packages/dashboard/src/tools/planner/hooks/usePdfImport.js:40 / :50
-- Version bump to v0.29.6.
+- Repo stripped from planner seed to rewards + tools packages only
+- `packages/rewards` — reward tracker PWA, opens straight to dashboard
+- `packages/tools` — TE Extractor PWA, base `/`, standalone at new domain
+- `packages/shared` — updated for johnson-web-tools Firebase project
+  (renamed to `@johnson-web-tools/shared`, added `useDarkMode` hook)
+- `netlify.toml` configured for rewards as default build
+- Old `packages/dashboard` and `packages/te-extractor` deleted entirely
 
 ## What is broken or incomplete
-- Netlify Blobs auto-backup fix (v0.28.6) is deployed but
-  unverified — confirm a backup appears in the Blobs store
-  after the next scheduled run.
-- PlannerTab.jsx still destructures sickDayIndices from
-  useSubjects (now undefined) and passes a dead sickDayIndices
-  prop to PlannerLayout. Harmless — clean up on the next
-  PlannerTab touch.
-- PlannerLayout.jsx is at 275 lines (under the 280 watch
-  line). The next addition will likely cross it — extract
-  before adding more.
-- Two stale breakpoint references remain in JSX comments
-  (outside the strict scope of this session's Fix 1 patterns):
-  PlannerLayout.jsx:133 (`≥1024px`) and MultiSelectBar.jsx:8
-  (`max-width: 1023px`). Behavior is unaffected. Sweep them
-  on the next touch of each file.
-- The key-decisions note in CLAUDE.md still reads "raised
-  from 768px — S25 Ultra compatibility" — technically still
-  true (810 > 768) but the surrounding context now describes
-  a lowering. Leave the historical parenthetical for now.
+- Netlify sites not yet created — Rob to set up two sites manually
+  (one for rewards, one for tools)
+- Environment variables not yet added to Netlify — Rob to add
+  `VITE_FIREBASE_*` to both sites, and `VITE_ANTHROPIC_API_KEY` to tools
+- First deploy not yet confirmed
+- `tools` package needs its own separate Netlify site (root `netlify.toml`
+  currently only wires up the rewards build)
+- TE Extractor still redirects signed-out users to `/` — now that tools
+  is standalone, `/` is itself. Rob to decide: add an inline sign-in UI,
+  or redirect to `rewards.grasphislove.com` for sign-in.
+- No `npm install` has been run on the new workspace layout — unverified
 
 ## Next session must start with
 1. Read CLAUDE.md and HANDOFF.md
 2. Confirm on main, pull latest
-3. Ask Rob what we are building today
+3. Ask Rob what we are working on today
 
-## Key files changed recently
-- packages/dashboard/src/tools/planner/components/PlannerLayout.jsx
-- packages/dashboard/src/tools/planner/components/SickDaySheet.jsx
-- packages/dashboard/src/firebase/RestoreDiffSheet.jsx
-- 40 .css files under packages/dashboard/src/
-- packages/dashboard/package.json
-- packages/shared/package.json
-- packages/te-extractor/package.json
-- CLAUDE.md
+## Key files changed this session
+- `packages/rewards/` — new PWA package
+  - `src/App.jsx`, `src/main.jsx`, `src/App.css`
+  - `src/components/SignIn.jsx` + `.css`
+  - `src/tools/reward-tracker/` (moved from old dashboard)
+  - `vite.config.js`, `package.json`, `index.html`
+- `packages/tools/` — renamed from `te-extractor`
+  - `vite.config.js` (base `/`, added PWA plugin)
+  - `public/manifest.json` (name "Tools App")
+  - `public/index.html` + `public/sw.js` (rewrote `/te-extractor/` paths)
+  - `package.json` (scoped name + version)
+- `packages/shared/`
+  - `package.json` (renamed to `@johnson-web-tools/shared`, v1.0.0)
+  - `src/index.js` (exports `useDarkMode`)
+  - `src/hooks/useDarkMode.js` (new — moved from dashboard)
+- `package.json` (workspaces list)
+- `netlify.toml` (rewritten for rewards build)
+- `CLAUDE.md` (new — replaces retired planner version)
+- `HANDOFF.md` (this file)
+
+## Deleted this session
+- `packages/dashboard/` entirely
+- `packages/te-extractor/` (renamed to `packages/tools/`)
+- `netlify/functions/parse-schedule.{js,json}`
+- `netlify/functions/scheduled-backup.js`
+- `CLAUDE-DESIGN.md`, `CLAUDE-HISTORY.md` (old planner docs)

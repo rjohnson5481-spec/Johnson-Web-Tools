@@ -3,3 +3,4 @@
 
 export { db, auth, storage }                 from './firebase/init.js';
 export { signInWithGoogle, signOut, useAuth } from './firebase/auth.js';
+export { useDarkMode }                        from './hooks/useDarkMode.js';
