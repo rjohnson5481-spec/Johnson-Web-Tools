@@ -1,17 +1,28 @@
 import { defineConfig } from 'vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  // Serve at /te-extractor/ — all asset URLs get this base
-  base: '/te-extractor/',
+  base: '/',
 
-  // Entry HTML lives in public/
   root: 'public',
 
   // No publicDir — static assets (manifest.json, sw.js) are copied by the build script
   publicDir: false,
 
+  plugins: [
+    VitePWA({
+      registerType: 'autoUpdate',
+      // Own manifest.json already exists in public/ — do not generate a second
+      manifest: false,
+      workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
+      },
+    }),
+  ],
+
   build: {
-    outDir: '../../../dist/te-extractor',
+    outDir: '../dist',
     emptyOutDir: true,
     rollupOptions: {
       output: {
