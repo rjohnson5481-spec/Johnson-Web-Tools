@@ -1,5 +1,5 @@
 # CLAUDE.md — Johnson Web Tools
-Current version: v1.0.0
+Current version: v1.0.2
 
 ## What this repo is
 A monorepo housing all digital tools for Iron & Light Johnson Academy.
@@ -22,9 +22,22 @@ single Firebase project.
 └── packages/
     ├── shared/                ← Ink & Gold tokens, Lexend font, Firebase init, auth, useDarkMode, logo.png
     ├── rewards/               ← Rewards tracker PWA — "Rewards App" — rewards.grasphislove.com
+    │   └── src/
+    │       ├── App.jsx                ← auth gate, student-list subscription, gear icon
+    │       ├── components/SignIn.jsx
+    │       ├── components/SettingsScreen.jsx  ← student add/remove + sign-out
+    │       ├── firebase/settings.js           ← writes /users/{uid}/settings/students
+    │       └── tools/reward-tracker/          ← do not touch without Rob's approval
     └── tools/                 ← TE Extractor PWA — "Tools App" — tools.grasphislove.com
 
 Root `package.json` workspaces: ["packages/shared", "packages/rewards", "packages/tools"].
+
+### Rewards navigation
+- The app opens straight to the reward dashboard (or an empty-state
+  placeholder if no students exist).
+- A gear icon ⚙️ is fixed at the top-right of every rewards screen.
+  Tapping it opens the Settings screen; the back arrow there returns
+  to the dashboard. No tab bar, no bottom nav.
 
 ---
 
