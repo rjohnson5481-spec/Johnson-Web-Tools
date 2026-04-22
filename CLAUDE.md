@@ -1,5 +1,5 @@
 # CLAUDE.md — Iron & Light Johnson Academy Homeschool Tools
-Current version: v0.29.4
+Current version: v0.29.5
 
 ## What this repo is
 A monorepo housing all digital tools for Iron & Light Johnson Academy.
@@ -233,7 +233,7 @@ Desktop changes are always additive via @media (min-width: 1024px) — never mod
 
 ---
 
-## Tools status (v0.29.4)
+## Tools status (v0.29.5)
 - shared            → ✅ Complete
 - dashboard shell   → ✅ Complete — 6-tab nav, dynamic students, dark mode
 - Home Tab          → ✅ Complete — per-student cards, tappable/expanded, attendance
@@ -339,4 +339,4 @@ Do not open pull requests. Do not create branches named claude/* or feature/*.
 - useSickDay hook owns sick day Firestore listener — Undo button driven by Firestore not local state
 - Sick day Friday overflow handling is deferred until the month view ships — when Friday has any non-allday lesson at confirm time, FridayComingSoonSheet opens BEFORE any Firestore write. Confirm Sick Day deletes Friday's lessons and runs the cascade; Cancel leaves Firestore untouched.
 - Sick day confirm auto-writes a "Sick Day" All Day Event — { lesson: 'Sick Day', note: '', done: false, flag: false } at the 'allday' key for the sick column, only if no allday cell already exists there. Undo Sick Day deletes that auto-written allday cell (skipped if the user had placed their own custom allday).
-- Mobile multi-select is mobile-only (≤1023px) — long-press 500ms on a SubjectCard enters select mode; MultiSelectBar replaces the bottom nav at z-index 110. Actions: Select All, Mark Done (toggles based on whether all selected are already done), Move to Day (picker showing the 4 other days), Delete (two-tap confirm with 3s auto-reset), Cancel. The 'allday' card is never selectable. All multi-select state lives in useMultiSelect; BottomNav.jsx is never modified.
+- Mobile multi-select is mobile-only (≤1023px) — long-press 500ms on a SubjectCard enters select mode; MultiSelectBar replaces the bottom nav at z-index 110 and PlannerActionBar is hidden while select mode is active. Actions: Select All, Mark Done (toggles based on whether all selected are already done), Move to Day (picker showing the 4 other days), Delete (two-tap confirm with 3s auto-reset), Cancel. The 'allday' card is never selectable. All multi-select state lives in useMultiSelect; BottomNav.jsx is never modified.
