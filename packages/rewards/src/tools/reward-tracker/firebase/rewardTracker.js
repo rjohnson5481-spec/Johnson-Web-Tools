@@ -5,7 +5,7 @@ import {
   doc, collection, onSnapshot, setDoc, getDoc, addDoc,
   query, orderBy, serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '@homeschool/shared';
+import { db } from '@johnson-web-tools/shared';
 
 // Seed values for initial points. Only students whose names match get seeded.
 // New students added after first run won't get seeded — acceptable behavior.

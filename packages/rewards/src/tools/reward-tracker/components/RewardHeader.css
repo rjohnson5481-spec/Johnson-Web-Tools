@@ -108,10 +108,3 @@
   .rh-school-tagline   { font-size: 11px; }
 }
 
-/* ── Desktop (≥810px) — reward tracker header hidden inside the shell ── */
-/* Mobile layout is COMPLETELY UNCHANGED. Shell sidebar provides branding,
-   nav, sign-out, and dark-mode toggle on desktop — the tool's own header
-   is redundant there. */
-@media (min-width: 810px) {
-  .rh-header { display: none; }
-}

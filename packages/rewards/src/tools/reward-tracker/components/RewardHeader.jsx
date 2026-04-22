@@ -1,4 +1,4 @@
-import logo from '@homeschool/shared/assets/logo.png';
+import logo from '@johnson-web-tools/shared/assets/logo.png';
 import './RewardHeader.css';
 
 // Props: onBack (fn | null)
@@ -22,7 +22,6 @@ export default function RewardHeader({ onBack }) {
             </span>
             <span className="rh-school-line2">JOHNSON ACADEMY</span>
             <span className="rh-school-tagline">Faith · Knowledge · Strength</span>
-            <span className="rh-school-version">v0.21.2</span>
           </div>
         </div>
 
