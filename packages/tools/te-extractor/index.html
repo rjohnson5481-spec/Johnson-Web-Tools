@@ -353,7 +353,11 @@ CONTEXT: BJU Press Reading 3A, 229-page TE, Lessons 1-37. Day on calendar = Less
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        window.location.href = '/';
+        // `/` now renders the React Dashboard, which shows the SignIn
+        // screen when signed out. Using replace() so this redirect does
+        // not push a history entry — Back-button can't land on the
+        // signed-out TE Extractor URL and bounce again.
+        window.location.replace('/');
       } else {
         window.__teUid = user.uid;
         document.dispatchEvent(new CustomEvent('te-auth-ready', { detail: { uid: user.uid } }));
