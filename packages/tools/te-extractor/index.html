@@ -363,8 +363,8 @@ CONTEXT: BJU Press Reading 3A, 229-page TE, Lessons 1-37. Day on calendar = Less
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', {
-          scope: '/',
+        navigator.serviceWorker.register('/te-extractor/sw.js', {
+          scope: '/te-extractor/',
           updateViaCache: 'none'   // always fetch sw.js fresh — never use HTTP cache
         }).then(reg => {
           // Check for a new version every time the page loads

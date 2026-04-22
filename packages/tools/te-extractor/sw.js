@@ -61,7 +61,7 @@ self.addEventListener('fetch', event => {
           if (cached) return cached;
           // Last resort: return index.html for navigation requests
           if (event.request.mode === 'navigate') {
-            return caches.match('/index.html');
+            return caches.match('/te-extractor/index.html');
           }
         });
       })
