@@ -7,11 +7,9 @@ import EditSheet       from './EditSheet.jsx';
 import UploadSheet     from './UploadSheet.jsx';
 import AddSubjectSheet from './AddSubjectSheet.jsx';
 import MonthSheet      from './MonthSheet.jsx';
-import SickDaySheet    from './SickDaySheet.jsx';
 import CalendarWeekView from './CalendarWeekView.jsx';
 import PlannerActionBar from './PlannerActionBar.jsx';
-import UndoSickSheet   from './UndoSickSheet.jsx';
-import FridayComingSoonSheet from './FridayComingSoonSheet.jsx';
+import SickDayManager  from './SickDayManager.jsx';
 import { readCell, updateCell as fbWriteCell } from '../firebase/planner.js';
 import { useSickDay } from '../hooks/useSickDay.js';
 import { usePlannerHelpers } from '../hooks/usePlannerHelpers.js';
@@ -235,21 +233,18 @@ export default function PlannerLayout({
       {showMonthPicker && (
         <MonthSheet weekId={weekId} onSelectDay={handleMonthDaySelect} onClose={() => setShowMonthPicker(false)} />
       )}
-      {showSickDay && (
-        <SickDaySheet subjects={subjects} dayData={dayData} dayName={DAY_NAMES[day]} day={day}
-          weekDates={weekDates} loadWeekDataFrom={loadWeekDataFrom}
-          onConfirm={handleSickDayConfirm} onClose={() => setShowSickDay(false)} />
-      )}
 
-      {showUndoSickDay && (
-        <UndoSickSheet day={day} onConfirm={handleUndoSickDay} onClose={() => setShowUndoSickDay(false)} />
-      )}
-
-      {showFridayComingSoon && (
-        <FridayComingSoonSheet
-          onConfirm={handleFridayComingSoonConfirm}
-          onDismiss={handleFridayComingSoonDismiss} />
-      )}
+      <SickDayManager
+        subjects={subjects} dayData={dayData} day={day}
+        weekDates={weekDates} loadWeekDataFrom={loadWeekDataFrom}
+        showSickDay={showSickDay} setShowSickDay={setShowSickDay}
+        showUndoSickDay={showUndoSickDay} setShowUndoSickDay={setShowUndoSickDay}
+        showFridayComingSoon={showFridayComingSoon}
+        handleSickDayConfirm={handleSickDayConfirm}
+        handleUndoSickDay={handleUndoSickDay}
+        handleFridayComingSoonConfirm={handleFridayComingSoonConfirm}
+        handleFridayComingSoonDismiss={handleFridayComingSoonDismiss}
+      />
     </div>
   );
 }
