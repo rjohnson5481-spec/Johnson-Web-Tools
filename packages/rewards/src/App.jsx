@@ -11,7 +11,6 @@ export default function App() {
   useDarkMode();
 
   const [students, setStudents] = useState([]);
-  const [seeded, setSeeded]     = useState(false);
 
   useEffect(() => {
     if (!uid) return;
@@ -22,12 +21,19 @@ export default function App() {
 
   useEffect(() => {
     if (!uid || !students.length) return;
-    seedIfNeeded(uid, students).then(() => setSeeded(true)).catch(() => setSeeded(true));
+    seedIfNeeded(uid, students).catch(() => {});
   }, [uid, students]);
 
   if (loading) return null;
   if (!user)   return <SignIn />;
-  if (!seeded) return null;
+
+  if (students.length === 0) {
+    return (
+      <div className="empty-state">
+        <p className="empty-state-msg">No students found. Add students in Settings.</p>
+      </div>
+    );
+  }
 
   return <RewardLayout uid={uid} students={students} />;
 }
