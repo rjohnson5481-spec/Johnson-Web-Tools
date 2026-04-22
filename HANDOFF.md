@@ -1,55 +1,40 @@
-# HANDOFF — v1.0.0 Initial split from Home-School-Planner
+# HANDOFF — v1.0.1
 
 ## What was completed this session
-- Repo stripped from planner seed to rewards + tools packages only
-- `packages/rewards` — reward tracker PWA, opens straight to dashboard
-- `packages/tools` — TE Extractor PWA, base `/`, standalone at new domain
-- `packages/shared` — updated for johnson-web-tools Firebase project
-  (renamed to `@johnson-web-tools/shared`, added `useDarkMode` hook)
-- `netlify.toml` configured for rewards as default build
-- Old `packages/dashboard` and `packages/te-extractor` deleted entirely
+- Removed the blank-screen bug in rewards: when the signed-in user has
+  no students doc, the app now shows a centered "No students found.
+  Add students in Settings." placeholder instead of a permanent blank
+  screen (the `seeded` gate was dropped entirely).
+- Added `firestore.rules` and `firebase.json` at the repo root so the
+  security rules live in version control. Rules are restricted to
+  `/users/{userId}/**` — matching the CLAUDE.md canonical rule.
+- Bumped `shared`, `rewards`, and `tools` package.json versions to 1.0.1.
 
 ## What is broken or incomplete
-- Netlify sites not yet created — Rob to set up two sites manually
-  (one for rewards, one for tools)
-- Environment variables not yet added to Netlify — Rob to add
-  `VITE_FIREBASE_*` to both sites, and `VITE_ANTHROPIC_API_KEY` to tools
-- First deploy not yet confirmed
-- `tools` package needs its own separate Netlify site (root `netlify.toml`
-  currently only wires up the rewards build)
-- TE Extractor still redirects signed-out users to `/` — now that tools
-  is standalone, `/` is itself. Rob to decide: add an inline sign-in UI,
-  or redirect to `rewards.grasphislove.com` for sign-in.
-- No `npm install` has been run on the new workspace layout — unverified
+- Placeholder says "Add students in Settings." but there is still no
+  Settings screen — next step is to build one that writes to
+  `/users/{uid}/settings/students`.
+- Firebase console rules still need to be published manually by Rob —
+  copy `firestore.rules` contents into Firebase → Firestore → Rules →
+  Publish. `firebase.json` is for documentation only; no Firebase CLI
+  deploy is wired up.
+- Netlify sites + env vars still not set up (carried over from v1.0.0).
+- TE Extractor signed-out redirect still points at `/` (self-loop when
+  hosted standalone at tools.grasphislove.com) — carried over.
+- `npm install` has not been run against the workspace layout yet.
 
 ## Next session must start with
 1. Read CLAUDE.md and HANDOFF.md
 2. Confirm on main, pull latest
-3. Ask Rob what we are working on today
+3. Ask Rob what we are working on today — likely a real Settings screen
+   so students can be added from the UI.
 
 ## Key files changed this session
-- `packages/rewards/` — new PWA package
-  - `src/App.jsx`, `src/main.jsx`, `src/App.css`
-  - `src/components/SignIn.jsx` + `.css`
-  - `src/tools/reward-tracker/` (moved from old dashboard)
-  - `vite.config.js`, `package.json`, `index.html`
-- `packages/tools/` — renamed from `te-extractor`
-  - `vite.config.js` (base `/`, added PWA plugin)
-  - `public/manifest.json` (name "Tools App")
-  - `public/index.html` + `public/sw.js` (rewrote `/te-extractor/` paths)
-  - `package.json` (scoped name + version)
-- `packages/shared/`
-  - `package.json` (renamed to `@johnson-web-tools/shared`, v1.0.0)
-  - `src/index.js` (exports `useDarkMode`)
-  - `src/hooks/useDarkMode.js` (new — moved from dashboard)
-- `package.json` (workspaces list)
-- `netlify.toml` (rewritten for rewards build)
-- `CLAUDE.md` (new — replaces retired planner version)
-- `HANDOFF.md` (this file)
-
-## Deleted this session
-- `packages/dashboard/` entirely
-- `packages/te-extractor/` (renamed to `packages/tools/`)
-- `netlify/functions/parse-schedule.{js,json}`
-- `netlify/functions/scheduled-backup.js`
-- `CLAUDE-DESIGN.md`, `CLAUDE-HISTORY.md` (old planner docs)
+- `packages/rewards/src/App.jsx` — dropped `seeded` state/gate, added
+  empty-state render when `students.length === 0`
+- `packages/rewards/src/App.css` — added `.empty-state` + `.empty-state-msg`
+  styles (gold text on #22252e background)
+- `firestore.rules` — simplified to canonical `users/{userId}` rule only
+- `firebase.json` — new, points at `firestore.rules`
+- `packages/shared/package.json`, `packages/rewards/package.json`,
+  `packages/tools/package.json` — version 1.0.0 → 1.0.1
